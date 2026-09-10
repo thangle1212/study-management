@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nền Tảng Học & Thi Trắc Nghiệm Trực Tuyến</title>
+    <title>Nền Tảng Học & Thi Trắc Nghiệm Trực Tuyến - EduTest</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome Icon -->
@@ -52,7 +52,7 @@
     <!-- 1. NAVBAR -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
         <div class="container">
-            <a class="navbar-brand fw-bold text-primary fs-3" href="#">
+            <a class="navbar-brand fw-bold text-primary fs-3" href="index.php?action=home">
                 <i class="fa-solid fa-graduation-cap me-2"></i>EduTest
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -65,8 +65,8 @@
                     <li class="nav-item"><a class="nav-link text-dark" href="#target">Dành cho ai</a></li>
                 </ul>
                 <div class="d-flex gap-2">
-                    <a href="login.php" class="btn btn-outline-primary fw-semibold px-4">Đăng nhập</a>
-                    <a href="register.php" class="btn btn-primary fw-semibold px-4">Đăng ký</a>
+                    <a href="index.php?action=login" class="btn btn-outline-primary fw-semibold px-4">Đăng nhập</a>
+                    <a href="index.php?action=register" class="btn btn-primary fw-semibold px-4">Đăng ký</a>
                 </div>
             </div>
         </div>
@@ -87,7 +87,7 @@
                         Giải pháp tối ưu giúp Giáo viên tiết kiệm 80% thời gian tạo đề thi và giúp Học sinh rèn luyện kiến thức hiệu quả mọi lúc, mọi nơi.
                     </p>
                     <div class="d-flex gap-3">
-                        <a href="register.php" class="btn btn-primary btn-lg fw-semibold px-4">
+                        <a href="index.php?action=register" class="btn btn-primary btn-lg fw-semibold px-4">
                             Bắt đầu miễn phí <i class="fa-solid fa-arrow-right ms-2"></i>
                         </a>
                         <a href="#features" class="btn btn-outline-secondary btn-lg fw-semibold px-4">Tìm hiểu thêm</a>
@@ -182,7 +182,7 @@
         <div class="p-5 text-center cta-section shadow">
             <h2 class="fw-bold mb-3">Sẵn sàng trải nghiệm EduTest?</h2>
             <p class="mb-4 fs-5 opacity-75">Đăng ký tài khoản miễn phí ngay hôm nay để bắt đầu học và tạo đề thi.</p>
-            <a href="register.php" class="btn btn-light btn-lg text-primary fw-bold px-5 rounded-pill">
+            <a href="index.php?action=register" class="btn btn-light btn-lg text-primary fw-bold px-5 rounded-pill">
                 Đăng ký tài khoản ngay
             </a>
         </div>
