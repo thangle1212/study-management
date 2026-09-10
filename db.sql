@@ -129,6 +129,16 @@ CREATE TABLE attempt_answers (
     FOREIGN KEY (answer_id) REFERENCES answers(answer_id) ON DELETE SET NULL
 );
 
+-- 11b. BẢNG GHI NHẬN VI PHẠM KHI LÀM BÀI
+CREATE TABLE violation_logs (
+    violation_id INT AUTO_INCREMENT PRIMARY KEY,
+    attempt_id INT NOT NULL,
+    violation_type VARCHAR(50) NOT NULL,
+    details VARCHAR(255),
+    occurred_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (attempt_id) REFERENCES exam_attempts(attempt_id) ON DELETE CASCADE
+);
+
 -- 12. BẢNG BÀI VIẾT DIỄN ĐÀN
 CREATE TABLE forum_posts (
     post_id INT AUTO_INCREMENT PRIMARY KEY,
