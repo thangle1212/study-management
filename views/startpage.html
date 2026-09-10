@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nền Tảng Học & Thi Trắc Nghiệm Trực Tuyến</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --secondary-color: #0b5ed7;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+        }
+        .hero-section {
+            background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%);
+            padding: 80px 0;
+        }
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+        .card-feature {
+            border: none;
+            border-radius: 16px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card-feature:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
+        }
+        .cta-section {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-primary fs-3" href="#">
+                <i class="fa-solid fa-graduation-cap me-2"></i>EduTest
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto me-4 fw-semibold">
+                    <li class="nav-item"><a class="nav-link text-dark" href="#about">Giới thiệu</a></li>
+                    <li class="nav-item"><a class="nav-link text-dark" href="#features">Tính năng</a></li>
+                    <li class="nav-item"><a class="nav-link text-dark" href="#target">Dành cho ai</a></li>
+                </ul>
+                <div class="d-flex gap-2">
+                    <a href="login.php" class="btn btn-outline-primary fw-semibold px-4">Đăng nhập</a>
+                    <a href="register.php" class="btn btn-primary fw-semibold px-4">Đăng ký</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 2. HERO SECTION -->
+    <section class="hero-section" id="about">
+        <div class="container">
+            <div class="row align-items-center g-5">
+                <div class="col-lg-6">
+                    <span class="badge bg-primary-subtle text-primary fw-bold px-3 py-2 rounded-pill mb-3">
+                        🚀 Nền tảng Học & Thi Thông Minh
+                    </span>
+                    <h1 class="display-5 fw-bold text-dark lh-sm mb-3">
+                        Tạo đề, giao bài và chấm điểm <span class="text-primary">tự động</span>
+                    </h1>
+                    <p class="lead text-muted mb-4">
+                        Giải pháp tối ưu giúp Giáo viên tiết kiệm 80% thời gian tạo đề thi và giúp Học sinh rèn luyện kiến thức hiệu quả mọi lúc, mọi nơi.
+                    </p>
+                    <div class="d-flex gap-3">
+                        <a href="register.php" class="btn btn-primary btn-lg fw-semibold px-4">
+                            Bắt đầu miễn phí <i class="fa-solid fa-arrow-right ms-2"></i>
+                        </a>
+                        <a href="#features" class="btn btn-outline-secondary btn-lg fw-semibold px-4">Tìm hiểu thêm</a>
+                    </div>
+                </div>
+                <div class="col-lg-6 text-center">
+                    <img src="https://img.freepik.com/free-vector/online-tutorials-concept_52683-37480.jpg" alt="EduTest Banner" class="img-fluid rounded-4 shadow-sm">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. TÍNH NĂNG NỔI BẬT -->
+    <section class="py-5" id="features">
+        <div class="container py-4">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold">Tính năng vượt trội</h2>
+                <p class="text-muted">Mọi công cụ bạn cần để quản lý lớp học và thi trực tuyến</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card card-feature h-100 p-4 shadow-sm">
+                        <div class="feature-icon bg-primary-subtle text-primary">
+                            <i class="fa-solid fa-file-pen"></i>
+                        </div>
+                        <h4 class="fw-bold mb-2">Tạo đề thi dễ dàng</h4>
+                        <p class="text-muted mb-0">Hỗ trợ tạo ngân hàng câu hỏi, đảo đề thi và đảo đáp án tự động chỉ trong vài thao tác.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card card-feature h-100 p-4 shadow-sm">
+                        <div class="feature-icon bg-success-subtle text-success">
+                            <i class="fa-solid fa-square-check"></i>
+                        </div>
+                        <h4 class="fw-bold mb-2">Chấm điểm tự động</h4>
+                        <p class="text-muted mb-0">Hệ thống tự động chấm bài trắc nghiệm ngay sau khi học sinh nộp bài, xuất báo cáo điểm chi tiết.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card card-feature h-100 p-4 shadow-sm">
+                        <div class="feature-icon bg-warning-subtle text-warning">
+                            <i class="fa-solid fa-school"></i>
+                        </div>
+                        <h4 class="fw-bold mb-2">Quản lý Lớp & Tài liệu</h4>
+                        <p class="text-muted mb-0">Tạo lớp học theo mã code, đăng tải bài giảng PDF, Word và tài liệu học tập cho học sinh.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. ĐỐI TƯỢNG SỬ DỤNG -->
+    <section class="py-5 bg-light" id="target">
+        <div class="container py-4">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold">Dành cho ai?</h2>
+                <p class="text-muted">Nền tảng đáp ứng nhu cầu cho mọi đối tượng trong giáo dục</p>
+            </div>
+            <div class="row g-4 align-items-center">
+                <div class="col-md-6">
+                    <div class="p-4 bg-white rounded-4 shadow-sm d-flex align-items-start gap-4">
+                        <div class="fs-1 text-primary"><i class="fa-solid fa-chalkboard-user"></i></div>
+                        <div>
+                            <h4 class="fw-bold">Cho Giáo viên & Nhà trường</h4>
+                            <ul class="text-muted ps-3 mb-0">
+                                <li class="mb-2">Quản lý danh sách lớp học và học sinh.</li>
+                                <li class="mb-2">Tạo đề kiểm tra 15 phút, 1 tiết, thi học kỳ.</li>
+                                <li>Theo dõi tiến độ và xuất bảng điểm Excel nhanh chóng.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-4 bg-white rounded-4 shadow-sm d-flex align-items-start gap-4">
+                        <div class="fs-1 text-success"><i class="fa-solid fa-user-graduate"></i></div>
+                        <div>
+                            <h4 class="fw-bold">Cho Học sinh & Sinh viên</h4>
+                            <ul class="text-muted ps-3 mb-0">
+                                <li class="mb-2">Tham gia lớp học bằng mã code đơn giản.</li>
+                                <li class="mb-2">Làm bài thi online trên điện thoại hoặc máy tính.</li>
+                                <li>Xem lại lịch sử làm bài, đáp án và lời giải chi tiết.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. BANNER KÊU GỌI ĐĂNG KÝ (CTA) -->
+    <section class="container my-5">
+        <div class="p-5 text-center cta-section shadow">
+            <h2 class="fw-bold mb-3">Sẵn sàng trải nghiệm EduTest?</h2>
+            <p class="mb-4 fs-5 opacity-75">Đăng ký tài khoản miễn phí ngay hôm nay để bắt đầu học và tạo đề thi.</p>
+            <a href="register.php" class="btn btn-light btn-lg text-primary fw-bold px-5 rounded-pill">
+                Đăng ký tài khoản ngay
+            </a>
+        </div>
+    </section>
+
+    <!-- 6. FOOTER -->
+    <footer class="bg-dark text-white py-4 mt-auto">
+        <div class="container text-center text-md-between d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+            <div>
+                <span class="fw-bold fs-4 text-primary"><i class="fa-solid fa-graduation-cap me-2"></i>EduTest</span>
+                <p class="small text-muted mb-0 mt-1">Nền tảng học tập & thi trắc nghiệm trực tuyến.</p>
+            </div>
+            <div class="small text-muted">
+                &copy; 2026 EduTest. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
