@@ -128,3 +128,30 @@ CREATE TABLE attempt_answers (
     FOREIGN KEY (question_id) REFERENCES questions(question_id) ON DELETE CASCADE,
     FOREIGN KEY (answer_id) REFERENCES answers(answer_id) ON DELETE SET NULL
 );
+
+-- 12. BẢNG BÀI VIẾT DIỄN ĐÀN
+CREATE TABLE forum_posts (
+    post_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    exam_id INT, -- Có thể NULL nếu bài viết không thuộc đề thi nào
+    question_id INT, -- Có thể NULL nếu bài viết không liên quan đến câu hỏi cụ thể
+    title VARCHAR(200),
+    content TEXT,
+    status VARCHAR(20) DEFAULT 'active',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (exam_id) REFERENCES exams(exam_id) ON DELETE SET NULL,
+    FOREIGN KEY (question_id) REFERENCES questions(question_id) ON DELETE SET NULL
+);
+
+-- 13. BẢNG BÌNH LUẬN DIỄN ĐÀN
+CREATE TABLE forum_comments (
+    comment_id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    user_id INT NOT NULL,
+    content TEXT NOT NULL,
+    status VARCHAR(20) DEFAULT 'active',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (post_id) REFERENCES forum_posts(post_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
