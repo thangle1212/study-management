@@ -8,11 +8,28 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="../qe.css">
+    <style>
+        .toolbar-mini { display:flex; gap:4px; padding:6px 8px; background:#f8f9fa; border:1px solid #e9ecef; border-bottom:none; border-radius:12px 12px 0 0; }
+        .toolbar-mini button { width:32px; height:32px; border:none; background:transparent; border-radius:6px; color:#495057; cursor:pointer; font-size:0.85rem; transition:all 0.2s; display:flex; align-items:center; justify-content:center; }
+        .toolbar-mini button:hover { background:#e7f1ff; color:#0d6efd; }
+        .toolbar-mini button:active { background:#0d6efd; color:#fff; }
+        .auto-textarea { min-height:80px; max-height:400px; overflow-y:auto; resize:none; border-radius:0 0 12px 12px !important; font-family:inherit; line-height:1.6; }
+        .answer-row { display:flex; flex-direction:column; gap:8px; padding:12px; border:1px solid #e9ecef; border-radius:12px; background:#fafbfc; margin-bottom:10px; transition:all 0.2s; }
+        .answer-row:hover { border-color:#cfd8e3; background:#fff; }
+        .answer-header { display:flex; align-items:center; gap:10px; }
+        .answer-label { width:28px; height:28px; border-radius:50%; background:#e7f1ff; color:#0d6efd; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; flex-shrink:0; }
+        .answer-header input[type="radio"], .answer-header input[type="checkbox"] { width:20px; height:20px; cursor:pointer; }
+        .answer-header .btn-remove-answer { margin-left:auto; width:28px; height:28px; padding:0; border-radius:6px; font-size:0.75rem; }
+        .preview-box { background:#f8f9fa; border:1px solid #e9ecef; border-radius:12px; padding:20px; min-height:150px; }
+        .preview-box .preview-label { font-size:0.7rem; font-weight:600; color:#6c757d; text-transform:uppercase; margin-bottom:10px; letter-spacing:0.05em; }
+        .preview-box .question-render { font-weight:600; font-size:1rem; margin-bottom:16px; line-height:1.6; padding-bottom:16px; border-bottom:1px dashed #cfd8e3; }
+        .preview-box .answer-render { padding:8px 12px; margin-bottom:6px; border-radius:8px; font-size:0.9rem; display:flex; align-items:center; gap:10px; }
+        .preview-box .answer-render.correct { background:#e7f1ff; border-left:3px solid #0d6efd; font-weight:600; }
+    </style>
 </head>
 
 <body>
     <?php
-    // GIẢ LẬP DATA
     $banks = [
         ['bank_id' => 1, 'name' => 'Lập trình cơ bản'],
         ['bank_id' => 2, 'name' => 'Toán học'],
@@ -26,7 +43,7 @@
         'question_type' => 'single_choice',
         'difficulty' => 'Cơ bản',
         'status' => 'Hoạt động',
-        'question_text' => 'Cú pháp đúng để khai báo biến trong PHP là gì?',
+        'content' => 'Cú pháp đúng để khai báo biến trong PHP là gì?',
         'explanation' => 'Biến trong PHP cần có ký hiệu $ trước tên biến.',
     ];
 
@@ -76,10 +93,7 @@
                 </div>
                 <div class="topbar-actions">
                     <button class="icon-button"><i class="fa-solid fa-bell"></i></button>
-                    <div class="user-chip">
-                        <i class="fa-solid fa-user"></i>
-                        <span>Thành viên 2</span>
-                    </div>
+                    <div class="user-chip"><i class="fa-solid fa-user"></i><span>Thành viên 2</span></div>
                 </div>
             </nav>
 
@@ -139,7 +153,14 @@
 
                             <div class="mb-3">
                                 <label class="form-label">Nội dung câu hỏi <span class="text-danger">*</span></label>
-                                <textarea class="form-control" name="question_text" rows="4" placeholder="Nhập nội dung câu hỏi" required><?= htmlspecialchars($question['question_text']) ?></textarea>
+                                <div class="toolbar-mini">
+                                    <button type="button" class="format-btn" data-before="**" data-after="**" title="In đậm">[B]</button>
+                                    <button type="button" class="format-btn" data-before="*" data-after="*" title="In nghiêng">[I]</button>
+                                    <button type="button" class="format-btn" data-before="__" data-after="__" title="Gạch chân">[U]</button>
+                                    <button type="button" class="format-btn" data-before="~" data-after="~" title="Chỉ số dưới">[x2]</button>
+                                    <button type="button" class="format-btn" data-before="^" data-after="^" title="Chỉ số trên">[x²]</button>
+                                </div>
+                                <textarea class="form-control auto-textarea" id="question_content" name="content" rows="4" placeholder="Nhập câu hỏi..." required><?= htmlspecialchars($question['content']) ?></textarea>
                             </div>
 
                             <div class="mb-3">
@@ -153,19 +174,18 @@
 
                             <div id="answers-wrapper">
                                 <?php foreach ($answers as $index => $answer): ?>
-                                    <div class="row mb-3 answer-row">
-                                        <div class="col-md-8">
-                                            <input type="text" class="form-control" name="answers[]" value="<?= htmlspecialchars($answer['answer_text']) ?>" placeholder="Nội dung đáp án">
+                                    <div class="answer-row" data-answer-index="<?= $index ?>">
+                                        <div class="answer-header">
+                                            <span class="answer-label"><?= chr(65 + $index) ?></span>
+                                            <input type="radio" class="answer-choice single-choice" name="is_correct[]" value="<?= $index ?>" <?= $answer['is_correct'] == 1 ? 'checked' : '' ?>>
+                                            <button type="button" class="btn btn-outline-danger btn-remove-answer remove-answer"><i class="fa-solid fa-xmark"></i></button>
                                         </div>
-                                        <div class="col-md-2">
-                                            <select class="form-select" name="is_correct[]">
-                                                <option value="0" <?= $answer['is_correct'] == 0 ? 'selected' : '' ?>>Sai</option>
-                                                <option value="1" <?= $answer['is_correct'] == 1 ? 'selected' : '' ?>>Đúng</option>
-                                            </select>
+                                        <div class="toolbar-mini answer-toolbar">
+                                            <button type="button" class="format-btn" data-before="**" data-after="**" title="In đậm">[B]</button>
+                                            <button type="button" class="format-btn" data-before="*" data-after="*" title="In nghiêng">[I]</button>
+                                            <button type="button" class="format-btn" data-before="__" data-after="__" title="Gạch chân">[U]</button>
                                         </div>
-                                        <div class="col-md-2">
-                                            <button type="button" class="btn btn-outline-danger remove-answer"><i class="fa-solid fa-trash"></i></button>
-                                        </div>
+                                        <textarea class="form-control auto-textarea" name="answers[]" rows="2" placeholder="Nội dung đáp án..."><?= htmlspecialchars($answer['answer_text']) ?></textarea>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
@@ -183,6 +203,11 @@
                                 <label class="form-label">Mẫu đáp án tự luận</label>
                                 <textarea class="form-control" name="essay_answer" rows="4" placeholder="Mô tả mẫu lời giải hoặc gợi ý chấm"></textarea>
                             </div>
+
+                            <div class="preview-box">
+                                <div class="preview-label">Xem trước</div>
+                                <div id="preview-content" class="preview-content"></div>
+                            </div>
                         </div>
 
                         <div class="d-flex justify-content-end gap-2 mt-4">
@@ -197,6 +222,50 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        function autoResize(el) {
+            el.style.height = 'auto';
+            el.style.height = Math.min(el.scrollHeight, 400) + 'px';
+        }
+
+        function wrapSelection(textarea, before, after) {
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const selected = textarea.value.substring(start, end);
+            const replacement = before + (selected || '') + after;
+            textarea.value = textarea.value.substring(0, start) + replacement + textarea.value.substring(end);
+            textarea.focus();
+            if (selected) {
+                textarea.setSelectionRange(start + before.length, start + before.length + selected.length);
+            } else {
+                textarea.setSelectionRange(start + before.length, start + before.length);
+            }
+            autoResize(textarea);
+            updatePreview();
+        }
+
+        function parseMarkdown(text) {
+            return text
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                .replace(/__(.+?)__/g, '<u>$1</u>')
+                .replace(/~(.+?)~/g, '<sub>$1</sub>')
+                .replace(/\^(.+?)\^/g, '<sup>$1</sup>')
+                .replace(/\n/g, '<br>');
+        }
+
+        function updatePreview() {
+            const content = document.getElementById('question_content').value || 'Nhập nội dung câu hỏi';
+            const answers = Array.from(document.querySelectorAll('#answers-wrapper textarea[name="answers[]"]'));
+            const lines = [`<div class="question-render">${parseMarkdown(content)}</div>`];
+            answers.forEach((area, idx) => {
+                const text = area.value.trim();
+                if (!text) return;
+                const isCorrect = idx === 0;
+                lines.push(`<div class="answer-render ${isCorrect ? 'correct' : ''}"><span class="answer-label-small">${String.fromCharCode(65 + idx)}</span><span>${parseMarkdown(text)}</span></div>`);
+            });
+            document.getElementById('preview-content').innerHTML = lines.join('');
+        }
+
         const typeSelect = document.getElementById('question_type');
         const fillBlankWrap = document.getElementById('fill-blank-wrap');
         const essayWrap = document.getElementById('essay-wrap');
@@ -207,66 +276,99 @@
             const isChoice = type === 'single_choice' || type === 'multiple_choice';
             const isFillBlank = type === 'fill_blank';
             const isEssay = type === 'essay';
-
             answerWrapper.style.display = isChoice ? 'block' : 'none';
             fillBlankWrap.style.display = isFillBlank ? 'block' : 'none';
             essayWrap.style.display = isEssay ? 'block' : 'none';
-
-            if (type === 'single_choice') {
-                document.querySelectorAll('select[name="is_correct[]"]').forEach(select => {
-                    select.innerHTML = '<option value="0">Sai</option><option value="1">Đúng</option>';
-                });
-            }
-
-            if (type === 'multiple_choice') {
-                document.querySelectorAll('select[name="is_correct[]"]').forEach(select => {
-                    select.innerHTML = '<option value="0">Sai</option><option value="1">Đúng</option>';
-                });
-            }
-
-            if (type === 'fill_blank') {
-                document.querySelectorAll('select[name="is_correct[]"]').forEach(select => {
-                    select.innerHTML = '<option value="1">Đáp án chính xác</option>';
-                });
-            }
-
-            if (type === 'essay') {
-                answerWrapper.style.display = 'none';
-                fillBlankWrap.style.display = 'none';
-            }
         }
 
         typeSelect.addEventListener('change', updateQuestionTypeUI);
 
-        document.getElementById('add-answer').addEventListener('click', function() {
+        document.getElementById('add-answer').addEventListener('click', function () {
+            const rows = answerWrapper.querySelectorAll('.answer-row').length;
             const row = document.createElement('div');
-            row.className = 'row mb-3 answer-row';
-            row.innerHTML = `<div class="col-md-8">
-                                <input type="text" class="form-control" name="answers[]" placeholder="Nội dung đáp án">
-                            </div>
-                            <div class="col-md-2">
-                                <select class="form-select" name="is_correct[]">
-                                    <option value="0">Sai</option>
-                                    <option value="1">Đúng</option>
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                <button type="button" class="btn btn-outline-danger remove-answer"><i class="fa-solid fa-trash"></i></button>
-                            </div>`;
+            row.className = 'answer-row';
+            row.dataset.answerIndex = rows;
+            const letter = String.fromCharCode(65 + rows);
+            const isMultiple = typeSelect.value === 'multiple_choice';
+            row.innerHTML = `<div class="answer-header">
+                <span class="answer-label">${letter}</span>
+                <input type="${isMultiple ? 'checkbox' : 'radio'}" class="answer-choice ${isMultiple ? 'multiple-choice' : 'single-choice'}" name="is_correct[]" value="${rows}">
+                <button type="button" class="btn btn-outline-danger btn-remove-answer remove-answer"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="toolbar-mini answer-toolbar">
+                <button type="button" class="format-btn" data-before="**" data-after="**" title="In đậm">[B]</button>
+                <button type="button" class="format-btn" data-before="*" data-after="*" title="In nghiêng">[I]</button>
+                <button type="button" class="format-btn" data-before="__" data-after="__" title="Gạch chân">[U]</button>
+            </div>
+            <textarea class="form-control auto-textarea" name="answers[]" rows="2" placeholder="Nội dung đáp án..."></textarea>`;
+
             answerWrapper.appendChild(row);
+            autoResize(row.querySelector('textarea[name="answers[]"]'));
+            setupAnswerToolbar(row);
+            updateAnswerLabels();
         });
 
-        document.addEventListener('click', function(event) {
+        function setupAnswerToolbar(row) {
+            const textarea = row.querySelector('textarea[name="answers[]"]');
+            const toolbar = row.querySelector('.answer-toolbar');
+            toolbar.querySelectorAll('.format-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    wrapSelection(textarea, btn.dataset.before, btn.dataset.after);
+                });
+            });
+        }
+
+        function updateAnswerLabels() {
+            Array.from(answerWrapper.querySelectorAll('.answer-row')).forEach((row, index) => {
+                row.dataset.answerIndex = index;
+                const label = row.querySelector('.answer-label');
+                if (label) label.textContent = String.fromCharCode(65 + index);
+            });
+        }
+
+        document.querySelectorAll('#answers-wrapper .answer-row').forEach(row => {
+            setupAnswerToolbar(row);
+            autoResize(row.querySelector('textarea[name="answers[]"]'));
+        });
+
+        const mainQuestion = document.getElementById('question_content');
+        if (mainQuestion) {
+            autoResize(mainQuestion);
+            document.querySelectorAll('#answers-wrapper .format-btn, .toolbar-mini .format-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const textarea = btn.closest('.toolbar-mini').classList.contains('answer-toolbar')
+                        ? btn.closest('.answer-row').querySelector('textarea[name="answers[]"]')
+                        : mainQuestion;
+                    wrapSelection(textarea, btn.dataset.before, btn.dataset.after);
+                });
+            });
+            mainQuestion.addEventListener('input', function () {
+                autoResize(mainQuestion);
+                updatePreview();
+            });
+        }
+
+        document.querySelectorAll('#answers-wrapper textarea[name="answers[]"]').forEach(textarea => {
+            textarea.addEventListener('input', function () {
+                autoResize(textarea);
+                updatePreview();
+            });
+        });
+
+        document.addEventListener('click', function (event) {
             if (event.target.closest('.remove-answer')) {
                 const row = event.target.closest('.answer-row');
-                if (row && answerWrapper.querySelectorAll('.answer-row').length > 1) {
+                const rows = answerWrapper.querySelectorAll('.answer-row');
+                if (row && rows.length > 2) {
                     row.remove();
+                    updateAnswerLabels();
                 }
             }
         });
 
         updateQuestionTypeUI();
+        updateAnswerLabels();
+        updatePreview();
     </script>
 </body>
-
 </html>
