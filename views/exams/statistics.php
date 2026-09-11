@@ -43,13 +43,14 @@
                     <?php else: ?>
                         <div class="table-responsive">
                             <table class="table align-middle">
-                                <thead><tr><th>Học sinh</th><th>Điểm</th><th>Thời gian</th></tr></thead>
+                                <thead><tr><th>Học sinh</th><th>Lần nộp</th><th>Điểm</th><th>Thời gian</th></tr></thead>
                                 <tbody>
                                 <?php foreach ($scores as $score): ?>
                                     <tr>
-                                        <td><?php echo htmlspecialchars($score['full_name']); ?></td>
+                                        <td><a class="fw-semibold text-decoration-none" href="index.php?action=attempt_detail&attempt_id=<?php echo (int) $score['attempt_id']; ?>"><?php echo htmlspecialchars($score['full_name']); ?></a></td>
+                                        <td><a href="index.php?action=attempt_detail&attempt_id=<?php echo (int) $score['attempt_id']; ?>" class="badge rounded-pill bg-primary-subtle text-primary text-decoration-none">Lần <?php echo (int) $score['attempt_number']; ?></a></td>
                                         <td class="fw-bold"><?php echo number_format((float) $score['total_score'], 2); ?></td>
-                                        <td><?php echo htmlspecialchars($score['end_time']); ?></td>
+                                        <td><a href="index.php?action=attempt_detail&attempt_id=<?php echo (int) $score['attempt_id']; ?>" class="text-decoration-none small"><?php echo htmlspecialchars($score['end_time']); ?> <i class="fa-solid fa-arrow-up-right-from-square ms-1"></i></a></td>
                                     </tr>
                                 <?php endforeach; ?>
                                 </tbody>
