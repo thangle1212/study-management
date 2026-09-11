@@ -173,13 +173,21 @@ class ExamController {
 
         $stmt = $this->pdo->prepare(
             "SELECT u.full_name, ea.total_score, ea.end_time
+                    , ea.attempt_id, ea.student_id
              FROM exam_attempts ea
              JOIN users u ON u.user_id = ea.student_id
              WHERE ea.exam_id = ? AND ea.status = 'completed'
-             ORDER BY ea.end_time DESC"
+             ORDER BY u.full_name, ea.end_time, ea.attempt_id"
         );
         $stmt->execute([$examId]);
         $scores = $stmt->fetchAll();
+        $attemptNumbers = [];
+        foreach ($scores as &$score) {
+            $studentId = (int) $score['student_id'];
+            $attemptNumbers[$studentId] = ($attemptNumbers[$studentId] ?? 0) + 1;
+            $score['attempt_number'] = $attemptNumbers[$studentId];
+        }
+        unset($score);
 
         $stmt = $this->pdo->prepare(
             "SELECT q.question_id, q.content, COUNT(ea.attempt_id) AS wrong_count
@@ -194,6 +202,115 @@ class ExamController {
         $stmt->execute([$examId, $examId]);
         $wrongQuestions = $stmt->fetchAll();
         require __DIR__ . '/../views/exams/statistics.php';
+    }
+
+    public function attemptDetail() {
+        $this->requireLogin();
+        $attemptId = (int) ($_GET['attempt_id'] ?? 0);
+        $userId = (int) $_SESSION['user']['id'];
+
+        $stmt = $this->pdo->prepare(
+            "SELECT ea.*, e.title, e.teacher_id, u.full_name
+             FROM exam_attempts ea
+             JOIN exams e ON e.exam_id = ea.exam_id
+             JOIN users u ON u.user_id = ea.student_id
+             WHERE ea.attempt_id = ? AND ea.status = 'completed'
+             AND (e.teacher_id = ? OR ea.student_id = ?)"
+        );
+        $stmt->execute([$attemptId, $userId, $userId]);
+        $attempt = $stmt->fetch();
+        if (!$attempt) {
+            die('Không tìm thấy lượt nộp hoặc bạn không có quyền xem lượt nộp này.');
+        }
+
+        $stmt = $this->pdo->prepare(
+            "SELECT eq.question_id, eq.order_index, q.content, q.question_type,
+                    a.answer_id, a.content AS answer_content, a.is_correct
+             FROM exam_questions eq
+             JOIN questions q ON q.question_id = eq.question_id
+             LEFT JOIN answers a ON a.question_id = q.question_id
+             WHERE eq.exam_id = ?
+             ORDER BY eq.order_index, q.question_id, a.order_index, a.answer_id"
+        );
+        $stmt->execute([(int) $attempt['exam_id']]);
+        $questions = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $questionId = (int) $row['question_id'];
+            if (!isset($questions[$questionId])) {
+                $questions[$questionId] = [
+                    'question_id' => $questionId,
+                    'content' => $row['content'],
+                    'question_type' => $row['question_type'],
+                    'answers' => [],
+                    'selected_ids' => [],
+                    'correct' => false
+                ];
+            }
+            if ($row['answer_id'] !== null) {
+                $questions[$questionId]['answers'][] = [
+                    'answer_id' => (int) $row['answer_id'],
+                    'content' => $row['answer_content'],
+                    'is_correct' => (bool) $row['is_correct']
+                ];
+            }
+        }
+
+        $stmt = $this->pdo->prepare(
+            "SELECT question_id, answer_id
+             FROM attempt_answers
+             WHERE attempt_id = ? AND answer_id IS NOT NULL"
+        );
+        $stmt->execute([$attemptId]);
+        foreach ($stmt->fetchAll() as $selected) {
+            $questionId = (int) $selected['question_id'];
+            if (isset($questions[$questionId])) {
+                $questions[$questionId]['selected_ids'][] = (int) $selected['answer_id'];
+            }
+        }
+
+        foreach ($questions as &$question) {
+            $correctIds = [];
+            foreach ($question['answers'] as $answer) {
+                if ($answer['is_correct']) {
+                    $correctIds[] = $answer['answer_id'];
+                }
+            }
+            $selectedIds = $question['selected_ids'];
+            sort($correctIds);
+            sort($selectedIds);
+            $question['correct'] = $selectedIds === $correctIds && !empty($correctIds);
+        }
+        unset($question);
+
+        require __DIR__ . '/../views/exams/attempt-detail.php';
+    }
+
+    public function studentStatistics() {
+        $this->requireLogin();
+        $studentId = (int) $_SESSION['user']['id'];
+
+        $stmt = $this->pdo->prepare(
+            "SELECT ea.attempt_id, e.title, ea.total_score, ea.end_time,
+                    COUNT(DISTINCT CASE WHEN aa.is_correct = TRUE THEN aa.question_id END) AS correct_count,
+                    COUNT(DISTINCT CASE WHEN aa.is_correct = FALSE THEN aa.question_id END) AS wrong_count
+             FROM exam_attempts ea
+             JOIN exams e ON e.exam_id = ea.exam_id
+             LEFT JOIN attempt_answers aa ON aa.attempt_id = ea.attempt_id
+             WHERE ea.student_id = ? AND ea.status = 'completed'
+             GROUP BY ea.attempt_id, e.title, ea.total_score, ea.end_time
+             ORDER BY ea.end_time ASC"
+        );
+        $stmt->execute([$studentId]);
+        $attempts = $stmt->fetchAll();
+
+        $totalCorrect = 0;
+        $totalWrong = 0;
+        foreach ($attempts as $attempt) {
+            $totalCorrect += (int) $attempt['correct_count'];
+            $totalWrong += (int) $attempt['wrong_count'];
+        }
+
+        require __DIR__ . '/../views/exams/student-statistics.php';
     }
 }
 ?>

@@ -59,6 +59,14 @@ switch ($action) {
         $examController->statistics();
         break;
 
+    case 'attempt_detail':
+        $examController->attemptDetail();
+        break;
+
+    case 'student_statistics':
+        $examController->studentStatistics();
+        break;
+
     default:
         require_once __DIR__ . '/views/startpage.php';
         break;

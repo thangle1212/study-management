@@ -49,9 +49,12 @@
     </section>
 
     <?php if ($_SESSION['user']['role'] === 'student'): ?>
-        <div class="d-flex justify-content-between align-items-end mb-3">
+        <div class="d-flex justify-content-between align-items-end mb-3 gap-3">
             <div><h2 class="h4 fw-bold mb-1">Đề thi dành cho bạn</h2><p class="text-muted small mb-0">Các đề thi đang được mở</p></div>
-            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2"><?php echo count($publishedExams); ?> đề thi</span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2"><?php echo count($publishedExams); ?> đề thi</span>
+                <a href="index.php?action=student_statistics" class="btn btn-sm btn-outline-primary rounded-3"><i class="fa-solid fa-chart-line me-1"></i>Thống kê của tôi</a>
+            </div>
         </div>
         <div class="row g-3">
             <?php if (!$publishedExams): ?>
