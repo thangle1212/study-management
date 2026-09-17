@@ -32,7 +32,12 @@
                 <label class="form-label fw-semibold">Mật khẩu</label>
                 <a href="index.php?action=forgot_password" class="small text-decoration-none">Quên mật khẩu?</a>
             </div>
-            <input type="password" name="password" class="form-control" required>
+            <div class="input-group">
+                <input type="password" id="loginPassword" name="password" class="form-control" required>
+                <button class="btn btn-outline-secondary" type="button" aria-label="Hiện mật khẩu" aria-pressed="false" onclick="togglePassword('loginPassword', this)">
+                    <i class="fa-regular fa-eye"></i>
+                </button>
+            </div>
         </div>
         <button type="submit" class="btn btn-primary w-100 py-2 fw-bold rounded-3 mb-3">Đăng nhập</button>
     </form>
@@ -40,5 +45,17 @@
         <p class="small text-muted mb-0">Chưa có tài khoản? <a href="index.php?action=register" class="text-primary fw-semibold text-decoration-none">Đăng ký ngay</a></p>
     </div>
 </div>
+<script>
+    function togglePassword(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const icon = btn.querySelector('i');
+        const isHidden = input.type === 'password';
+        input.type = isHidden ? 'text' : 'password';
+        btn.setAttribute('aria-pressed', String(isHidden));
+        btn.setAttribute('aria-label', isHidden ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
+        icon.classList.toggle('fa-eye', !isHidden);
+        icon.classList.toggle('fa-eye-slash', isHidden);
+    }
+</script>
 </body>
 </html>

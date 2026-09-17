@@ -132,7 +132,7 @@
                 <div class="input-group">
                     <span class="input-group-text text-muted"><i class="fa-solid fa-lock"></i></span>
                     <input type="password" id="regPassword" name="password" class="form-control form-control-with-icon" placeholder="Ít nhất 6 ký tự" minlength="6" required>
-                    <button class="btn btn-outline-secondary border-start-0" type="button" onclick="togglePassword('regPassword', this)">
+                    <button class="btn btn-outline-secondary border-start-0" type="button" aria-label="Hiện mật khẩu" aria-pressed="false" onclick="togglePassword('regPassword', this)">
                         <i class="fa-regular fa-eye"></i>
                     </button>
                 </div>
@@ -161,11 +161,13 @@
     function togglePassword(inputId, btn) {
         const input = document.getElementById(inputId);
         const icon = btn.querySelector('i');
-        if (input.type === 'password') {
-            input.type = 'text';
+        const isHidden = input.type === 'password';
+        input.type = isHidden ? 'text' : 'password';
+        btn.setAttribute('aria-pressed', String(isHidden));
+        btn.setAttribute('aria-label', isHidden ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
+        if (isHidden) {
             icon.classList.replace('fa-eye', 'fa-eye-slash');
         } else {
-            input.type = 'password';
             icon.classList.replace('fa-eye-slash', 'fa-eye');
         }
     }
