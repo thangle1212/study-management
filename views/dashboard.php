@@ -22,8 +22,9 @@
     <div class="container py-2">
         <a class="navbar-brand brand fw-bold" href="index.php?action=dashboard"><i class="fa-solid fa-graduation-cap me-2"></i>EduTest</a>
         <div class="d-flex align-items-center gap-3">
+            <a href="index.php?action=forum" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-comments me-1"></i>Diễn đàn</a>
             <span class="d-none d-md-inline text-muted small">Xin chào, <strong><?php echo htmlspecialchars($_SESSION['user']['full_name']); ?></strong></span>
-            <a href="index.php?action=logout" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-right-from-bracket me-1"></i>Đăng xuất</a>
+            <a href="index.php?action=logout" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-right-from-bracket me-1"></i>Đăng xuất</a>
         </div>
     </div>
 </nav>
@@ -42,7 +43,8 @@
             <div class="col-lg-8">
                 <div class="small opacity-75 text-uppercase mb-2"><i class="fa-solid fa-sparkles me-1"></i> Không gian học tập của bạn</div>
                 <h1 class="h2 fw-bold mb-2">Chào mừng, <?php echo htmlspecialchars($_SESSION['user']['full_name']); ?>!</h1>
-                <p class="mb-0 opacity-75">Bạn đang đăng nhập với vai trò <strong><?php echo htmlspecialchars($_SESSION['user']['role']); ?></strong>. Chọn một hoạt động để bắt đầu.</p>
+                <p class="mb-3 opacity-75">Bạn đang đăng nhập với vai trò <strong><?php echo htmlspecialchars($_SESSION['user']['role']); ?></strong>. Chọn một hoạt động để bắt đầu.</p>
+                <a href="index.php?action=forum" class="btn btn-light text-primary fw-bold rounded-pill px-4 py-2 shadow-sm"><i class="fa-solid fa-comments me-2"></i>Diễn đàn thảo luận <i class="fa-solid fa-arrow-right ms-1"></i></a>
             </div>
             <div class="col-lg-4 text-lg-end"><i class="fa-solid fa-chart-line display-3 opacity-25"></i></div>
         </div>
