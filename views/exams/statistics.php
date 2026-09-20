@@ -63,22 +63,74 @@
         <div class="col-lg-6">
             <div class="card stat-card h-100">
                 <div class="card-body">
-                    <h5 class="fw-bold mb-1"><i class="fa-solid fa-chart-column text-danger me-2"></i>Phân tích câu sai</h5>
-                    <p class="text-muted small mb-3">Số lượt trả lời sai theo từng câu hỏi</p>
-                    <canvas id="wrongQuestionsChart"></canvas>
+                    <h5 class="fw-bold mb-1"><i class="fa-solid fa-chart-pie text-primary me-2"></i>Tổng quan đúng / sai</h5>
+                    <p class="text-muted small mb-3">Tổng số câu đúng và sai trong các lượt làm bài</p>
+                    <?php if (!$scores): ?>
+                        <p class="text-muted">Chưa có dữ liệu để thống kê.</p>
+                    <?php else: ?>
+                        <div style="height: 280px;"><canvas id="correctWrongChart"></canvas></div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
     </div>
+    <div class="card stat-card mt-4">
+        <div class="card-body">
+            <h5 class="fw-bold mb-1"><i class="fa-solid fa-chart-column text-primary me-2"></i>Phổ điểm</h5>
+            <p class="text-muted small mb-3">Số lượt sinh viên đạt từng mức điểm</p>
+            <?php if (!$scores): ?>
+                <p class="text-muted mb-0">Chưa có dữ liệu để thống kê.</p>
+            <?php else: ?>
+                <div style="height: 280px;"><canvas id="scoreDistributionChart"></canvas></div>
+            <?php endif; ?>
+        </div>
+    </div>
 </div>
+<?php if ($scores): ?>
 <script>
-const labels = <?php echo json_encode(array_map(function ($item) { return 'Câu ' . $item['question_id']; }, $wrongQuestions), JSON_UNESCAPED_UNICODE); ?>;
-const wrongCounts = <?php echo json_encode(array_map(function ($item) { return (int) $item['wrong_count']; }, $wrongQuestions)); ?>;
-new Chart(document.getElementById('wrongQuestionsChart'), {
+new Chart(document.getElementById('correctWrongChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Câu đúng', 'Câu sai'],
+        datasets: [{
+            data: [<?php echo $correctCount; ?>, <?php echo $wrongCount; ?>],
+            backgroundColor: ['#198754', '#dc3545'],
+            borderColor: '#ffffff',
+            borderWidth: 4,
+            hoverOffset: 8
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '62%',
+        plugins: { legend: { position: 'bottom' } }
+    }
+});
+
+new Chart(document.getElementById('scoreDistributionChart'), {
     type: 'bar',
-    data: { labels, datasets: [{ label: 'Lượt sai', data: wrongCounts, backgroundColor: '#dc3545' }] },
-    options: { indexAxis: 'y', responsive: true, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
+    data: {
+        labels: <?php echo json_encode(array_keys($scoreDistribution), JSON_UNESCAPED_UNICODE); ?>,
+        datasets: [{
+            label: 'Số lượt đạt điểm',
+            data: <?php echo json_encode(array_values($scoreDistribution)); ?>,
+            backgroundColor: '#0d6efd',
+            borderRadius: 8,
+            maxBarThickness: 56
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 }, title: { display: true, text: 'Số lượt' } },
+            x: { title: { display: true, text: 'Mức điểm' } }
+        }
+    }
 });
 </script>
+<?php endif; ?>
 </body>
 </html>

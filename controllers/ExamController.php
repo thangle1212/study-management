@@ -189,18 +189,55 @@ class ExamController {
         }
         unset($score);
 
-        $stmt = $this->pdo->prepare(
-            "SELECT q.question_id, q.content, COUNT(ea.attempt_id) AS wrong_count
-             FROM exam_questions eq
-             JOIN questions q ON q.question_id = eq.question_id
-             LEFT JOIN attempt_answers aa ON aa.question_id = q.question_id AND aa.is_correct = FALSE
-             LEFT JOIN exam_attempts ea ON ea.attempt_id = aa.attempt_id AND ea.exam_id = ? AND ea.status = 'completed'
-             WHERE eq.exam_id = ?
-             GROUP BY q.question_id, q.content
-             ORDER BY wrong_count DESC, q.question_id"
-        );
-        $stmt->execute([$examId, $examId]);
-        $wrongQuestions = $stmt->fetchAll();
+        $scoreDistribution = [];
+        foreach ($scores as $score) {
+            $scoreValue = number_format((float) $score['total_score'], 2, '.', '');
+            $scoreDistribution[$scoreValue] = ($scoreDistribution[$scoreValue] ?? 0) + 1;
+        }
+        uksort($scoreDistribution, function ($left, $right) {
+            return (float) $left <=> (float) $right;
+        });
+
+                $stmt = $this->pdo->prepare(
+                        "SELECT COUNT(*) AS total_question_count,
+                                        SUM(CASE
+                                                WHEN EXISTS (
+                                                        SELECT 1
+                                                        FROM attempt_answers aa_wrong
+                                                        WHERE aa_wrong.attempt_id = ea.attempt_id
+                                                            AND aa_wrong.question_id = eq.question_id
+                                                            AND aa_wrong.is_correct = FALSE
+                                                ) THEN 0
+                                                WHEN (
+                                                        SELECT COUNT(*)
+                                                        FROM attempt_answers aa_selected
+                                                        WHERE aa_selected.attempt_id = ea.attempt_id
+                                                            AND aa_selected.question_id = eq.question_id
+                                                            AND aa_selected.answer_id IS NOT NULL
+                                                ) = (
+                                                        SELECT COUNT(*)
+                                                        FROM answers a_correct
+                                                        WHERE a_correct.question_id = eq.question_id
+                                                            AND a_correct.is_correct = TRUE
+                                                )
+                                                AND (
+                                                        SELECT COUNT(*)
+                                                        FROM attempt_answers aa_answered
+                                                        WHERE aa_answered.attempt_id = ea.attempt_id
+                                                            AND aa_answered.question_id = eq.question_id
+                                                            AND aa_answered.answer_id IS NOT NULL
+                                                ) > 0 THEN 1
+                                                ELSE 0
+                                        END) AS correct_count
+                         FROM exam_attempts ea
+                         JOIN exam_questions eq ON eq.exam_id = ea.exam_id
+                         WHERE ea.exam_id = ? AND ea.status = 'completed'"
+                );
+                $stmt->execute([$examId]);
+                $chartStats = $stmt->fetch();
+                $totalQuestionCount = (int) ($chartStats['total_question_count'] ?? 0);
+                $correctCount = (int) ($chartStats['correct_count'] ?? 0);
+                $wrongCount = max(0, $totalQuestionCount - $correctCount);
         require __DIR__ . '/../views/exams/statistics.php';
     }
 
