@@ -33,20 +33,25 @@ class ExamController {
 
         $studentId = (int) $_SESSION['user']['id'];
         $attemptStmt = $this->pdo->prepare(
-            "SELECT attempt_id FROM exam_attempts
+            "SELECT attempt_id, start_time FROM exam_attempts
              WHERE exam_id = ? AND student_id = ? AND status = 'in_progress'
              ORDER BY attempt_id DESC LIMIT 1"
         );
         $attemptStmt->execute([$examId, $studentId]);
-        $attemptId = $attemptStmt->fetchColumn();
-        if (!$attemptId) {
+        $attempt = $attemptStmt->fetch();
+        if (!$attempt) {
             $attemptStmt = $this->pdo->prepare(
                 "INSERT INTO exam_attempts (exam_id, student_id, status)
                  VALUES (?, ?, 'in_progress')"
             );
             $attemptStmt->execute([$examId, $studentId]);
-            $attemptId = $this->pdo->lastInsertId();
+            $attemptStmt = $this->pdo->prepare(
+                "SELECT attempt_id, start_time FROM exam_attempts WHERE attempt_id = ?"
+            );
+            $attemptStmt->execute([$this->pdo->lastInsertId()]);
+            $attempt = $attemptStmt->fetch();
         }
+        $attemptId = (int) $attempt['attempt_id'];
 
         $stmt = $this->pdo->prepare(
             "SELECT q.question_id, q.content, q.question_type, a.answer_id, a.content AS answer_content

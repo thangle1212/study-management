@@ -1,3 +1,6 @@
+<?php
+$deadline = strtotime($attempt['start_time']) + ((int) $exam['duration_minutes'] * 60);
+?>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -23,8 +26,11 @@
 </head>
 <body>
 <nav class="navbar topbar sticky-top">
-    <div class="container exam-shell">
+    <div class="container exam-shell d-flex flex-wrap align-items-center justify-content-between gap-2">
         <a class="navbar-brand brand fw-bold" href="index.php?action=dashboard"><i class="fa-solid fa-graduation-cap me-2"></i>EduTest</a>
+        <span class="fw-semibold text-primary text-nowrap" aria-live="polite">
+            <i class="fa-regular fa-clock me-1"></i>Còn lại <span id="exam-countdown">--:--</span>
+        </span>
         <a href="index.php?action=dashboard" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-arrow-left me-1"></i>Trang tổng quan</a>
     </div>
 </nav>
@@ -38,8 +44,9 @@
         </div>
     </div>
 
-    <form method="post" action="index.php?action=submit_exam">
+    <form id="exam-form" method="post" action="index.php?action=submit_exam">
         <input type="hidden" name="exam_id" value="<?php echo (int) $exam['exam_id']; ?>">
+        <input type="hidden" name="attempt_id" value="<?php echo (int) $attemptId; ?>">
         <?php $number = 1; foreach ($questions as $question): ?>
             <section class="card question-card mb-3">
                 <div class="card-body">
@@ -61,5 +68,55 @@
         </div>
     </form>
 </div>
+<script>
+(function () {
+    const deadline = <?php echo json_encode($deadline * 1000); ?>;
+    const attemptId = <?php echo json_encode($attemptId); ?>;
+    const form = document.getElementById('exam-form');
+    const countdown = document.getElementById('exam-countdown');
+    let isSubmitting = false;
+
+    form.addEventListener('submit', function () {
+        isSubmitting = true;
+    });
+
+    function submitExam() {
+        if (!isSubmitting) {
+            isSubmitting = true;
+            form.submit();
+        }
+    }
+
+    function updateCountdown() {
+        const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+        const minutes = String(Math.floor(remaining / 60)).padStart(2, '0');
+        const seconds = String(remaining % 60).padStart(2, '0');
+        countdown.textContent = minutes + ':' + seconds;
+        countdown.classList.toggle('text-danger', remaining <= 60);
+
+        if (remaining === 0) {
+            submitExam();
+        }
+    }
+
+    function reportTabHidden() {
+        const data = new URLSearchParams({
+            attempt_id: String(attemptId),
+            violation_type: 'tab_hidden',
+            details: 'document visibility changed to hidden'
+        });
+        navigator.sendBeacon('index.php?action=log_violation', data);
+    }
+
+    document.addEventListener('visibilitychange', function () {
+        if (document.hidden) {
+            reportTabHidden();
+        }
+    });
+
+    window.setInterval(updateCountdown, 1000);
+    updateCountdown();
+}());
+</script>
 </body>
 </html>
