@@ -149,6 +149,18 @@ CREATE TABLE `exam_attempts` (
   `total_score` decimal(5,2) DEFAULT 0.00
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- Bảng ghi nhận sự kiện vi phạm trong lượt thi.
+CREATE TABLE `violation_logs` (
+  `violation_id` int(11) NOT NULL AUTO_INCREMENT,
+  `attempt_id` int(11) NOT NULL,
+  `violation_type` varchar(50) NOT NULL,
+  `details` varchar(255) DEFAULT NULL,
+  `occurred_at` datetime DEFAULT current_timestamp(),
+  PRIMARY KEY (`violation_id`),
+  KEY `violation_logs_attempt_id` (`attempt_id`),
+  CONSTRAINT `violation_logs_ibfk_1` FOREIGN KEY (`attempt_id`) REFERENCES `exam_attempts` (`attempt_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 --
 -- Đang đổ dữ liệu cho bảng `exam_attempts`
 --
