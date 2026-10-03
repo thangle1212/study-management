@@ -31,6 +31,23 @@ class ExamController {
             die('Đề thi không tồn tại hoặc chưa được công khai.');
         }
 
+        $studentId = (int) $_SESSION['user']['id'];
+        $attemptStmt = $this->pdo->prepare(
+            "SELECT attempt_id FROM exam_attempts
+             WHERE exam_id = ? AND student_id = ? AND status = 'in_progress'
+             ORDER BY attempt_id DESC LIMIT 1"
+        );
+        $attemptStmt->execute([$examId, $studentId]);
+        $attemptId = $attemptStmt->fetchColumn();
+        if (!$attemptId) {
+            $attemptStmt = $this->pdo->prepare(
+                "INSERT INTO exam_attempts (exam_id, student_id, status)
+                 VALUES (?, ?, 'in_progress')"
+            );
+            $attemptStmt->execute([$examId, $studentId]);
+            $attemptId = $this->pdo->lastInsertId();
+        }
+
         $stmt = $this->pdo->prepare(
             "SELECT q.question_id, q.content, q.question_type, a.answer_id, a.content AS answer_content
              FROM exam_questions eq
@@ -68,6 +85,7 @@ class ExamController {
         }
 
         $examId = (int) ($_POST['exam_id'] ?? 0);
+        $attemptId = (int) ($_POST['attempt_id'] ?? 0);
         $answers = $_POST['answers'] ?? [];
         $studentId = (int) $_SESSION['user']['id'];
 
@@ -86,11 +104,17 @@ class ExamController {
         $this->pdo->beginTransaction();
         try {
             $stmt = $this->pdo->prepare(
-                "INSERT INTO exam_attempts (exam_id, student_id, end_time, status, total_score)
-                 VALUES (?, ?, NOW(), 'completed', 0)"
+                "SELECT attempt_id FROM exam_attempts
+                 WHERE attempt_id = ? AND exam_id = ? AND student_id = ?
+                 AND status = 'in_progress' FOR UPDATE"
             );
-            $stmt->execute([$examId, $studentId]);
-            $attemptId = $this->pdo->lastInsertId();
+            $stmt->execute([$attemptId, $examId, $studentId]);
+            if (!$stmt->fetch()) {
+                $this->pdo->rollBack();
+                http_response_code(403);
+                die('Lượt thi không hợp lệ hoặc đã được nộp.');
+            }
+
             $insertAnswer = $this->pdo->prepare(
                 "INSERT INTO attempt_answers (attempt_id, question_id, answer_id, is_correct)
                  VALUES (?, ?, ?, ?)"
@@ -125,7 +149,9 @@ class ExamController {
             }
 
             $updateAttempt = $this->pdo->prepare(
-                "UPDATE exam_attempts SET total_score = ? WHERE attempt_id = ?"
+                "UPDATE exam_attempts
+                 SET total_score = ?, end_time = NOW(), status = 'completed'
+                 WHERE attempt_id = ? AND status = 'in_progress'"
             );
             $updateAttempt->execute([$score, $attemptId]);
             $this->pdo->commit();
@@ -135,6 +161,35 @@ class ExamController {
             $this->pdo->rollBack();
             throw $exception;
         }
+    }
+
+    public function logViolation() {
+        $this->requireLogin();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            exit;
+        }
+
+        $attemptId = (int) ($_POST['attempt_id'] ?? 0);
+        $violationType = $_POST['violation_type'] ?? '';
+        if (!$attemptId || !in_array($violationType, ['tab_hidden', 'window_blur'], true)) {
+            http_response_code(400);
+            exit;
+        }
+
+        $details = substr(trim((string) ($_POST['details'] ?? '')), 0, 255);
+        $stmt = $this->pdo->prepare(
+            "INSERT INTO violation_logs (attempt_id, violation_type, details)
+             SELECT attempt_id, ?, ? FROM exam_attempts
+             WHERE attempt_id = ? AND student_id = ? AND status = 'in_progress'"
+        );
+        $stmt->execute([
+            $violationType,
+            $details,
+            $attemptId,
+            (int) $_SESSION['user']['id']
+        ]);
+        http_response_code(204);
     }
 
     public function result() {

@@ -53,6 +53,10 @@ switch ($action) {
         $examController->submit();
         break;
 
+    case 'log_violation':
+        $examController->logViolation();
+        break;
+
     case 'exam_result':
         $examController->result();
         break;
