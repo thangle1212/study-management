@@ -1,0 +1,27 @@
+STT,Chức năng,Người đảm nhiệm,Bảng SQL liên quan
+1,Đăng ký/đăng nhập & phân quyền,Thành viên 1,users
+2,"Quản lý người dùng & lớp học (Admin tạo tài khoản GV/HS, gán lớp)",Thành viên 1,"users, classes, class_students"
+3,"Quản lý ngân hàng câu hỏi (tạo/sửa/xóa câu hỏi, tùy chỉnh loại câu hỏi)",Thành viên 2,"question_banks, questions, answers"
+4,"Soạn đề thi & cấu hình (chọn câu hỏi vào đề, thời gian, trộn đề)",Thành viên 2,"exams, exam_questions"
+5,"Giao diện làm bài thi (đếm ngược, tự nộp khi hết giờ)",Thành viên 3,"exams, exam_attempts, attempt_answers"
+6,Giám sát chống gian lận (phát hiện chuyển tab/rời màn hình),Thành viên 3,"exam_attempts, violation_logs"
+7,Chấm điểm tự động,Thành viên 4,"attempt_answers, answers"
+8,"Thống kê & biểu đồ (bảng điểm, câu sai nhiều nhất)",Thành viên 4,"exam_attempts, attempt_answers, questions"
+9,Đăng bài & bình luận diễn đàn,Thành viên 5,"forum_posts, forum_comments"
+10,Quản lý & kiểm duyệt diễn đàn (ẩn/xóa bài vi phạm),Thành viên 5,"forum_posts, forum_comments, users"
+
+
+Mình sẽ hỏi liên quan đến 3 ý chính: ý 2 gồm 3 ý nhỏ. Các ý này các bạn cũng gặp phải khi phỏng vấn
+Ý 1: Làm sao để xây dựng 1 hệ thống với sự trợ giúp của Agent (VSCode-Copilot, Cursor, Claude....). 3 điểm
+Y2: Kỹ năng kiểm soát code: (5 điểm)
+a ) Kiểm soát tính năng: Các bạn có thể làm chương trình với ngôn ngữ bất kỳ mà các bạn giỏi nhất (C,C#, Java...). Nhưng phải biết tính năng đó ở đâu, sửa tính năng như thế nào, ví dụ thầy sẽ hỏi phần code đăng nhập ở đâu, tạo rằng buộc mật khẩu phải có dấu @. 
+b) Kỹ năng dùng skill: graphify hoặc các skills khác phục vụ việc viết code.
+c) Cách các bạn trình bày ý hiểu về các công cụ log, diff .. dựa vào đó đóng vai trò leader chỉ ra làm sao để biết được 1 người trong nhóm làm việc hiệu quả hay không? Tiêu chí hiệu quả theo các bạn gồm những gì?
+3. Biết cách kết hợp các công cụ test tính năng (nâng cao) - 2 điểm.
+
+Ý 1: Làm sao để xây dựng 1 hệ thống với sự trợ giúp của Agent (VSCode-Copilot, Cursor, Claude....). 3 điểm
+Y2: Kỹ năng kiểm soát code: (5 điểm)
+a ) Kiểm soát tính năng: Các bạn có thể làm chương trình với ngôn ngữ bất kỳ mà các bạn giỏi nhất (C,C#, Java...). Nhưng phải biết tính năng đó ở đâu, sửa tính năng như thế nào, ví dụ thầy sẽ hỏi phần code đăng nhập ở đâu, tạo rằng buộc mật khẩu phải có dấu @. 
+b) Kỹ năng dùng skill: graphify hoặc các skills khác phục vụ việc viết code.
+c) Cách các bạn trình bày ý hiểu về các công cụ log, diff .. dựa vào đó đóng vai trò leader chỉ ra làm sao để biết được 1 người trong nhóm làm việc hiệu quả hay không? Tiêu chí hiệu quả theo các bạn gồm những gì?
+3. Biết cách kết hợp các công cụ test tính năng (nâng cao) - 2 điểm
