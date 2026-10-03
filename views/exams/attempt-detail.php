@@ -47,6 +47,39 @@
         <div class="col-md-4"><div class="card question-card p-3 h-100"><div class="text-muted small">Nộp bài / thời gian làm</div><div class="fw-semibold mt-1"><?php echo htmlspecialchars($attempt['end_time']); ?></div><div class="text-muted small mt-1"><i class="fa-regular fa-clock me-1"></i><?php echo $durationText; ?></div></div></div>
     </div>
 
+    <?php if ($violationLogs): ?>
+        <section class="card question-card mb-4">
+            <div class="card-body p-4">
+                <h2 class="h5 fw-bold mb-3"><i class="fa-solid fa-shield-halved text-warning me-2"></i>Lịch sử vi phạm</h2>
+                <div class="table-responsive"><table class="table align-middle mb-0">
+                    <thead><tr><th>Thời gian</th><th>Lý do</th><th>Chi tiết</th></tr></thead>
+                    <tbody><?php foreach ($violationLogs as $log): ?>
+                        <tr><td class="text-nowrap"><?php echo htmlspecialchars($log['occurred_at']); ?></td><td><?php echo htmlspecialchars($log['violation_type']); ?></td><td><?php echo htmlspecialchars($log['details'] ?? ''); ?></td></tr>
+                    <?php endforeach; ?></tbody>
+                </table></div>
+            </div>
+        </section>
+    <?php endif; ?>
+
+    <?php if ($_SESSION['user']['role'] === 'teacher' && $attempt['review_status'] === 'pending'): ?>
+        <section class="card question-card mb-4">
+            <div class="card-body p-4">
+                <h2 class="h5 fw-bold mb-3">Xem xét lượt thi bị thu bài</h2>
+                <form method="post" action="index.php?action=review_attempt" class="row g-3">
+                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>">
+                    <input type="hidden" name="attempt_id" value="<?php echo (int) $attempt['attempt_id']; ?>">
+                    <div class="col-12"><label for="review-note" class="form-label">Ghi chú</label><textarea id="review-note" name="review_note" class="form-control" maxlength="500" rows="2"></textarea></div>
+                    <div class="col-12 d-flex flex-wrap gap-2 justify-content-end">
+                        <button class="btn btn-outline-danger" name="decision" value="void" type="submit">Hủy kết quả</button>
+                        <button class="btn btn-primary" name="decision" value="allow_retry" type="submit">Cho phép làm lại</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    <?php elseif ($attempt['review_note']): ?>
+        <div class="alert alert-info"><strong>Ghi chú phúc khảo:</strong> <?php echo htmlspecialchars($attempt['review_note']); ?></div>
+    <?php endif; ?>
+
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div><h2 class="h4 fw-bold mb-1">Chi tiết câu trả lời</h2><p class="text-muted small mb-0">Đối chiếu lựa chọn của sinh viên với đáp án đúng.</p></div>
         <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2"><?php echo count($questions); ?> câu</span>
