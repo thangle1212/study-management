@@ -18,8 +18,11 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Cơ sở dữ liệu: `db`
+-- Cơ sở dữ liệu: `study_management`
 --
+CREATE DATABASE IF NOT EXISTS `study_management`
+  CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE `study_management`;
 
 -- --------------------------------------------------------
 
@@ -157,8 +160,7 @@ CREATE TABLE `violation_logs` (
   `details` varchar(255) DEFAULT NULL,
   `occurred_at` datetime DEFAULT current_timestamp(),
   PRIMARY KEY (`violation_id`),
-  KEY `violation_logs_attempt_id` (`attempt_id`),
-  CONSTRAINT `violation_logs_ibfk_1` FOREIGN KEY (`attempt_id`) REFERENCES `exam_attempts` (`attempt_id`) ON DELETE CASCADE
+  KEY `violation_logs_attempt_id` (`attempt_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -543,6 +545,10 @@ ALTER TABLE `exams`
 ALTER TABLE `exam_attempts`
   ADD CONSTRAINT `exam_attempts_ibfk_1` FOREIGN KEY (`exam_id`) REFERENCES `exams` (`exam_id`) ON DELETE CASCADE,
   ADD CONSTRAINT `exam_attempts_ibfk_2` FOREIGN KEY (`student_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+-- Khóa ngoại log được thêm sau khi exam_attempts đã có khóa chính.
+ALTER TABLE `violation_logs`
+  ADD CONSTRAINT `violation_logs_ibfk_1` FOREIGN KEY (`attempt_id`) REFERENCES `exam_attempts` (`attempt_id`) ON DELETE CASCADE;
 
 --
 -- Các ràng buộc cho bảng `exam_questions`
