@@ -45,8 +45,24 @@ switch ($action) {
         require_once __DIR__ . '/views/dashboard.php';
         break;
 
+    case 'prepare_exam':
+        $examController->prepare();
+        break;
+
+    case 'start_exam':
+        $examController->start();
+        break;
+
     case 'take_exam':
         $examController->take();
+        break;
+
+    case 'autosave_answers':
+        $examController->autosave();
+        break;
+
+    case 'update_exam_settings':
+        $examController->updateSettings();
         break;
 
     case 'submit_exam':
@@ -63,6 +79,18 @@ switch ($action) {
 
     case 'exam_statistics':
         $examController->statistics();
+        break;
+
+    case 'exam_monitoring':
+        $examController->monitoring();
+        break;
+
+    case 'exam_monitoring_data':
+        $examController->monitoringData();
+        break;
+
+    case 'review_attempt':
+        $examController->reviewAttempt();
         break;
 
     case 'attempt_detail':

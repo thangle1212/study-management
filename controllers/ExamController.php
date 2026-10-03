@@ -11,12 +11,148 @@ class ExamController {
             header('Location: index.php?action=login');
             exit;
         }
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
     }
 
-    public function take() {
+    private function requireStudent() {
         $this->requireLogin();
-        $examId = (int) ($_GET['exam_id'] ?? 0);
+        if (($_SESSION['user']['role'] ?? '') !== 'student') {
+            http_response_code(403);
+            exit('Chỉ học sinh mới được làm bài thi.');
+        }
+    }
 
+    private function requirePostWithCsrf() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            exit;
+        }
+        $token = $_POST['csrf_token'] ?? '';
+        if (!is_string($token) || !hash_equals($_SESSION['csrf_token'], $token)) {
+            http_response_code(403);
+            exit('Yêu cầu không hợp lệ. Hãy tải lại trang và thử lại.');
+        }
+    }
+
+    private function sendJson($payload, $statusCode = 200) {
+        http_response_code($statusCode);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($payload, JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    private function saveAttemptAnswers($attemptId, $examId, $answers) {
+        $stmt = $this->pdo->prepare(
+            "SELECT eq.question_id, a.answer_id
+             FROM exam_questions eq
+             LEFT JOIN answers a ON a.question_id = eq.question_id
+             WHERE eq.exam_id = ?"
+        );
+        $stmt->execute([$examId]);
+        $validAnswers = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $questionId = (int) $row['question_id'];
+            $validAnswers[$questionId] = $validAnswers[$questionId] ?? [];
+            if ($row['answer_id'] !== null) {
+                $validAnswers[$questionId][] = (int) $row['answer_id'];
+            }
+        }
+
+        $delete = $this->pdo->prepare("DELETE FROM attempt_answers WHERE attempt_id = ?");
+        $delete->execute([$attemptId]);
+        $insert = $this->pdo->prepare(
+            "INSERT INTO attempt_answers (attempt_id, question_id, answer_id, is_correct)
+             VALUES (?, ?, ?, 0)"
+        );
+        foreach ($validAnswers as $questionId => $validIds) {
+            $selectedIds = $answers[$questionId] ?? [];
+            $selectedIds = is_array($selectedIds) ? $selectedIds : [$selectedIds];
+            $selectedIds = array_values(array_unique(array_filter(array_map('intval', $selectedIds))));
+            $selectedIds = array_values(array_intersect($selectedIds, $validIds));
+            if (!$selectedIds) {
+                $insert->execute([$attemptId, $questionId, null]);
+                continue;
+            }
+            foreach ($selectedIds as $answerId) {
+                $insert->execute([$attemptId, $questionId, $answerId]);
+            }
+        }
+    }
+
+    private function finalizeAttempt($attemptId, $studentId, $answers, $reason) {
+        $stmt = $this->pdo->prepare(
+                "SELECT ea.attempt_id, ea.exam_id, ea.start_time,
+                    COALESCE(ea.duration_minutes_snapshot, e.duration_minutes) AS duration_minutes
+             FROM exam_attempts ea
+             JOIN exams e ON e.exam_id = ea.exam_id
+             WHERE ea.attempt_id = ? AND ea.student_id = ? AND ea.status = 'in_progress'
+             FOR UPDATE"
+        );
+        $stmt->execute([$attemptId, $studentId]);
+        $attempt = $stmt->fetch();
+        if (!$attempt) {
+            return false;
+        }
+
+        if (time() >= strtotime($attempt['start_time']) + ((int) $attempt['duration_minutes'] * 60)) {
+            $reason = 'time_expired';
+        }
+        if ($answers !== null) {
+            $this->saveAttemptAnswers($attemptId, (int) $attempt['exam_id'], $answers);
+        }
+
+        $stmt = $this->pdo->prepare(
+            "SELECT question_id, score_weight FROM exam_questions WHERE exam_id = ?"
+        );
+        $stmt->execute([(int) $attempt['exam_id']]);
+        $examQuestions = $stmt->fetchAll();
+        if (!$examQuestions) {
+            throw new RuntimeException('Đề thi chưa có câu hỏi.');
+        }
+
+        $selectedStmt = $this->pdo->prepare(
+            "SELECT answer_id FROM attempt_answers
+             WHERE attempt_id = ? AND question_id = ? AND answer_id IS NOT NULL"
+        );
+        $correctStmt = $this->pdo->prepare(
+            "SELECT answer_id FROM answers WHERE question_id = ? AND is_correct = TRUE"
+        );
+        $markAnswers = $this->pdo->prepare(
+            "UPDATE attempt_answers SET is_correct = ?
+             WHERE attempt_id = ? AND question_id = ?"
+        );
+        $score = 0;
+        foreach ($examQuestions as $examQuestion) {
+            $questionId = (int) $examQuestion['question_id'];
+            $selectedStmt->execute([$attemptId, $questionId]);
+            $selectedIds = array_map('intval', $selectedStmt->fetchAll(PDO::FETCH_COLUMN));
+            $correctStmt->execute([$questionId]);
+            $correctIds = array_map('intval', $correctStmt->fetchAll(PDO::FETCH_COLUMN));
+            sort($selectedIds);
+            sort($correctIds);
+            $isCorrect = $selectedIds === $correctIds && !empty($correctIds);
+            $markAnswers->execute([$isCorrect ? 1 : 0, $attemptId, $questionId]);
+            if ($isCorrect) {
+                $score += (float) $examQuestion['score_weight'];
+            }
+        }
+
+        $reviewStatus = $reason === 'violation_limit' ? 'pending' : 'not_required';
+        $update = $this->pdo->prepare(
+            "UPDATE exam_attempts
+             SET total_score = ?, end_time = NOW(), status = 'completed',
+                 submit_reason = ?, review_status = ?
+             WHERE attempt_id = ? AND status = 'in_progress'"
+        );
+        $update->execute([$score, $reason, $reviewStatus, $attemptId]);
+        return true;
+    }
+
+    public function prepare() {
+        $this->requireStudent();
+        $examId = (int) ($_GET['exam_id'] ?? 0);
         $stmt = $this->pdo->prepare(
             "SELECT e.*, COUNT(eq.id) AS question_count
              FROM exams e
@@ -31,27 +167,93 @@ class ExamController {
             die('Đề thi không tồn tại hoặc chưa được công khai.');
         }
 
+        $csrfToken = $_SESSION['csrf_token'];
+        require __DIR__ . '/../views/exams/prepare.php';
+    }
+
+    public function start() {
+        $this->requireStudent();
+        $this->requirePostWithCsrf();
+        $examId = (int) ($_POST['exam_id'] ?? 0);
         $studentId = (int) $_SESSION['user']['id'];
+        $stmt = $this->pdo->prepare(
+            "SELECT exam_id, duration_minutes, anti_cheat_enabled,
+                    violation_limit, violation_action
+             FROM exams WHERE exam_id = ? AND status = 'published'"
+        );
+        $stmt->execute([$examId]);
+        $exam = $stmt->fetch();
+        if (!$exam) {
+            http_response_code(404);
+            exit('Đề thi không tồn tại hoặc chưa được công khai.');
+        }
+
         $attemptStmt = $this->pdo->prepare(
-            "SELECT attempt_id, start_time FROM exam_attempts
+            "SELECT attempt_id FROM exam_attempts
              WHERE exam_id = ? AND student_id = ? AND status = 'in_progress'
              ORDER BY attempt_id DESC LIMIT 1"
         );
         $attemptStmt->execute([$examId, $studentId]);
-        $attempt = $attemptStmt->fetch();
-        if (!$attempt) {
+        $attemptId = $attemptStmt->fetchColumn();
+        if (!$attemptId) {
             $attemptStmt = $this->pdo->prepare(
-                "INSERT INTO exam_attempts (exam_id, student_id, status)
-                 VALUES (?, ?, 'in_progress')"
+                "INSERT INTO exam_attempts
+                    (exam_id, student_id, status, duration_minutes_snapshot,
+                     anti_cheat_enabled_snapshot, violation_limit_snapshot,
+                     violation_action_snapshot)
+                 VALUES (?, ?, 'in_progress', ?, ?, ?, ?)"
             );
-            $attemptStmt->execute([$examId, $studentId]);
-            $attemptStmt = $this->pdo->prepare(
-                "SELECT attempt_id, start_time FROM exam_attempts WHERE attempt_id = ?"
-            );
-            $attemptStmt->execute([$this->pdo->lastInsertId()]);
-            $attempt = $attemptStmt->fetch();
+            $attemptStmt->execute([
+                $examId,
+                $studentId,
+                (int) $exam['duration_minutes'],
+                (int) $exam['anti_cheat_enabled'],
+                (int) $exam['violation_limit'],
+                $exam['violation_action']
+            ]);
+            $attemptId = $this->pdo->lastInsertId();
         }
-        $attemptId = (int) $attempt['attempt_id'];
+        header('Location: index.php?action=take_exam&attempt_id=' . (int) $attemptId);
+        exit;
+    }
+
+    public function take() {
+        $this->requireStudent();
+        $attemptId = (int) ($_GET['attempt_id'] ?? 0);
+        $studentId = (int) $_SESSION['user']['id'];
+        $stmt = $this->pdo->prepare(
+            "SELECT ea.attempt_id, ea.exam_id, ea.start_time, ea.status,
+                    e.title,
+                    COALESCE(ea.duration_minutes_snapshot, e.duration_minutes) AS duration_minutes,
+                    COALESCE(ea.anti_cheat_enabled_snapshot, e.anti_cheat_enabled) AS anti_cheat_enabled,
+                    COALESCE(ea.violation_limit_snapshot, e.violation_limit) AS violation_limit,
+                    COALESCE(ea.violation_action_snapshot, e.violation_action) AS violation_action,
+                    COUNT(eq.id) AS question_count
+             FROM exam_attempts ea
+             JOIN exams e ON e.exam_id = ea.exam_id
+             LEFT JOIN exam_questions eq ON eq.exam_id = e.exam_id
+             WHERE ea.attempt_id = ? AND ea.student_id = ?
+             GROUP BY ea.attempt_id"
+        );
+        $stmt->execute([$attemptId, $studentId]);
+        $exam = $stmt->fetch();
+        if (!$exam || $exam['status'] !== 'in_progress') {
+            http_response_code(403);
+            exit('Lượt thi không hợp lệ hoặc đã được nộp.');
+        }
+
+        if (time() >= strtotime($exam['start_time']) + ((int) $exam['duration_minutes'] * 60)) {
+            $this->pdo->beginTransaction();
+            try {
+                $this->finalizeAttempt($attemptId, $studentId, null, 'time_expired');
+                $this->pdo->commit();
+            } catch (Throwable $exception) {
+                $this->pdo->rollBack();
+                throw $exception;
+            }
+            header('Location: index.php?action=exam_result&attempt_id=' . $attemptId);
+            exit;
+        }
 
         $stmt = $this->pdo->prepare(
             "SELECT q.question_id, q.content, q.question_type, a.answer_id, a.content AS answer_content
@@ -79,86 +281,75 @@ class ExamController {
             ];
         }
 
+        $savedAnswers = [];
+        $stmt = $this->pdo->prepare(
+            "SELECT question_id, answer_id FROM attempt_answers
+             WHERE attempt_id = ? AND answer_id IS NOT NULL"
+        );
+        $stmt->execute([$attemptId]);
+        foreach ($stmt->fetchAll() as $savedAnswer) {
+            $questionId = (int) $savedAnswer['question_id'];
+            $savedAnswers[$questionId][] = (int) $savedAnswer['answer_id'];
+        }
+
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM violation_logs WHERE attempt_id = ?");
+        $stmt->execute([$attemptId]);
+        $violationCount = (int) $stmt->fetchColumn();
+        $csrfToken = $_SESSION['csrf_token'];
+
         require __DIR__ . '/../views/exams/take.php';
     }
 
-    public function submit() {
-        $this->requireLogin();
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: index.php?action=dashboard');
-            exit;
-        }
-
-        $examId = (int) ($_POST['exam_id'] ?? 0);
+    public function autosave() {
+        $this->requireStudent();
+        $this->requirePostWithCsrf();
         $attemptId = (int) ($_POST['attempt_id'] ?? 0);
-        $answers = $_POST['answers'] ?? [];
         $studentId = (int) $_SESSION['user']['id'];
-
-        $stmt = $this->pdo->prepare(
-            "SELECT eq.question_id, eq.score_weight, q.question_type
-             FROM exam_questions eq
-             JOIN questions q ON q.question_id = eq.question_id
-             WHERE eq.exam_id = ?"
-        );
-        $stmt->execute([$examId]);
-        $examQuestions = $stmt->fetchAll();
-        if (!$examQuestions) {
-            die('Đề thi chưa có câu hỏi.');
-        }
-
         $this->pdo->beginTransaction();
         try {
             $stmt = $this->pdo->prepare(
-                "SELECT attempt_id FROM exam_attempts
-                 WHERE attempt_id = ? AND exam_id = ? AND student_id = ?
-                 AND status = 'in_progress' FOR UPDATE"
+                "SELECT ea.exam_id, ea.start_time,
+                    COALESCE(ea.duration_minutes_snapshot, e.duration_minutes) AS duration_minutes
+                 FROM exam_attempts ea JOIN exams e ON e.exam_id = ea.exam_id
+                 WHERE ea.attempt_id = ? AND ea.student_id = ?
+                   AND ea.status = 'in_progress' FOR UPDATE"
             );
-            $stmt->execute([$attemptId, $examId, $studentId]);
-            if (!$stmt->fetch()) {
+            $stmt->execute([$attemptId, $studentId]);
+            $attempt = $stmt->fetch();
+            if (!$attempt) {
+                $this->pdo->rollBack();
+                $this->sendJson(['error' => 'Lượt thi không hợp lệ hoặc đã nộp.'], 403);
+            }
+            if (time() >= strtotime($attempt['start_time']) + ((int) $attempt['duration_minutes'] * 60)) {
+                $this->finalizeAttempt($attemptId, $studentId, $_POST['answers'] ?? [], 'time_expired');
+                $this->pdo->commit();
+                $this->sendJson(['saved' => false, 'forced_submit' => true, 'reason' => 'time_expired']);
+            }
+            $this->saveAttemptAnswers($attemptId, (int) $attempt['exam_id'], $_POST['answers'] ?? []);
+            $this->pdo->commit();
+            $this->sendJson(['saved' => true]);
+        } catch (Throwable $exception) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $exception;
+        }
+    }
+
+    public function submit() {
+        $this->requireStudent();
+        $this->requirePostWithCsrf();
+        $attemptId = (int) ($_POST['attempt_id'] ?? 0);
+        $studentId = (int) $_SESSION['user']['id'];
+        $answers = array_key_exists('answers', $_POST) ? $_POST['answers'] : null;
+        $this->pdo->beginTransaction();
+        try {
+            $completed = $this->finalizeAttempt($attemptId, $studentId, $answers, 'manual');
+            if (!$completed) {
                 $this->pdo->rollBack();
                 http_response_code(403);
                 die('Lượt thi không hợp lệ hoặc đã được nộp.');
             }
-
-            $insertAnswer = $this->pdo->prepare(
-                "INSERT INTO attempt_answers (attempt_id, question_id, answer_id, is_correct)
-                 VALUES (?, ?, ?, ?)"
-            );
-            $score = 0;
-
-            foreach ($examQuestions as $examQuestion) {
-                $questionId = (int) $examQuestion['question_id'];
-                $selectedIds = $answers[$questionId] ?? [];
-                $selectedIds = is_array($selectedIds) ? $selectedIds : [$selectedIds];
-                $selectedIds = array_values(array_filter(array_map('intval', $selectedIds)));
-                $correctStmt = $this->pdo->prepare(
-                    "SELECT answer_id FROM answers WHERE question_id = ? AND is_correct = TRUE"
-                );
-                $correctStmt->execute([$questionId]);
-                $correctIds = array_map('intval', $correctStmt->fetchAll(PDO::FETCH_COLUMN));
-                sort($correctIds);
-                $checkedIds = $selectedIds;
-                sort($checkedIds);
-                $isCorrect = $checkedIds === $correctIds && !empty($correctIds);
-
-                if ($selectedIds) {
-                    foreach ($selectedIds as $selectedId) {
-                        $insertAnswer->execute([$attemptId, $questionId, $selectedId, $isCorrect ? 1 : 0]);
-                    }
-                } else {
-                    $insertAnswer->execute([$attemptId, $questionId, null, 0]);
-                }
-                if ($isCorrect) {
-                    $score += (float) $examQuestion['score_weight'];
-                }
-            }
-
-            $updateAttempt = $this->pdo->prepare(
-                "UPDATE exam_attempts
-                 SET total_score = ?, end_time = NOW(), status = 'completed'
-                 WHERE attempt_id = ? AND status = 'in_progress'"
-            );
-            $updateAttempt->execute([$score, $attemptId]);
             $this->pdo->commit();
             header('Location: index.php?action=exam_result&attempt_id=' . $attemptId);
             exit;
@@ -169,32 +360,187 @@ class ExamController {
     }
 
     public function logViolation() {
-        $this->requireLogin();
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            http_response_code(405);
-            exit;
-        }
+        $this->requireStudent();
+        $this->requirePostWithCsrf();
 
         $attemptId = (int) ($_POST['attempt_id'] ?? 0);
         $violationType = $_POST['violation_type'] ?? '';
-        if (!$attemptId || !in_array($violationType, ['tab_hidden', 'window_blur'], true)) {
-            http_response_code(400);
-            exit;
+        $allowedTypes = ['tab_hidden', 'window_blur', 'context_menu', 'copy', 'cut', 'paste', 'shortcut'];
+        if (!$attemptId || !in_array($violationType, $allowedTypes, true)) {
+            $this->sendJson(['error' => 'Loại vi phạm không hợp lệ.'], 400);
         }
 
         $details = substr(trim((string) ($_POST['details'] ?? '')), 0, 255);
+        $studentId = (int) $_SESSION['user']['id'];
+        $this->pdo->beginTransaction();
+        try {
+            $stmt = $this->pdo->prepare(
+                "SELECT ea.exam_id, ea.status,
+                    COALESCE(ea.anti_cheat_enabled_snapshot, e.anti_cheat_enabled) AS anti_cheat_enabled,
+                    COALESCE(ea.violation_limit_snapshot, e.violation_limit) AS violation_limit,
+                    COALESCE(ea.violation_action_snapshot, e.violation_action) AS violation_action
+                 FROM exam_attempts ea JOIN exams e ON e.exam_id = ea.exam_id
+                 WHERE ea.attempt_id = ? AND ea.student_id = ? FOR UPDATE"
+            );
+            $stmt->execute([$attemptId, $studentId]);
+            $attempt = $stmt->fetch();
+            if (!$attempt || $attempt['status'] !== 'in_progress') {
+                $this->pdo->rollBack();
+                $this->sendJson(['error' => 'Lượt thi không còn hoạt động.'], 403);
+            }
+            if (!(int) $attempt['anti_cheat_enabled']) {
+                $this->pdo->commit();
+                $this->sendJson(['count' => 0, 'forced_submit' => false]);
+            }
+
+            $stmt = $this->pdo->prepare(
+                "INSERT INTO violation_logs (attempt_id, violation_type, details)
+                 VALUES (?, ?, ?)"
+            );
+            $stmt->execute([$attemptId, $violationType, $details]);
+            $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM violation_logs WHERE attempt_id = ?");
+            $stmt->execute([$attemptId]);
+            $violationCount = (int) $stmt->fetchColumn();
+            $limit = max(1, (int) $attempt['violation_limit']);
+            $forcedSubmit = $violationCount >= $limit && $attempt['violation_action'] === 'auto_submit';
+            if ($forcedSubmit) {
+                $this->finalizeAttempt($attemptId, $studentId, null, 'violation_limit');
+            }
+            $this->pdo->commit();
+            $this->sendJson([
+                'count' => $violationCount,
+                'limit' => $limit,
+                'forced_submit' => $forcedSubmit,
+                'attempt_id' => $attemptId
+            ]);
+        } catch (Throwable $exception) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $exception;
+        }
+    }
+
+    public function updateSettings() {
+        $this->requireLogin();
+        $this->requirePostWithCsrf();
+        $examId = (int) ($_POST['exam_id'] ?? 0);
+        $teacherId = (int) $_SESSION['user']['id'];
+        if (($_SESSION['user']['role'] ?? '') !== 'teacher') {
+            http_response_code(403);
+            exit('Chỉ giáo viên sở hữu đề thi mới được cấu hình.');
+        }
+
+        $duration = filter_var($_POST['duration_minutes'] ?? null, FILTER_VALIDATE_INT);
+        $limit = filter_var($_POST['violation_limit'] ?? null, FILTER_VALIDATE_INT);
+        $action = $_POST['violation_action'] ?? '';
+        if (!$duration || $duration < 1 || $duration > 360 || !$limit || $limit < 1 || $limit > 20
+            || !in_array($action, ['auto_submit', 'log_only'], true)) {
+            http_response_code(400);
+            exit('Thông số cấu hình không hợp lệ.');
+        }
+
         $stmt = $this->pdo->prepare(
-            "INSERT INTO violation_logs (attempt_id, violation_type, details)
-             SELECT attempt_id, ?, ? FROM exam_attempts
-             WHERE attempt_id = ? AND student_id = ? AND status = 'in_progress'"
+            "UPDATE exams SET duration_minutes = ?, anti_cheat_enabled = ?,
+                    violation_limit = ?, violation_action = ?
+             WHERE exam_id = ? AND teacher_id = ?"
         );
         $stmt->execute([
-            $violationType,
-            $details,
-            $attemptId,
-            (int) $_SESSION['user']['id']
+            $duration,
+            isset($_POST['anti_cheat_enabled']) ? 1 : 0,
+            $limit,
+            $action,
+            $examId,
+            $teacherId
         ]);
-        http_response_code(204);
+        header('Location: index.php?action=exam_statistics&exam_id=' . $examId . '&settings=saved');
+        exit;
+    }
+
+    private function fetchMonitoringAttempts($examId, $teacherId) {
+        $stmt = $this->pdo->prepare(
+            "SELECT ea.attempt_id, ea.status, ea.submit_reason, ea.review_status,
+                    ea.start_time, ea.end_time, u.full_name,
+                    COUNT(v.violation_id) AS violation_count
+             FROM exams e
+             JOIN exam_attempts ea ON ea.exam_id = e.exam_id
+             JOIN users u ON u.user_id = ea.student_id
+             LEFT JOIN violation_logs v ON v.attempt_id = ea.attempt_id
+             WHERE e.exam_id = ? AND e.teacher_id = ?
+             GROUP BY ea.attempt_id
+             ORDER BY (ea.status = 'in_progress') DESC, ea.start_time DESC"
+        );
+        $stmt->execute([$examId, $teacherId]);
+        return $stmt->fetchAll();
+    }
+
+    public function monitoring() {
+        $this->requireLogin();
+        $examId = (int) ($_GET['exam_id'] ?? 0);
+        $teacherId = (int) $_SESSION['user']['id'];
+        $stmt = $this->pdo->prepare(
+            "SELECT exam_id, title FROM exams WHERE exam_id = ? AND teacher_id = ?"
+        );
+        $stmt->execute([$examId, $teacherId]);
+        $exam = $stmt->fetch();
+        if (!$exam || ($_SESSION['user']['role'] ?? '') !== 'teacher') {
+            http_response_code(403);
+            exit('Bạn không có quyền giám sát đề thi này.');
+        }
+        $attempts = $this->fetchMonitoringAttempts($examId, $teacherId);
+        $csrfToken = $_SESSION['csrf_token'];
+        require __DIR__ . '/../views/exams/monitoring.php';
+    }
+
+    public function monitoringData() {
+        $this->requireLogin();
+        $examId = (int) ($_GET['exam_id'] ?? 0);
+        $teacherId = (int) $_SESSION['user']['id'];
+        if (($_SESSION['user']['role'] ?? '') !== 'teacher') {
+            $this->sendJson(['error' => 'Không có quyền xem dữ liệu giám sát.'], 403);
+        }
+        $attempts = $this->fetchMonitoringAttempts($examId, $teacherId);
+        if (!$attempts) {
+            $stmt = $this->pdo->prepare("SELECT 1 FROM exams WHERE exam_id = ? AND teacher_id = ?");
+            $stmt->execute([$examId, $teacherId]);
+            if (!$stmt->fetch()) {
+                $this->sendJson(['error' => 'Không tìm thấy đề thi.'], 404);
+            }
+        }
+        $this->sendJson(['attempts' => $attempts]);
+    }
+
+    public function reviewAttempt() {
+        $this->requireLogin();
+        $this->requirePostWithCsrf();
+        $attemptId = (int) ($_POST['attempt_id'] ?? 0);
+        $decision = $_POST['decision'] ?? '';
+        $note = trim((string) ($_POST['review_note'] ?? ''));
+        $note = substr($note, 0, 500);
+        $teacherId = (int) $_SESSION['user']['id'];
+        if (($_SESSION['user']['role'] ?? '') !== 'teacher'
+            || !in_array($decision, ['void', 'allow_retry'], true)) {
+            http_response_code(403);
+            exit('Yêu cầu phúc khảo không hợp lệ.');
+        }
+
+        $reviewStatus = $decision === 'void' ? 'voided' : 'retake_allowed';
+        $attemptStatus = $decision === 'void' ? 'voided' : 'completed';
+        $stmt = $this->pdo->prepare(
+            "UPDATE exam_attempts ea
+             JOIN exams e ON e.exam_id = ea.exam_id
+             SET ea.review_status = ?, ea.review_note = ?, ea.reviewed_by = ?,
+                 ea.reviewed_at = NOW(), ea.status = ?
+             WHERE ea.attempt_id = ? AND e.teacher_id = ?
+               AND ea.review_status = 'pending'"
+        );
+        $stmt->execute([$reviewStatus, $note ?: null, $teacherId, $attemptStatus, $attemptId, $teacherId]);
+        if (!$stmt->rowCount()) {
+            http_response_code(404);
+            exit('Không tìm thấy lượt thi đang chờ phúc khảo.');
+        }
+        header('Location: index.php?action=attempt_detail&attempt_id=' . $attemptId . '&review=saved');
+        exit;
     }
 
     public function result() {
@@ -222,6 +568,8 @@ class ExamController {
         $userId = (int) $_SESSION['user']['id'];
         $stmt = $this->pdo->prepare(
             "SELECT e.exam_id, e.title
+                    , e.duration_minutes, e.anti_cheat_enabled
+                    , e.violation_limit, e.violation_action
              FROM exams e
              WHERE e.exam_id = ? AND e.teacher_id = ?"
         );
@@ -230,13 +578,18 @@ class ExamController {
         if (!$exam) {
             die('Bạn không có quyền xem thống kê đề thi này.');
         }
+        $csrfToken = $_SESSION['csrf_token'];
 
         $stmt = $this->pdo->prepare(
-            "SELECT u.full_name, ea.total_score, ea.end_time
-                    , ea.attempt_id, ea.student_id
+                "SELECT u.full_name, ea.total_score, ea.end_time, ea.attempt_id,
+                    ea.student_id, ea.submit_reason, ea.review_status,
+                    COUNT(v.violation_id) AS violation_count
              FROM exam_attempts ea
              JOIN users u ON u.user_id = ea.student_id
+                 LEFT JOIN violation_logs v ON v.attempt_id = ea.attempt_id
              WHERE ea.exam_id = ? AND ea.status = 'completed'
+                 GROUP BY ea.attempt_id, u.full_name, ea.total_score, ea.end_time,
+                      ea.student_id, ea.submit_reason, ea.review_status
              ORDER BY u.full_name, ea.end_time, ea.attempt_id"
         );
         $stmt->execute([$examId]);
@@ -311,7 +664,7 @@ class ExamController {
              FROM exam_attempts ea
              JOIN exams e ON e.exam_id = ea.exam_id
              JOIN users u ON u.user_id = ea.student_id
-             WHERE ea.attempt_id = ? AND ea.status = 'completed'
+             WHERE ea.attempt_id = ? AND ea.status IN ('completed', 'voided')
              AND (e.teacher_id = ? OR ea.student_id = ?)"
         );
         $stmt->execute([$attemptId, $userId, $userId]);
@@ -319,6 +672,14 @@ class ExamController {
         if (!$attempt) {
             die('Không tìm thấy lượt nộp hoặc bạn không có quyền xem lượt nộp này.');
         }
+
+        $stmt = $this->pdo->prepare(
+            "SELECT violation_type, details, occurred_at
+             FROM violation_logs WHERE attempt_id = ? ORDER BY occurred_at"
+        );
+        $stmt->execute([$attemptId]);
+        $violationLogs = $stmt->fetchAll();
+        $csrfToken = $_SESSION['csrf_token'];
 
         $stmt = $this->pdo->prepare(
             "SELECT eq.question_id, eq.order_index, q.content, q.question_type,
