@@ -22,6 +22,21 @@
             <h1 class="h3 fw-bold mt-2 mb-0"><?php echo htmlspecialchars($attempt['title']); ?></h1>
         </div>
         <div class="p-4 p-md-5">
+            <?php
+            $submissionMessages = [
+                'manual' => 'Bạn đã nộp bài thành công.',
+                'time_expired' => 'Hệ thống đã tự nộp bài vì hết giờ.',
+                'violation_limit' => 'Bài thi được tự động nộp do chạm giới hạn vi phạm.'
+            ];
+            ?>
+            <p class="mb-3"><?php echo htmlspecialchars($submissionMessages[$attempt['submit_reason']] ?? 'Bài thi đã được hoàn tất.'); ?></p>
+            <?php if ($attempt['review_status'] === 'pending'): ?>
+                <div class="alert alert-warning text-start">Lượt thi đang chờ giáo viên xem xét.</div>
+            <?php elseif ($attempt['review_status'] === 'voided'): ?>
+                <div class="alert alert-danger text-start">Giáo viên đã hủy kết quả lượt thi.</div>
+            <?php elseif ($attempt['review_status'] === 'retake_allowed'): ?>
+                <div class="alert alert-info text-start">Giáo viên đã cho phép làm lại bài thi.</div>
+            <?php endif; ?>
             <div class="score rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
                 <span class="display-5 fw-bold"><?php echo number_format((float) $attempt['total_score'], 2); ?></span>
             </div>

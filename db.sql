@@ -18,8 +18,11 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Cơ sở dữ liệu: `db`
+-- Cơ sở dữ liệu: `study_management`
 --
+CREATE DATABASE IF NOT EXISTS `study_management`
+  CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE `study_management`;
 
 -- --------------------------------------------------------
 
@@ -118,6 +121,9 @@ CREATE TABLE `exams` (
   `class_id` int(11) DEFAULT NULL,
   `title` varchar(200) NOT NULL,
   `duration_minutes` int(11) NOT NULL,
+  `anti_cheat_enabled` tinyint(1) NOT NULL DEFAULT 1,
+  `violation_limit` int(11) NOT NULL DEFAULT 3,
+  `violation_action` varchar(20) NOT NULL DEFAULT 'auto_submit',
   `shuffle_questions` tinyint(1) DEFAULT 1,
   `shuffle_answers` tinyint(1) DEFAULT 1,
   `start_time` datetime DEFAULT NULL,
@@ -146,7 +152,27 @@ CREATE TABLE `exam_attempts` (
   `start_time` datetime DEFAULT current_timestamp(),
   `end_time` datetime DEFAULT NULL,
   `status` varchar(20) DEFAULT 'in_progress',
-  `total_score` decimal(5,2) DEFAULT 0.00
+  `total_score` decimal(5,2) DEFAULT 0.00,
+  `duration_minutes_snapshot` int(11) DEFAULT NULL,
+  `anti_cheat_enabled_snapshot` tinyint(1) DEFAULT NULL,
+  `violation_limit_snapshot` int(11) DEFAULT NULL,
+  `violation_action_snapshot` varchar(20) DEFAULT NULL,
+  `submit_reason` varchar(30) NOT NULL DEFAULT 'manual',
+  `review_status` varchar(20) NOT NULL DEFAULT 'not_required',
+  `review_note` varchar(500) DEFAULT NULL,
+  `reviewed_by` int(11) DEFAULT NULL,
+  `reviewed_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Bảng ghi nhận sự kiện vi phạm trong lượt thi.
+CREATE TABLE `violation_logs` (
+  `violation_id` int(11) NOT NULL AUTO_INCREMENT,
+  `attempt_id` int(11) NOT NULL,
+  `violation_type` varchar(50) NOT NULL,
+  `details` varchar(255) DEFAULT NULL,
+  `occurred_at` datetime DEFAULT current_timestamp(),
+  PRIMARY KEY (`violation_id`),
+  KEY `violation_logs_attempt_id` (`attempt_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -531,6 +557,13 @@ ALTER TABLE `exams`
 ALTER TABLE `exam_attempts`
   ADD CONSTRAINT `exam_attempts_ibfk_1` FOREIGN KEY (`exam_id`) REFERENCES `exams` (`exam_id`) ON DELETE CASCADE,
   ADD CONSTRAINT `exam_attempts_ibfk_2` FOREIGN KEY (`student_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+ALTER TABLE `exam_attempts`
+  ADD CONSTRAINT `exam_attempts_reviewed_by_ibfk` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`user_id`) ON DELETE SET NULL;
+
+-- Khóa ngoại log được thêm sau khi exam_attempts đã có khóa chính.
+ALTER TABLE `violation_logs`
+  ADD CONSTRAINT `violation_logs_ibfk_1` FOREIGN KEY (`attempt_id`) REFERENCES `exam_attempts` (`attempt_id`) ON DELETE CASCADE;
 
 --
 -- Các ràng buộc cho bảng `exam_questions`

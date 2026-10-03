@@ -60,7 +60,7 @@
             <?php if (!$publishedExams): ?>
                 <div class="col-12"><div class="card exam-card p-4 text-center text-muted"><i class="fa-regular fa-folder-open fs-2 mb-2"></i><p class="mb-0">Hiện chưa có đề thi được công khai.</p></div></div>
             <?php else: foreach ($publishedExams as $publishedExam): ?>
-                <div class="col-md-6 col-xl-4"><div class="card exam-card h-100 p-3"><div class="d-flex gap-3 align-items-start"><span class="exam-icon bg-primary-subtle text-primary"><i class="fa-solid fa-file-pen"></i></span><div><h3 class="h6 fw-bold mb-1"><?php echo htmlspecialchars($publishedExam['title']); ?></h3><p class="text-muted small mb-3">Đề kiểm tra trực tuyến</p><a href="index.php?action=take_exam&exam_id=<?php echo (int) $publishedExam['exam_id']; ?>" class="btn btn-sm btn-primary rounded-3">Làm bài <i class="fa-solid fa-arrow-right ms-1"></i></a></div></div></div></div>
+                <div class="col-md-6 col-xl-4"><div class="card exam-card h-100 p-3"><div class="d-flex gap-3 align-items-start"><span class="exam-icon bg-primary-subtle text-primary"><i class="fa-solid fa-file-pen"></i></span><div><h3 class="h6 fw-bold mb-1"><?php echo htmlspecialchars($publishedExam['title']); ?></h3><p class="text-muted small mb-3">Đề kiểm tra trực tuyến</p><a href="index.php?action=prepare_exam&exam_id=<?php echo (int) $publishedExam['exam_id']; ?>" class="btn btn-sm btn-primary rounded-3">Làm bài <i class="fa-solid fa-arrow-right ms-1"></i></a></div></div></div></div>
             <?php endforeach; endif; ?>
         </div>
     <?php else: ?>
