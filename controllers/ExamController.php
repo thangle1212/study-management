@@ -263,7 +263,7 @@ class ExamController {
              WHERE eq.exam_id = ?
              ORDER BY eq.order_index, q.question_id, a.order_index, a.answer_id"
         );
-        $stmt->execute([$examId]);
+        $stmt->execute([(int) $exam['exam_id']]);
         $questions = [];
         foreach ($stmt->fetchAll() as $row) {
             $questionId = $row['question_id'];

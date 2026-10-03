@@ -1,5 +1,5 @@
 <?php
-$deadline = strtotime($attempt['start_time']) + ((int) $exam['duration_minutes'] * 60);
+$deadline = strtotime($exam['start_time']) + ((int) $exam['duration_minutes'] * 60);
 ?>
 <!DOCTYPE html>
 <html lang="vi">
