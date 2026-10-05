@@ -90,3 +90,4 @@ Nháp: bài thi hoặc câu hỏi đang được xây dựng, chưa sử dụng.
 Đã công bố/Hoạt động: nội dung đã sẵn sàng để sử dụng.
 Đã lên lịch: bài thi sẽ mở trong khoảng thời gian đã cài đặt.
 Lưu trữ: không còn sử dụng nhưng vẫn giữ lại dữ liệu.
+
