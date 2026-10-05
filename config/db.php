@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('Asia/Ho_Chi_Minh');
 $host = 'localhost';
 $db   = 'db'; // Tên CSDL của bạn
 $user = 'root';
@@ -14,6 +15,7 @@ $options = [
 
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
+    $pdo->exec("SET time_zone = '+07:00';");
 } catch (\PDOException $e) {
     die("Lỗi kết nối CSDL: " . $e->getMessage());
 }

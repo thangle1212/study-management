@@ -1,4 +1,8 @@
--- 1. BẢNG NGƯỜI DÙNG
+-- =================================================================
+-- HỆ THỐNG CƠ SỞ DỮ LIỆU CHUẨN - EDUTEST / STUDY MANAGEMENT
+-- =================================================================
+
+-- 1. BẢNG NGƯỜI DÙNG (Đã bổ sung các cột phục vụ Quên/Đặt lại mật khẩu)
 CREATE TABLE users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     full_name VARCHAR(100) NOT NULL,
@@ -6,9 +10,11 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL,
     phone VARCHAR(15),
     role VARCHAR(20) NOT NULL DEFAULT 'student', -- 'student', 'teacher', 'admin'
-    school_name VARCHAR(150), -- Bổ sung thông tin trường học
+    school_name VARCHAR(150), 
     avatar VARCHAR(255),
     status VARCHAR(20) DEFAULT 'active',
+    reset_token VARCHAR(255) DEFAULT NULL,       -- Chuỗi token khôi phục mật khẩu
+    reset_token_expires DATETIME DEFAULT NULL,   -- Thời gian hết hạn token (Chuẩn DATETIME)
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -32,7 +38,7 @@ CREATE TABLE class_students (
     FOREIGN KEY (student_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
--- 4. BẢNG BÀI HỌC / TÀI LIỆU (Mới bổ sung cho chức năng HỌC)
+-- 4. BẢNG BÀI HỌC / TÀI LIỆU
 CREATE TABLE lessons (
     lesson_id INT AUTO_INCREMENT PRIMARY KEY,
     class_id INT NOT NULL,
