@@ -99,6 +99,191 @@ EduTest là website hỗ trợ học sinh, sinh viên, giáo viên và người 
 | Xuất dữ liệu | Chưa thấy chức năng xuất dữ liệu trong code hiện tại. |
 | Trạng thái đề thi | Có truy vấn chỉ cho phép làm đề đã công khai và trong khoảng thời gian mở; chưa thấy giao diện quản lý trạng thái đề. |
 
+## 5. Báo cáo riêng về module chấm điểm tự động và báo cáo thống kê
+
+Phần này là phần Hợp phụ trách. Mục tiêu không chỉ là làm cho hệ thống hiện ra một con điểm, mà là giải thích được:
+
+- Hệ thống chấm như thế nào và vì sao kết quả đó là đúng.
+- Giáo viên đọc được gì từ kết quả của cả lớp.
+- Học sinh xem lại được gì sau mỗi lần làm bài.
+- Mỗi quyết định trong code giải quyết vấn đề nghiệp vụ nào.
+
+### 5.1. Em đã dùng gì để phân tích hệ thống?
+
+Trước khi chỉnh code, em đọc luồng nghiệp vụ theo thứ tự một người dùng thực tế sẽ đi qua:
+
+1. Học sinh mở đề và bắt đầu một lượt thi.
+2. Học sinh chọn đáp án, hệ thống tự lưu đáp án.
+3. Học sinh nộp bài, hoặc hệ thống tự nộp khi hết giờ/vượt giới hạn vi phạm.
+4. Server chấm điểm và lưu kết quả.
+5. Giáo viên xem báo cáo của đề.
+6. Học sinh xem lịch sử và chi tiết câu đúng/sai của mình.
+
+Sau đó em đối chiếu luồng này với:
+
+- Route trong `index.php`.
+- Controller trong `controllers/ExamController.php`.
+- Giao diện trong `views/exams/`.
+- Cấu trúc dữ liệu trong `db.sql`.
+- Các trường hợp có thể làm sai điểm: nộp nhiều lần, câu nhiều đáp án, bỏ trống câu, hết giờ, vi phạm, giáo viên sửa đáp án giữa lúc học sinh đang làm.
+
+Em cũng dùng dữ liệu mẫu trong SQL để tự kiểm tra các trường hợp như chọn đúng, chọn sai, chọn nhiều đáp án và làm lại cùng một đề nhiều lần. Cách phân tích này giúp em nhìn module theo cả ba phần: giao diện, xử lý nghiệp vụ và dữ liệu lưu trong database.
+
+### 5.2. Ý 1 - Chấm điểm tự động: em vận dụng được gì?
+
+#### Định nghĩa bài toán
+
+Một câu hỏi được tính đúng khi tập đáp án học sinh chọn giống hoàn toàn tập đáp án đúng của câu hỏi:
+
+- Câu một đáp án: phải chọn đúng đáp án duy nhất.
+- Câu nhiều đáp án: phải chọn đủ và không chọn thừa đáp án đúng.
+- Không chọn hoặc chọn thiếu đều không được tính điểm.
+
+Điểm của lượt thi là tổng `score_weight` của những câu được tính đúng. Việc chấm được thực hiện ở server, không tin vào kết quả do trình duyệt gửi lên.
+
+#### Cách em triển khai
+
+Luồng chấm chính nằm ở `ExamController::finalizeAttempt()`:
+
+1. Kiểm tra lượt thi có thuộc đúng học sinh và vẫn đang `in_progress` hay không.
+2. Lọc các đáp án gửi lên, chỉ giữ những đáp án thật sự thuộc đề thi.
+3. Lưu lựa chọn vào `attempt_answers`.
+4. Lấy tập đáp án đúng và tập đáp án học sinh chọn.
+5. Sắp xếp hai tập rồi so sánh.
+6. Ghi `is_correct` cho từng câu.
+7. Cộng điểm theo trọng số câu hỏi và lưu vào `exam_attempts.total_score`.
+
+Em cũng thêm một số kiểm soát để kết quả không bị thay đổi ngoài ý muốn:
+
+- Không cho bắt đầu đề có câu `fill_blank` hoặc `essay` khi hệ thống chưa có cách chấm tương ứng.
+- Câu một đáp án phải có đúng một đáp án đúng.
+- Không để cùng một câu xuất hiện nhiều lần trong một đề làm điểm bị cộng lặp.
+- Khi bắt đầu lượt thi, hệ thống lưu snapshot đáp án đúng vào `attempt_correct_answers`. Vì vậy nếu giáo viên sửa ngân hàng câu hỏi sau đó, lượt thi đang diễn ra vẫn được chấm theo đáp án tại thời điểm học sinh bắt đầu.
+- Khi tự nộp do hết giờ hoặc vi phạm, câu chưa trả lời vẫn được tạo bản ghi để báo cáo không bị thiếu câu.
+
+#### File và dữ liệu liên quan
+
+- `controllers/ExamController.php`: nhận bài, lưu đáp án, chấm điểm và hoàn tất lượt thi.
+- `views/exams/take.php`: giao diện chọn đáp án, tự lưu và nộp bài.
+- `views/exams/result.php`: hiển thị điểm sau khi nộp.
+- `views/exams/attempt-detail.php`: đối chiếu từng câu và đáp án đúng/sai.
+- `exam_attempts`: lưu một lượt làm bài và tổng điểm.
+- `attempt_answers`: lưu lựa chọn của học sinh và trạng thái đúng/sai.
+- `attempt_correct_answers`: lưu đáp án đúng tại thời điểm bắt đầu lượt thi.
+- `exam_questions`: lưu câu hỏi trong đề và trọng số điểm.
+
+### 5.3. Ý 2 - Báo cáo của giảng viên: em vận dụng được gì?
+
+Em hiểu báo cáo giảng viên không nên chỉ là một bảng điểm dài. Giáo viên cần nhìn nhanh được tình hình, sau đó mới đi sâu vào từng câu hỏi và từng học sinh.
+
+Trang thống kê giáo viên hiện có các phần:
+
+- KPI số lượt tham gia.
+- Điểm trung bình, cao nhất và thấp nhất theo từng lượt.
+- Tỷ lệ đạt. Một lượt đạt khi số câu đúng lớn hơn hoặc bằng một nửa tổng số câu trong đề.
+- Số lượt đang chờ xem xét do vi phạm.
+- Biểu đồ tổng quan đúng/sai có cả số lượng và phần trăm.
+- Top câu hỏi có tỷ lệ sai cao nhất để biết nội dung nào học sinh đang yếu.
+- Phổ điểm có thể chọn:
+  - Lần đầu.
+  - Lần cao nhất.
+  - Tất cả các lượt.
+- Bảng danh sách nộp bài có tìm kiếm theo tên và lọc `Tất cả`, `Đã nộp`, `Vi phạm`.
+
+Phần phổ điểm được tách khỏi bảng chi tiết. Bảng vẫn hiển thị tất cả lượt để giáo viên tra cứu, còn biểu đồ cho phép chọn cách tính để tránh nhầm giữa “số sinh viên” và “số lượt làm bài”.
+
+Các file chính:
+
+- `controllers/ExamController.php`, hàm `statistics()`.
+- `views/exams/statistics.php`.
+- `views/exams/monitoring.php` và `views/exams/attempt-detail.php` cho phần theo dõi và xem chi tiết.
+
+### 5.4. Ý 3 - Báo cáo và thống kê của sinh viên: em vận dụng được gì?
+
+Ở phía học sinh, em tách rõ hai khái niệm:
+
+- **Số đề đã tham gia:** mỗi đề chỉ tính một lần.
+- **Tổng lượt làm:** tính tất cả những lần học sinh đã hoàn thành, kể cả làm lại cùng một đề.
+
+Trang thống kê cá nhân có:
+
+- Bộ lọc xem tất cả đề hoặc một đề cụ thể.
+- Điểm trung bình.
+- Tỷ lệ chính xác.
+- Thời gian trung bình hoàn thành bài.
+- Biểu đồ tiến bộ theo từng lượt của từng đề.
+- Biểu đồ được quy đổi sang phần trăm điểm để có thể so sánh các đề có tổng điểm khác nhau.
+- Nhãn điểm hiển thị trực tiếp trên các điểm của biểu đồ.
+- Bảng lịch sử có lần thi, đề thi, điểm, số câu đúng/sai, thời lượng, thời gian hoàn thành và trạng thái.
+- Huy hiệu `Vi phạm - Tự nộp` hoặc `Hết giờ` để học sinh hiểu vì sao lượt thi kết thúc.
+- Nút xem chi tiết từng câu đúng/sai.
+
+Các file chính:
+
+- `controllers/ExamController.php`, hàm `studentStatistics()`.
+- `views/exams/student-statistics.php`.
+- `views/exams/attempt-detail.php`.
+
+### 5.5. Em viết code như thế nào và dùng AI ở đâu?
+
+Phần lớn quá trình làm module này em dùng **vibe coding** với AI, nhưng em không xem việc AI sinh ra code là đã hoàn thành bài. Cách em làm là:
+
+1. Đọc code và mô tả lại cho AI luồng hiện tại.
+2. Nêu rõ yêu cầu nghiệp vụ, ví dụ: “câu nhiều đáp án chỉ đúng khi tập lựa chọn giống hoàn toàn đáp án đúng”.
+3. Nhờ AI đề xuất hoặc viết phần thay đổi nhỏ.
+4. Em đọc lại diff, kiểm tra tên biến, câu SQL, quyền truy cập và luồng dữ liệu.
+5. Nếu có thay đổi giao diện, em đối chiếu lại với dữ liệu thật mà giao diện cần hiển thị.
+6. Chạy kiểm tra cú pháp và kiểm tra Problems trong VS Code.
+7. Thử các trường hợp biên thay vì chỉ thử trường hợp làm bài bình thường.
+
+AI được dùng nhiều ở phần gợi ý cấu trúc, viết truy vấn, chỉnh giao diện và rà soát các trường hợp thiếu. Những phần em cần tự hiểu và tự giải thích khi báo cáo là:
+
+- Vì sao chấm ở server.
+- Vì sao phải lưu snapshot đáp án đúng.
+- Vì sao phải tách số đề và số lượt.
+- Vì sao phổ điểm cần có lựa chọn cách tính.
+- Vì sao biểu đồ câu hỏi sai nhiều có ích hơn một tỷ lệ đúng/sai tổng quát.
+
+Nói cách khác, AI hỗ trợ em viết nhanh hơn, còn yêu cầu nghiệp vụ, cách kiểm tra và quyết định giữ hay sửa code là phần em phải chịu trách nhiệm.
+
+### 5.6. Em kiểm soát code bằng cách nào?
+
+Để không phụ thuộc mù quáng vào code sinh ra, em dùng các cách sau:
+
+- Kiểm tra quyền truy cập ở controller, không chỉ ẩn nút trên giao diện.
+- Dùng prepared statement cho truy vấn có dữ liệu người dùng.
+- Kiểm tra dữ liệu đầu vào và giới hạn đáp án theo đúng câu hỏi của đề.
+- Dùng transaction khi hoàn tất lượt thi.
+- Kiểm tra trạng thái lượt thi trước khi chấm, tránh nộp hai lần.
+- Chạy `php -l` cho các file PHP đã sửa.
+- Kiểm tra Problems panel trong VS Code.
+- Chạy `git diff --check` để bắt lỗi khoảng trắng/định dạng.
+- Đọc lại diff sau mỗi thay đổi lớn.
+- Kiểm tra cả trường hợp bình thường và trường hợp biên: bỏ trống, chọn nhiều đáp án, hết giờ, vi phạm, làm lại nhiều lần, sửa đáp án giữa lượt thi.
+
+Các kiểm tra này chưa thay thế cho một bộ test tự động đầy đủ. Những phần nên làm tiếp là test chấm điểm theo từng loại câu hỏi, test quyền xem báo cáo, test nhiều lượt làm và test dữ liệu lớp không có sinh viên.
+
+### 5.7. Những công cụ em đã biết và đang dùng
+
+- VS Code để đọc code, xem Problems và quản lý thay đổi.
+- PHP CLI để kiểm tra cú pháp.
+- MariaDB/MySQL và phpMyAdmin để xem cấu trúc, dữ liệu và kiểm tra truy vấn.
+- Git để xem diff và theo dõi file đã thay đổi.
+- Browser DevTools để kiểm tra request, response và lỗi JavaScript.
+- Chart.js để vẽ biểu đồ thống kê.
+- AI/Copilot SDK để phân tích code, gợi ý hướng xử lý, tạo bản nháp code và rà soát các trường hợp có thể bỏ sót.
+
+### 5.8. Hạn chế và hướng phát triển
+
+Module hiện tại đã đáp ứng phần chấm điểm và báo cáo cho câu hỏi trắc nghiệm một đáp án/nhiều đáp án. Một số hướng phát triển tiếp:
+
+- Thêm chấm tự động cho điền khuyết với quy tắc chuẩn hóa câu trả lời.
+- Thêm quy trình chấm và phúc khảo cho câu tự luận.
+- Xuất báo cáo CSV/Excel.
+- Cho giáo viên chọn cách tính KPI riêng: theo lượt, theo sinh viên, lần đầu hoặc lần cao nhất.
+- Thêm bộ test tự động cho toàn bộ luồng nộp bài và chấm điểm.
+- Có lịch sử thay đổi đáp án và cấu hình đề để dễ kiểm tra khi cần giải trình.hai và trong khoảng thời gian mở; chưa thấy giao diện quản lý trạng thái đề. |
+
 Diễn đàn được ghi là ngoài phạm vi MVP ban đầu, nhưng sau đó đã được giao cho Thành viên 5 trong bảng phân công. Trong phiên bản code hiện tại, phần này mới có cấu trúc dữ liệu và chưa có chức năng sử dụng.
 
 ## 5. Đối chiếu tiêu chuẩn an toàn
