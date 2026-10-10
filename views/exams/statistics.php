@@ -16,6 +16,9 @@
         .page-heading { border: 0; border-radius: 22px; background: linear-gradient(135deg, #0d6efd, #438df4); color: #fff; box-shadow: 0 16px 36px rgba(13,110,253,.18); }
         .table thead th { color: #6c7b93; font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; border-bottom-width: 1px; }
         .table tbody tr:last-child td { border-bottom: 0; }
+        .kpi-card { border: 1px solid #e5edf8; border-radius: 16px; box-shadow: 0 8px 24px rgba(31,74,125,.06); }
+        .kpi-icon { width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; border-radius: 11px; }
+        .kpi-value { font-size: 1.45rem; line-height: 1.2; }
     </style>
 </head>
 <body>
@@ -38,6 +41,44 @@
     <?php if (($_GET['settings'] ?? '') === 'saved'): ?>
         <div class="alert alert-success" role="status">Đã cập nhật cấu hình đề thi.</div>
     <?php endif; ?>
+
+    <section class="row g-3 mb-4" aria-label="Chỉ số tổng quan">
+        <div class="col-sm-6 col-xl">
+            <div class="card kpi-card h-100"><div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3"><span class="text-muted small">Sĩ số tham gia</span><span class="kpi-icon bg-primary-subtle text-primary"><i class="fa-solid fa-users"></i></span></div>
+                <div class="kpi-value fw-bold"><?php echo $participantCount; ?></div>
+                <div class="text-muted small mt-1">Tổng lượt đã hoàn thành</div>
+            </div></div>
+        </div>
+        <div class="col-sm-6 col-xl">
+            <div class="card kpi-card h-100"><div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3"><span class="text-muted small">Điểm trung bình</span><span class="kpi-icon bg-info-subtle text-info"><i class="fa-solid fa-chart-line"></i></span></div>
+                <div class="kpi-value fw-bold"><?php echo $averageScore === null ? '—' : number_format($averageScore, 2); ?></div>
+                <div class="text-muted small mt-1">Tính trên từng lượt thi</div>
+            </div></div>
+        </div>
+        <div class="col-sm-6 col-xl">
+            <div class="card kpi-card h-100"><div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3"><span class="text-muted small">Cao nhất / thấp nhất</span><span class="kpi-icon bg-success-subtle text-success"><i class="fa-solid fa-ranking-star"></i></span></div>
+                <div class="kpi-value fw-bold"><?php echo $highestScore === null ? '—' : number_format($highestScore, 2); ?> <span class="text-danger fs-6">/ <?php echo $lowestScore === null ? '—' : number_format($lowestScore, 2); ?></span></div>
+                <div class="text-muted small mt-1">Tính trên từng lượt thi</div>
+            </div></div>
+        </div>
+        <div class="col-sm-6 col-xl">
+            <div class="card kpi-card h-100"><div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3"><span class="text-muted small">Tỷ lệ đạt</span><span class="kpi-icon bg-warning-subtle text-warning-emphasis"><i class="fa-solid fa-bullseye"></i></span></div>
+                <div class="kpi-value fw-bold"><?php echo $passRate === null ? '—' : number_format($passRate, 1) . '%'; ?></div>
+                <div class="text-muted small mt-1"><?php echo $passCount; ?> lượt đạt ít nhất <?php echo $minimumCorrectCount; ?>/<?php echo $questionCount; ?> câu</div>
+            </div></div>
+        </div>
+        <div class="col-sm-6 col-xl">
+            <div class="card kpi-card h-100"><div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3"><span class="text-muted small">Cảnh báo vi phạm</span><span class="kpi-icon bg-danger-subtle text-danger"><i class="fa-solid fa-triangle-exclamation"></i></span></div>
+                <div class="kpi-value fw-bold"><?php echo $violationWarningCount; ?></div>
+                <div class="text-muted small mt-1">Lượt thi chờ xem xét</div>
+            </div></div>
+        </div>
+    </section>
 
     <section class="card stat-card mb-4">
         <div class="card-body p-4">

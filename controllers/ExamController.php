@@ -43,7 +43,40 @@ class ExamController {
         exit;
     }
 
+    private function ensureAutomaticallyGradableExam($examId) {
+        $stmt = $this->pdo->prepare(
+            "SELECT q.question_id, q.question_type,
+                    COUNT(a.answer_id) AS answer_count,
+                    COALESCE(SUM(CASE WHEN a.is_correct = TRUE THEN 1 ELSE 0 END), 0) AS correct_count
+             FROM exam_questions eq
+             JOIN questions q ON q.question_id = eq.question_id
+             LEFT JOIN answers a ON a.question_id = q.question_id
+             WHERE eq.exam_id = ?
+             GROUP BY q.question_id, q.question_type"
+        );
+        $stmt->execute([$examId]);
+        $questions = $stmt->fetchAll();
+        if (!$questions) {
+            return 'Đề thi chưa có câu hỏi.';
+        }
+
+        foreach ($questions as $question) {
+            if (!in_array($question['question_type'], ['single_choice', 'multiple_choice'], true)) {
+                return 'Đề thi có câu hỏi chưa được hỗ trợ chấm tự động. Chỉ hỗ trợ câu hỏi một đáp án và nhiều đáp án.';
+            }
+            if ((int) $question['answer_count'] === 0 || (int) $question['correct_count'] === 0) {
+                return 'Đề thi có câu hỏi chưa được cấu hình đáp án đúng.';
+            }
+            if ($question['question_type'] === 'single_choice' && (int) $question['correct_count'] !== 1) {
+                return 'Câu hỏi một đáp án phải có đúng một đáp án đúng.';
+            }
+        }
+
+        return null;
+    }
+
     private function saveAttemptAnswers($attemptId, $examId, $answers) {
+        $answers = is_array($answers) ? $answers : [];
         $stmt = $this->pdo->prepare(
             "SELECT eq.question_id, a.answer_id
              FROM exam_questions eq
@@ -81,6 +114,35 @@ class ExamController {
         }
     }
 
+    private function ensureUnansweredQuestions($attemptId, $examId) {
+        $stmt = $this->pdo->prepare(
+            "INSERT INTO attempt_answers (attempt_id, question_id, answer_id, is_correct)
+             SELECT ?, DISTINCT_QUESTIONS.question_id, NULL, 0
+             FROM (
+                 SELECT DISTINCT question_id
+                 FROM exam_questions
+                 WHERE exam_id = ?
+             ) AS DISTINCT_QUESTIONS
+             WHERE NOT EXISTS (
+                   SELECT 1
+                   FROM attempt_answers aa
+                   WHERE aa.attempt_id = ? AND aa.question_id = DISTINCT_QUESTIONS.question_id
+               )"
+        );
+        $stmt->execute([$attemptId, $examId, $attemptId]);
+    }
+
+    private function snapshotCorrectAnswers($attemptId, $examId) {
+        $stmt = $this->pdo->prepare(
+            "INSERT IGNORE INTO attempt_correct_answers (attempt_id, question_id, answer_id)
+             SELECT ?, eq.question_id, a.answer_id
+             FROM exam_questions eq
+             JOIN answers a ON a.question_id = eq.question_id
+             WHERE eq.exam_id = ? AND a.is_correct = TRUE"
+        );
+        $stmt->execute([$attemptId, $examId]);
+    }
+
     private function finalizeAttempt($attemptId, $studentId, $answers, $reason) {
         $stmt = $this->pdo->prepare(
                 "SELECT ea.attempt_id, ea.exam_id, ea.start_time,
@@ -101,15 +163,25 @@ class ExamController {
         }
         if ($answers !== null) {
             $this->saveAttemptAnswers($attemptId, (int) $attempt['exam_id'], $answers);
+        } else {
+            $this->ensureUnansweredQuestions($attemptId, (int) $attempt['exam_id']);
         }
+        $this->snapshotCorrectAnswers($attemptId, (int) $attempt['exam_id']);
 
         $stmt = $this->pdo->prepare(
-            "SELECT question_id, score_weight FROM exam_questions WHERE exam_id = ?"
+            "SELECT question_id, MAX(score_weight) AS score_weight
+             FROM exam_questions
+             WHERE exam_id = ?
+             GROUP BY question_id"
         );
         $stmt->execute([(int) $attempt['exam_id']]);
         $examQuestions = $stmt->fetchAll();
         if (!$examQuestions) {
             throw new RuntimeException('Đề thi chưa có câu hỏi.');
+        }
+        $gradingError = $this->ensureAutomaticallyGradableExam((int) $attempt['exam_id']);
+        if ($gradingError !== null) {
+            throw new RuntimeException($gradingError);
         }
 
         $selectedStmt = $this->pdo->prepare(
@@ -117,7 +189,8 @@ class ExamController {
              WHERE attempt_id = ? AND question_id = ? AND answer_id IS NOT NULL"
         );
         $correctStmt = $this->pdo->prepare(
-            "SELECT answer_id FROM answers WHERE question_id = ? AND is_correct = TRUE"
+            "SELECT answer_id FROM attempt_correct_answers
+             WHERE attempt_id = ? AND question_id = ?"
         );
         $markAnswers = $this->pdo->prepare(
             "UPDATE attempt_answers SET is_correct = ?
@@ -128,7 +201,7 @@ class ExamController {
             $questionId = (int) $examQuestion['question_id'];
             $selectedStmt->execute([$attemptId, $questionId]);
             $selectedIds = array_map('intval', $selectedStmt->fetchAll(PDO::FETCH_COLUMN));
-            $correctStmt->execute([$questionId]);
+            $correctStmt->execute([$attemptId, $questionId]);
             $correctIds = array_map('intval', $correctStmt->fetchAll(PDO::FETCH_COLUMN));
             sort($selectedIds);
             sort($correctIds);
@@ -166,6 +239,37 @@ class ExamController {
         if (!$exam) {
             die('Đề thi không tồn tại hoặc chưa được công khai.');
         }
+        $gradingError = $this->ensureAutomaticallyGradableExam($examId);
+        if ($gradingError !== null) {
+            die($gradingError);
+        }
+
+        $studentId = (int) $_SESSION['user']['id'];
+        $historyStmt = $this->pdo->prepare(
+            "SELECT ea.attempt_id, ea.total_score, ea.start_time, ea.end_time,
+                    ea.submit_reason, ea.review_status,
+                    COUNT(DISTINCT CASE WHEN aa.is_correct = TRUE THEN aa.question_id END) AS correct_count,
+                    COUNT(DISTINCT eq.question_id) AS question_count
+             FROM exam_attempts ea
+             LEFT JOIN attempt_answers aa ON aa.attempt_id = ea.attempt_id
+             JOIN exam_questions eq ON eq.exam_id = ea.exam_id
+             WHERE ea.exam_id = ? AND ea.student_id = ?
+               AND ea.status IN ('completed', 'voided')
+             GROUP BY ea.attempt_id, ea.total_score, ea.start_time, ea.end_time,
+                      ea.submit_reason, ea.review_status
+             ORDER BY ea.end_time DESC, ea.attempt_id DESC"
+        );
+        $historyStmt->execute([$examId, $studentId]);
+        $attemptHistory = $historyStmt->fetchAll();
+        $completedAttemptCount = count($attemptHistory);
+        $activeAttemptStmt = $this->pdo->prepare(
+            "SELECT attempt_id
+             FROM exam_attempts
+             WHERE exam_id = ? AND student_id = ? AND status = 'in_progress'
+             ORDER BY attempt_id DESC LIMIT 1"
+        );
+        $activeAttemptStmt->execute([$examId, $studentId]);
+        $activeAttemptId = $activeAttemptStmt->fetchColumn();
 
         $csrfToken = $_SESSION['csrf_token'];
         require __DIR__ . '/../views/exams/prepare.php';
@@ -186,6 +290,11 @@ class ExamController {
         if (!$exam) {
             http_response_code(404);
             exit('Đề thi không tồn tại hoặc chưa được công khai.');
+        }
+        $gradingError = $this->ensureAutomaticallyGradableExam($examId);
+        if ($gradingError !== null) {
+            http_response_code(422);
+            exit($gradingError);
         }
 
         $attemptStmt = $this->pdo->prepare(
@@ -213,6 +322,7 @@ class ExamController {
             ]);
             $attemptId = $this->pdo->lastInsertId();
         }
+        $this->snapshotCorrectAnswers((int) $attemptId, $examId);
         header('Location: index.php?action=take_exam&attempt_id=' . (int) $attemptId);
         exit;
     }
@@ -240,6 +350,11 @@ class ExamController {
         if (!$exam || $exam['status'] !== 'in_progress') {
             http_response_code(403);
             exit('Lượt thi không hợp lệ hoặc đã được nộp.');
+        }
+        $gradingError = $this->ensureAutomaticallyGradableExam((int) $exam['exam_id']);
+        if ($gradingError !== null) {
+            http_response_code(422);
+            exit($gradingError);
         }
 
         if (time() >= strtotime($exam['start_time']) + ((int) $exam['duration_minutes'] * 60)) {
@@ -567,7 +682,7 @@ class ExamController {
         $examId = (int) ($_GET['exam_id'] ?? 0);
         $userId = (int) $_SESSION['user']['id'];
         $stmt = $this->pdo->prepare(
-            "SELECT e.exam_id, e.title
+            "SELECT e.exam_id, e.title, e.class_id
                     , e.duration_minutes, e.anti_cheat_enabled
                     , e.violation_limit, e.violation_action
              FROM exams e
@@ -583,11 +698,13 @@ class ExamController {
         $stmt = $this->pdo->prepare(
                 "SELECT u.full_name, ea.total_score, ea.end_time, ea.attempt_id,
                     ea.student_id, ea.submit_reason, ea.review_status,
-                    COUNT(v.violation_id) AS violation_count
-             FROM exam_attempts ea
-             JOIN users u ON u.user_id = ea.student_id
-                 LEFT JOIN violation_logs v ON v.attempt_id = ea.attempt_id
-             WHERE ea.exam_id = ? AND ea.status = 'completed'
+                        COUNT(v.violation_id) AS violation_count,
+                        COUNT(DISTINCT CASE WHEN aa.is_correct = TRUE THEN aa.question_id END) AS correct_count
+                 FROM exam_attempts ea
+                 JOIN users u ON u.user_id = ea.student_id
+                     LEFT JOIN violation_logs v ON v.attempt_id = ea.attempt_id
+                     LEFT JOIN attempt_answers aa ON aa.attempt_id = ea.attempt_id
+                 WHERE ea.exam_id = ? AND ea.status = 'completed'
                  GROUP BY ea.attempt_id, u.full_name, ea.total_score, ea.end_time,
                       ea.student_id, ea.submit_reason, ea.review_status
              ORDER BY u.full_name, ea.end_time, ea.attempt_id"
@@ -601,6 +718,41 @@ class ExamController {
             $score['attempt_number'] = $attemptNumbers[$studentId];
         }
         unset($score);
+
+        $questionCountStmt = $this->pdo->prepare(
+            "SELECT COUNT(DISTINCT question_id)
+             FROM exam_questions
+             WHERE exam_id = ?"
+        );
+        $questionCountStmt->execute([$examId]);
+        $questionCount = (int) $questionCountStmt->fetchColumn();
+        $participantCount = count($scores);
+        $averageScore = null;
+        $highestScore = null;
+        $lowestScore = null;
+        $passCount = 0;
+        $minimumCorrectCount = (int) ceil($questionCount / 2);
+        if ($scores) {
+            $scoreValues = array_map(function ($row) {
+                return (float) $row['total_score'];
+            }, $scores);
+            $averageScore = array_sum($scoreValues) / $participantCount;
+            $highestScore = max($scoreValues);
+            $lowestScore = min($scoreValues);
+            $passCount = count(array_filter($scores, function ($score) use ($minimumCorrectCount) {
+                return (int) $score['correct_count'] >= $minimumCorrectCount;
+            }));
+        }
+
+        $passRate = $participantCount ? ($passCount / $participantCount) * 100 : null;
+
+        $violationStmt = $this->pdo->prepare(
+            "SELECT COUNT(*)
+             FROM exam_attempts
+             WHERE exam_id = ? AND status = 'completed' AND review_status = 'pending'"
+        );
+        $violationStmt->execute([$examId]);
+        $violationWarningCount = (int) $violationStmt->fetchColumn();
 
         $scoreDistribution = [];
         foreach ($scores as $score) {
@@ -683,14 +835,21 @@ class ExamController {
 
         $stmt = $this->pdo->prepare(
             "SELECT eq.question_id, eq.order_index, q.content, q.question_type,
-                    a.answer_id, a.content AS answer_content, a.is_correct
+                    a.answer_id, a.content AS answer_content,
+                    CASE WHEN EXISTS (
+                        SELECT 1 FROM attempt_correct_answers snapshot
+                        WHERE snapshot.attempt_id = ?
+                    ) THEN aca.answer_id IS NOT NULL ELSE a.is_correct END AS is_correct
              FROM exam_questions eq
              JOIN questions q ON q.question_id = eq.question_id
              LEFT JOIN answers a ON a.question_id = q.question_id
+             LEFT JOIN attempt_correct_answers aca
+               ON aca.attempt_id = ? AND aca.question_id = q.question_id
+              AND aca.answer_id = a.answer_id
              WHERE eq.exam_id = ?
              ORDER BY eq.order_index, q.question_id, a.order_index, a.answer_id"
         );
-        $stmt->execute([(int) $attempt['exam_id']]);
+        $stmt->execute([$attemptId, $attemptId, (int) $attempt['exam_id']]);
         $questions = [];
         foreach ($stmt->fetchAll() as $row) {
             $questionId = (int) $row['question_id'];

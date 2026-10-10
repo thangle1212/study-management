@@ -12,6 +12,8 @@
         .prepare-header { border: 0; border-radius: 18px; background: linear-gradient(135deg, #0d6efd, #438df4); color: #fff; }
         .policy-row { border-bottom: 1px solid #e5edf8; }
         .policy-row:last-child { border-bottom: 0; }
+        .history-card { border: 1px solid #e5edf8; border-radius: 14px; }
+        .history-score { min-width: 86px; }
     </style>
 </head>
 <body>
@@ -41,11 +43,57 @@
     <div class="alert alert-warning" role="note">
         <i class="fa-solid fa-triangle-exclamation me-2"></i>Rời tab, thu nhỏ cửa sổ hoặc thao tác bị cấm có thể được ghi nhận theo quy chế bài thi.
     </div>
-    <form id="start-exam-form" method="post" action="index.php?action=start_exam" class="text-end">
+    <form id="start-exam-form" method="post" action="index.php?action=start_exam" class="text-end mb-4">
         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>">
         <input type="hidden" name="exam_id" value="<?php echo (int) $exam['exam_id']; ?>">
-        <button type="submit" class="btn btn-primary btn-lg"><i class="fa-solid fa-play me-2"></i>Bắt đầu làm bài</button>
+        <button type="submit" class="btn btn-primary btn-lg"><i class="fa-solid fa-play me-2"></i><?php echo $activeAttemptId ? 'Tiếp tục làm bài' : 'Bắt đầu làm bài'; ?></button>
     </form>
+
+    <section aria-labelledby="attempt-history-title">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 id="attempt-history-title" class="h5 fw-bold mb-0">
+                <i class="fa-solid fa-clock-rotate-left text-primary me-2"></i>Lịch sử làm bài
+            </h2>
+            <span class="badge rounded-pill bg-primary-subtle text-primary">
+                <?php echo $completedAttemptCount; ?> lần
+            </span>
+        </div>
+        <?php if (!$attemptHistory): ?>
+            <div class="card history-card">
+                <div class="card-body text-center text-muted py-4">
+                    <i class="fa-regular fa-folder-open fs-2 mb-2"></i>
+                    <p class="mb-0">Bạn chưa có lịch sử làm bài.</p>
+                </div>
+            </div>
+        <?php else: ?>
+            <div class="d-grid gap-3">
+                <?php foreach ($attemptHistory as $history): ?>
+                    <article class="card history-card">
+                        <div class="card-body p-3 p-md-4">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                                <div>
+                                    <div class="text-muted small mb-1">
+                                        Lần <?php echo $completedAttemptCount--; ?> ·
+                                        <?php echo htmlspecialchars($history['end_time'] ?? 'Chưa xác định'); ?>
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-3 small">
+                                        <span><i class="fa-solid fa-circle-check text-success me-1"></i><?php echo (int) $history['correct_count']; ?>/<?php echo (int) $history['question_count']; ?> câu đúng</span>
+                                        <span><i class="fa-regular fa-clock text-primary me-1"></i><?php echo htmlspecialchars($history['submit_reason'] === 'time_expired' ? 'Hết giờ' : ($history['submit_reason'] === 'violation_limit' ? 'Tự động nộp' : 'Đã nộp')); ?></span>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <strong class="history-score text-end text-primary fs-5"><?php echo number_format((float) $history['total_score'], 2); ?> điểm</strong>
+                                    <a class="btn btn-outline-primary btn-sm text-nowrap" href="index.php?action=attempt_detail&amp;attempt_id=<?php echo (int) $history['attempt_id']; ?>&amp;from=exam&amp;exam_id=<?php echo (int) $exam['exam_id']; ?>">
+                                        <i class="fa-solid fa-eye me-1"></i>Xem chi tiết
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    </section>
 </main>
 <script>
 document.getElementById('start-exam-form').addEventListener('submit', async function (event) {

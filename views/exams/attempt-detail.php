@@ -23,7 +23,13 @@
 <nav class="navbar topbar sticky-top">
     <div class="container">
         <a class="navbar-brand brand fw-bold" href="index.php?action=dashboard"><i class="fa-solid fa-graduation-cap me-2"></i>EduTest</a>
-        <?php $backAction = $_SESSION['user']['role'] === 'student' ? 'student_statistics' : 'exam_statistics&exam_id=' . (int) $attempt['exam_id']; ?>
+        <?php
+        $backAction = $_SESSION['user']['role'] === 'student'
+            ? (($_GET['from'] ?? '') === 'exam'
+                ? 'prepare_exam&exam_id=' . (int) $attempt['exam_id']
+                : 'student_statistics')
+            : 'exam_statistics&exam_id=' . (int) $attempt['exam_id'];
+        ?>
         <a href="index.php?action=<?php echo $backAction; ?>" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-arrow-left me-1"></i><?php echo $_SESSION['user']['role'] === 'student' ? 'Quay lại thống kê cá nhân' : 'Quay lại bảng điểm'; ?></a>
     </div>
 </nav>

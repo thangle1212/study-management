@@ -65,6 +65,15 @@ CREATE TABLE `attempt_answers` (
   `is_correct` tinyint(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- Đáp án đúng được chụp tại thời điểm bắt đầu lượt thi.
+CREATE TABLE `attempt_correct_answers` (
+  `attempt_id` int(11) NOT NULL,
+  `question_id` int(11) NOT NULL,
+  `answer_id` int(11) NOT NULL,
+  PRIMARY KEY (`attempt_id`,`question_id`,`answer_id`),
+  KEY `attempt_correct_answers_question_id` (`question_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 --
 -- Đang đổ dữ liệu cho bảng `attempt_answers`
 --
@@ -347,6 +356,13 @@ ALTER TABLE `attempt_answers`
   ADD KEY `answer_id` (`answer_id`);
 
 --
+-- Chỉ mục cho bảng `attempt_correct_answers`
+--
+ALTER TABLE `attempt_correct_answers`
+  ADD KEY `attempt_correct_answers_attempt_id` (`attempt_id`),
+  ADD KEY `attempt_correct_answers_answer_id` (`answer_id`);
+
+--
 -- Chỉ mục cho bảng `classes`
 --
 ALTER TABLE `classes`
@@ -383,6 +399,7 @@ ALTER TABLE `exam_attempts`
 --
 ALTER TABLE `exam_questions`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `exam_questions_exam_question_unique` (`exam_id`,`question_id`),
   ADD KEY `exam_id` (`exam_id`),
   ADD KEY `question_id` (`question_id`);
 
@@ -530,6 +547,13 @@ ALTER TABLE `attempt_answers`
   ADD CONSTRAINT `attempt_answers_ibfk_1` FOREIGN KEY (`attempt_id`) REFERENCES `exam_attempts` (`attempt_id`) ON DELETE CASCADE,
   ADD CONSTRAINT `attempt_answers_ibfk_2` FOREIGN KEY (`question_id`) REFERENCES `questions` (`question_id`) ON DELETE CASCADE,
   ADD CONSTRAINT `attempt_answers_ibfk_3` FOREIGN KEY (`answer_id`) REFERENCES `answers` (`answer_id`) ON DELETE SET NULL;
+
+--
+-- Các ràng buộc cho bảng `attempt_correct_answers`
+--
+ALTER TABLE `attempt_correct_answers`
+  ADD CONSTRAINT `attempt_correct_answers_ibfk_1` FOREIGN KEY (`attempt_id`) REFERENCES `exam_attempts` (`attempt_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `attempt_correct_answers_ibfk_2` FOREIGN KEY (`question_id`) REFERENCES `questions` (`question_id`) ON DELETE CASCADE;
 
 --
 -- Các ràng buộc cho bảng `classes`
