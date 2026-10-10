@@ -698,7 +698,7 @@ class ExamController {
         $stmt = $this->pdo->prepare(
                 "SELECT u.full_name, ea.total_score, ea.end_time, ea.attempt_id,
                     ea.student_id, ea.submit_reason, ea.review_status,
-                        COUNT(v.violation_id) AS violation_count,
+                        COUNT(DISTINCT v.violation_id) AS violation_count,
                         COUNT(DISTINCT CASE WHEN aa.is_correct = TRUE THEN aa.question_id END) AS correct_count
                  FROM exam_attempts ea
                  JOIN users u ON u.user_id = ea.student_id
@@ -754,8 +754,33 @@ class ExamController {
         $violationStmt->execute([$examId]);
         $violationWarningCount = (int) $violationStmt->fetchColumn();
 
+        $distributionMode = $_GET['distribution_mode'] ?? 'highest';
+        if (!in_array($distributionMode, ['first', 'highest', 'all'], true)) {
+            $distributionMode = 'highest';
+        }
+        $distributionScores = $scores;
+        if ($distributionMode !== 'all') {
+            $selectedAttempts = [];
+            foreach ($scores as $score) {
+                $studentId = (int) $score['student_id'];
+                if (!isset($selectedAttempts[$studentId])) {
+                    $selectedAttempts[$studentId] = $score;
+                    continue;
+                }
+                $current = $selectedAttempts[$studentId];
+                $isHigher = (float) $score['total_score'] > (float) $current['total_score'];
+                $isLater = $score['end_time'] > $current['end_time']
+                    || ($score['end_time'] === $current['end_time'] && (int) $score['attempt_id'] > (int) $current['attempt_id']);
+                if (($distributionMode === 'highest' && ($isHigher || ((float) $score['total_score'] === (float) $current['total_score'] && $isLater)))
+                    || ($distributionMode === 'first' && !$isLater)) {
+                    $selectedAttempts[$studentId] = $score;
+                }
+            }
+            $distributionScores = array_values($selectedAttempts);
+        }
+
         $scoreDistribution = [];
-        foreach ($scores as $score) {
+        foreach ($distributionScores as $score) {
             $scoreValue = number_format((float) $score['total_score'], 2, '.', '');
             $scoreDistribution[$scoreValue] = ($scoreDistribution[$scoreValue] ?? 0) + 1;
         }
@@ -763,46 +788,49 @@ class ExamController {
             return (float) $left <=> (float) $right;
         });
 
-                $stmt = $this->pdo->prepare(
-                        "SELECT COUNT(*) AS total_question_count,
-                                        SUM(CASE
-                                                WHEN EXISTS (
-                                                        SELECT 1
-                                                        FROM attempt_answers aa_wrong
-                                                        WHERE aa_wrong.attempt_id = ea.attempt_id
-                                                            AND aa_wrong.question_id = eq.question_id
-                                                            AND aa_wrong.is_correct = FALSE
-                                                ) THEN 0
-                                                WHEN (
-                                                        SELECT COUNT(*)
-                                                        FROM attempt_answers aa_selected
-                                                        WHERE aa_selected.attempt_id = ea.attempt_id
-                                                            AND aa_selected.question_id = eq.question_id
-                                                            AND aa_selected.answer_id IS NOT NULL
-                                                ) = (
-                                                        SELECT COUNT(*)
-                                                        FROM answers a_correct
-                                                        WHERE a_correct.question_id = eq.question_id
-                                                            AND a_correct.is_correct = TRUE
-                                                )
-                                                AND (
-                                                        SELECT COUNT(*)
-                                                        FROM attempt_answers aa_answered
-                                                        WHERE aa_answered.attempt_id = ea.attempt_id
-                                                            AND aa_answered.question_id = eq.question_id
-                                                            AND aa_answered.answer_id IS NOT NULL
-                                                ) > 0 THEN 1
-                                                ELSE 0
-                                        END) AS correct_count
-                         FROM exam_attempts ea
-                         JOIN exam_questions eq ON eq.exam_id = ea.exam_id
-                         WHERE ea.exam_id = ? AND ea.status = 'completed'"
-                );
-                $stmt->execute([$examId]);
-                $chartStats = $stmt->fetch();
-                $totalQuestionCount = (int) ($chartStats['total_question_count'] ?? 0);
-                $correctCount = (int) ($chartStats['correct_count'] ?? 0);
-                $wrongCount = max(0, $totalQuestionCount - $correctCount);
+        $questionStatsStmt = $this->pdo->prepare(
+            "SELECT eq.question_id, eq.order_index,
+                    COUNT(DISTINCT ea.attempt_id) AS attempt_count,
+                    COUNT(DISTINCT CASE WHEN aa.is_correct = TRUE THEN ea.attempt_id END) AS correct_count,
+                    q.content
+             FROM exam_questions eq
+             JOIN questions q ON q.question_id = eq.question_id
+             LEFT JOIN exam_attempts ea
+               ON ea.exam_id = eq.exam_id AND ea.status = 'completed'
+             LEFT JOIN attempt_answers aa
+               ON aa.attempt_id = ea.attempt_id
+              AND aa.question_id = eq.question_id
+             WHERE eq.exam_id = ?
+             GROUP BY eq.question_id, eq.order_index, q.content
+             ORDER BY eq.order_index, eq.question_id"
+        );
+        $questionStatsStmt->execute([$examId]);
+        $questionStats = $questionStatsStmt->fetchAll();
+        $totalCorrectAnswers = 0;
+        $totalWrongAnswers = 0;
+        foreach ($questionStats as &$questionStat) {
+            $questionStat['attempt_count'] = (int) $questionStat['attempt_count'];
+            $questionStat['correct_count'] = (int) $questionStat['correct_count'];
+            $questionStat['wrong_count'] = max(0, $questionStat['attempt_count'] - $questionStat['correct_count']);
+            $questionStat['wrong_rate'] = $questionStat['attempt_count']
+                ? ($questionStat['wrong_count'] / $questionStat['attempt_count']) * 100
+                : 0;
+            $totalCorrectAnswers += $questionStat['correct_count'];
+            $totalWrongAnswers += $questionStat['wrong_count'];
+        }
+        unset($questionStat);
+        $totalAnsweredQuestions = $totalCorrectAnswers + $totalWrongAnswers;
+        $correctPercentage = $totalAnsweredQuestions
+            ? ($totalCorrectAnswers / $totalAnsweredQuestions) * 100
+            : 0;
+        $wrongPercentage = $totalAnsweredQuestions
+            ? ($totalWrongAnswers / $totalAnsweredQuestions) * 100
+            : 0;
+        $topDifficultQuestions = $questionStats;
+        usort($topDifficultQuestions, function ($left, $right) {
+            return $right['wrong_rate'] <=> $left['wrong_rate'];
+        });
+        $topDifficultQuestions = array_slice($topDifficultQuestions, 0, 5);
         require __DIR__ . '/../views/exams/statistics.php';
     }
 

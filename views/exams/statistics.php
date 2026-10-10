@@ -19,6 +19,7 @@
         .kpi-card { border: 1px solid #e5edf8; border-radius: 16px; box-shadow: 0 8px 24px rgba(31,74,125,.06); }
         .kpi-icon { width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; border-radius: 11px; }
         .kpi-value { font-size: 1.45rem; line-height: 1.2; }
+        .table-filter { background: #f7faff; border: 1px solid #e5edf8; border-radius: 12px; }
     </style>
 </head>
 <body>
@@ -45,7 +46,7 @@
     <section class="row g-3 mb-4" aria-label="Chỉ số tổng quan">
         <div class="col-sm-6 col-xl">
             <div class="card kpi-card h-100"><div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-3"><span class="text-muted small">Sĩ số tham gia</span><span class="kpi-icon bg-primary-subtle text-primary"><i class="fa-solid fa-users"></i></span></div>
+                <div class="d-flex justify-content-between align-items-start mb-3"><span class="text-muted small">Số lượt tham gia</span><span class="kpi-icon bg-primary-subtle text-primary"><i class="fa-solid fa-users"></i></span></div>
                 <div class="kpi-value fw-bold"><?php echo $participantCount; ?></div>
                 <div class="text-muted small mt-1">Tổng lượt đã hoàn thành</div>
             </div></div>
@@ -124,12 +125,31 @@
                     <?php if (!$scores): ?>
                         <p class="text-muted">Chưa có học sinh nộp bài.</p>
                     <?php else: ?>
+                        <div class="table-filter p-3 mb-3">
+                            <div class="row g-2">
+                                <div class="col-md-7">
+                                    <label class="visually-hidden" for="score-search">Tìm kiếm sinh viên</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white"><i class="fa-solid fa-magnifying-glass"></i></span>
+                                        <input id="score-search" class="form-control" type="search" placeholder="Tìm theo tên sinh viên">
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="visually-hidden" for="score-status">Lọc trạng thái</label>
+                                    <select id="score-status" class="form-select">
+                                        <option value="all">Tất cả trạng thái</option>
+                                        <option value="submitted">Đã nộp</option>
+                                        <option value="violation">Vi phạm</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
                         <div class="table-responsive">
-                            <table class="table align-middle">
+                            <table id="scores-table" class="table align-middle">
                                 <thead><tr><th>Học sinh</th><th>Lần nộp</th><th>Điểm</th><th>Vi phạm</th><th>Trạng thái</th><th>Thời gian</th></tr></thead>
                                 <tbody>
                                 <?php foreach ($scores as $score): ?>
-                                    <tr>
+                                    <tr data-student-name="<?php echo htmlspecialchars(function_exists('mb_strtolower') ? mb_strtolower($score['full_name'], 'UTF-8') : strtolower($score['full_name'])); ?>" data-status="<?php echo $score['review_status'] === 'pending' || $score['submit_reason'] === 'violation_limit' ? 'violation' : 'submitted'; ?>">
                                         <td><a class="fw-semibold text-decoration-none" href="index.php?action=attempt_detail&attempt_id=<?php echo (int) $score['attempt_id']; ?>"><?php echo htmlspecialchars($score['full_name']); ?></a></td>
                                         <td><a href="index.php?action=attempt_detail&attempt_id=<?php echo (int) $score['attempt_id']; ?>" class="badge rounded-pill bg-primary-subtle text-primary text-decoration-none">Lần <?php echo (int) $score['attempt_number']; ?></a></td>
                                         <td class="fw-bold"><?php echo number_format((float) $score['total_score'], 2); ?></td>
@@ -150,6 +170,7 @@
                                 <?php endforeach; ?>
                                 </tbody>
                             </table>
+                            <p id="scores-empty" class="text-muted d-none mb-0">Không có lượt nộp phù hợp với bộ lọc.</p>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -159,11 +180,15 @@
             <div class="card stat-card h-100">
                 <div class="card-body">
                     <h5 class="fw-bold mb-1"><i class="fa-solid fa-chart-pie text-primary me-2"></i>Tổng quan đúng / sai</h5>
-                    <p class="text-muted small mb-3">Tổng số câu đúng và sai trong các lượt làm bài</p>
+                    <p class="text-muted small mb-3">Tổng hợp <?php echo $totalAnsweredQuestions; ?> lượt trả lời từ các bài đã hoàn thành</p>
                     <?php if (!$scores): ?>
                         <p class="text-muted">Chưa có dữ liệu để thống kê.</p>
                     <?php else: ?>
-                        <div style="height: 280px;"><canvas id="correctWrongChart"></canvas></div>
+                        <div class="row g-2 mb-3 text-center">
+                            <div class="col-6"><div class="bg-success-subtle rounded-3 p-2"><div class="small text-success">Đúng</div><strong><?php echo $totalCorrectAnswers; ?></strong> <span class="small text-success">(<?php echo number_format($correctPercentage, 1); ?>%)</span></div></div>
+                            <div class="col-6"><div class="bg-danger-subtle rounded-3 p-2"><div class="small text-danger">Sai</div><strong><?php echo $totalWrongAnswers; ?></strong> <span class="small text-danger">(<?php echo number_format($wrongPercentage, 1); ?>%)</span></div></div>
+                        </div>
+                        <div style="height: 230px;"><canvas id="correctWrongChart"></canvas></div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -171,8 +196,31 @@
     </div>
     <div class="card stat-card mt-4">
         <div class="card-body">
+            <h5 class="fw-bold mb-1"><i class="fa-solid fa-arrow-trend-down text-danger me-2"></i>Top câu hỏi có tỷ lệ sai cao nhất</h5>
+            <p class="text-muted small mb-3">Ưu tiên các nội dung cần chữa hoặc giải thích lại trên lớp</p>
+            <?php if (!$topDifficultQuestions || !$scores): ?>
+                <p class="text-muted mb-0">Chưa có dữ liệu để phân tích độ khó câu hỏi.</p>
+            <?php else: ?>
+                <div style="height: <?php echo max(220, count($topDifficultQuestions) * 58); ?>px;"><canvas id="questionDifficultyChart"></canvas></div>
+            <?php endif; ?>
+        </div>
+    </div>
+    <div class="card stat-card mt-4">
+        <div class="card-body">
             <h5 class="fw-bold mb-1"><i class="fa-solid fa-chart-column text-primary me-2"></i>Phổ điểm</h5>
-            <p class="text-muted small mb-3">Số lượt sinh viên đạt từng mức điểm</p>
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <p class="text-muted small mb-0">Mỗi sinh viên được tính một điểm đại diện, trừ chế độ “Tất cả lượt”.</p>
+                <form method="get" class="d-flex align-items-center gap-2">
+                    <input type="hidden" name="action" value="exam_statistics">
+                    <input type="hidden" name="exam_id" value="<?php echo (int) $exam['exam_id']; ?>">
+                    <label class="small text-muted text-nowrap" for="distribution-mode">Tính phổ điểm theo</label>
+                    <select id="distribution-mode" name="distribution_mode" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="first" <?php echo $distributionMode === 'first' ? 'selected' : ''; ?>>Lần đầu</option>
+                        <option value="highest" <?php echo $distributionMode === 'highest' ? 'selected' : ''; ?>>Lần cao nhất</option>
+                        <option value="all" <?php echo $distributionMode === 'all' ? 'selected' : ''; ?>>Tất cả lượt</option>
+                    </select>
+                </form>
+            </div>
             <?php if (!$scores): ?>
                 <p class="text-muted mb-0">Chưa có dữ liệu để thống kê.</p>
             <?php else: ?>
@@ -183,12 +231,34 @@
 </div>
 <?php if ($scores): ?>
 <script>
+const scoreSearch = document.getElementById('score-search');
+const scoreStatus = document.getElementById('score-status');
+const scoreRows = Array.from(document.querySelectorAll('#scores-table tbody tr'));
+const scoresEmpty = document.getElementById('scores-empty');
+function filterScores() {
+    const search = scoreSearch.value.trim().toLocaleLowerCase();
+    const status = scoreStatus.value;
+    let visibleCount = 0;
+    scoreRows.forEach(function (row) {
+        const matchesName = row.dataset.studentName.includes(search);
+        const matchesStatus = status === 'all' || row.dataset.status === status;
+        row.classList.toggle('d-none', !(matchesName && matchesStatus));
+        if (matchesName && matchesStatus) visibleCount++;
+    });
+    scoresEmpty.classList.toggle('d-none', visibleCount !== 0);
+}
+scoreSearch.addEventListener('input', filterScores);
+scoreStatus.addEventListener('change', filterScores);
+
 new Chart(document.getElementById('correctWrongChart'), {
     type: 'doughnut',
     data: {
-        labels: ['Câu đúng', 'Câu sai'],
+        labels: [
+            'Đúng <?php echo $totalCorrectAnswers; ?> (<?php echo number_format($correctPercentage, 1); ?>%)',
+            'Sai <?php echo $totalWrongAnswers; ?> (<?php echo number_format($wrongPercentage, 1); ?>%)'
+        ],
         datasets: [{
-            data: [<?php echo $correctCount; ?>, <?php echo $wrongCount; ?>],
+            data: [<?php echo $totalCorrectAnswers; ?>, <?php echo $totalWrongAnswers; ?>],
             backgroundColor: ['#198754', '#dc3545'],
             borderColor: '#ffffff',
             borderWidth: 4,
@@ -202,6 +272,39 @@ new Chart(document.getElementById('correctWrongChart'), {
         plugins: { legend: { position: 'bottom' } }
     }
 });
+
+<?php if ($topDifficultQuestions): ?>
+new Chart(document.getElementById('questionDifficultyChart'), {
+    type: 'bar',
+    data: {
+        labels: <?php echo json_encode(array_map(function ($question) {
+            return 'Câu ' . ((int) $question['order_index']);
+        }, $topDifficultQuestions), JSON_UNESCAPED_UNICODE); ?>,
+        datasets: [{
+            label: 'Tỷ lệ sai (%)',
+            data: <?php echo json_encode(array_map(function ($question) {
+                return round((float) $question['wrong_rate'], 1);
+            }, $topDifficultQuestions)); ?>,
+            backgroundColor: '#dc3545',
+            borderRadius: 8,
+            maxBarThickness: 32
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: function (context) { return context.raw + '% sai'; } } }
+        },
+        scales: {
+            x: { beginAtZero: true, max: 100, title: { display: true, text: 'Tỷ lệ sai (%)' } },
+            y: { title: { display: true, text: 'Câu hỏi' } }
+        }
+    }
+});
+<?php endif; ?>
 
 new Chart(document.getElementById('scoreDistributionChart'), {
     type: 'bar',
