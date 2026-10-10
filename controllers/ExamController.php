@@ -933,27 +933,61 @@ class ExamController {
     public function studentStatistics() {
         $this->requireLogin();
         $studentId = (int) $_SESSION['user']['id'];
+        $selectedExamId = (int) ($_GET['exam_id'] ?? 0);
 
         $stmt = $this->pdo->prepare(
-            "SELECT ea.attempt_id, e.title, ea.total_score, ea.end_time,
+            "SELECT ea.attempt_id, ea.exam_id, e.title, ea.total_score, ea.start_time, ea.end_time,
+                    (SELECT COALESCE(SUM(score_weight), 0) FROM exam_questions WHERE exam_id = ea.exam_id) AS max_score,
+                    ea.submit_reason, ea.review_status,
+                    COUNT(DISTINCT eq.question_id) AS question_count,
                     COUNT(DISTINCT CASE WHEN aa.is_correct = TRUE THEN aa.question_id END) AS correct_count,
                     COUNT(DISTINCT CASE WHEN aa.is_correct = FALSE THEN aa.question_id END) AS wrong_count
              FROM exam_attempts ea
              JOIN exams e ON e.exam_id = ea.exam_id
+             LEFT JOIN exam_questions eq ON eq.exam_id = ea.exam_id
              LEFT JOIN attempt_answers aa ON aa.attempt_id = ea.attempt_id
-             WHERE ea.student_id = ? AND ea.status = 'completed'
-             GROUP BY ea.attempt_id, e.title, ea.total_score, ea.end_time
+             WHERE ea.student_id = ? AND ea.status = 'completed'"
+            . ($selectedExamId ? " AND ea.exam_id = ?" : "") . "
+             GROUP BY ea.attempt_id, ea.exam_id, e.title, ea.total_score, ea.start_time,
+                      ea.end_time, ea.submit_reason, ea.review_status
              ORDER BY ea.end_time ASC"
         );
-        $stmt->execute([$studentId]);
+        $params = [$studentId];
+        if ($selectedExamId) {
+            $params[] = $selectedExamId;
+        }
+        $stmt->execute($params);
         $attempts = $stmt->fetchAll();
+
+        $examStmt = $this->pdo->prepare(
+            "SELECT DISTINCT e.exam_id, e.title
+             FROM exam_attempts ea
+             JOIN exams e ON e.exam_id = ea.exam_id
+             WHERE ea.student_id = ? AND ea.status = 'completed'
+             ORDER BY e.title"
+        );
+        $examStmt->execute([$studentId]);
+        $availableExams = $examStmt->fetchAll();
 
         $totalCorrect = 0;
         $totalWrong = 0;
+        $totalDurationSeconds = 0;
         foreach ($attempts as $attempt) {
             $totalCorrect += (int) $attempt['correct_count'];
             $totalWrong += (int) $attempt['wrong_count'];
+            $totalDurationSeconds += max(0, strtotime($attempt['end_time']) - strtotime($attempt['start_time']));
         }
+        $attemptCount = count($attempts);
+        $examCount = count(array_unique(array_column($attempts, 'exam_id')));
+        $averageScore = $attemptCount
+            ? array_sum(array_map(function ($attempt) {
+                return (float) $attempt['total_score'];
+            }, $attempts)) / $attemptCount
+            : 0;
+        $accuracy = ($totalCorrect + $totalWrong)
+            ? ($totalCorrect / ($totalCorrect + $totalWrong)) * 100
+            : 0;
+        $averageDurationSeconds = $attemptCount ? (int) round($totalDurationSeconds / $attemptCount) : 0;
 
         require __DIR__ . '/../views/exams/student-statistics.php';
     }

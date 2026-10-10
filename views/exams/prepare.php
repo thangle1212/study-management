@@ -14,6 +14,7 @@
         .policy-row:last-child { border-bottom: 0; }
         .history-card { border: 1px solid #e5edf8; border-radius: 14px; }
         .history-score { min-width: 86px; }
+        .history-card.history-extra { display: none; }
     </style>
 </head>
 <body>
@@ -67,13 +68,13 @@
             </div>
         <?php else: ?>
             <div class="d-grid gap-3">
-                <?php foreach ($attemptHistory as $history): ?>
-                    <article class="card history-card">
+                <?php foreach ($attemptHistory as $historyIndex => $history): ?>
+                    <article class="card history-card<?php echo $historyIndex >= 5 ? ' history-extra' : ''; ?>">
                         <div class="card-body p-3 p-md-4">
                             <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
                                 <div>
                                     <div class="text-muted small mb-1">
-                                        Lần <?php echo $completedAttemptCount--; ?> ·
+                                        Lần <?php echo $completedAttemptCount - $historyIndex; ?> ·
                                         <?php echo htmlspecialchars($history['end_time'] ?? 'Chưa xác định'); ?>
                                     </div>
                                     <div class="d-flex flex-wrap gap-3 small">
@@ -92,6 +93,13 @@
                     </article>
                 <?php endforeach; ?>
             </div>
+            <?php if ($completedAttemptCount > 5): ?>
+                <div class="text-center mt-3">
+                    <button id="toggle-history" class="btn btn-outline-primary btn-sm" type="button" aria-expanded="false">
+                        <i class="fa-solid fa-chevron-down me-1"></i>Xem thêm <?php echo $completedAttemptCount - 5; ?> lượt
+                    </button>
+                </div>
+            <?php endif; ?>
         <?php endif; ?>
     </section>
 </main>
@@ -104,6 +112,20 @@ document.getElementById('start-exam-form').addEventListener('submit', async func
     }
     this.submit();
 });
+
+const toggleHistory = document.getElementById('toggle-history');
+if (toggleHistory) {
+    toggleHistory.addEventListener('click', function () {
+        const expanded = this.getAttribute('aria-expanded') === 'true';
+        document.querySelectorAll('.history-extra').forEach(function (card) {
+            card.style.display = expanded ? 'none' : 'block';
+        });
+        this.setAttribute('aria-expanded', String(!expanded));
+        this.innerHTML = expanded
+            ? '<i class="fa-solid fa-chevron-down me-1"></i>Xem thêm <?php echo $completedAttemptCount - 5; ?> lượt'
+            : '<i class="fa-solid fa-chevron-up me-1"></i>Thu gọn lịch sử';
+    });
+}
 </script>
 </body>
 </html>
