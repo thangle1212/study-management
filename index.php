@@ -8,11 +8,13 @@ require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/controllers/AuthController.php';
 require_once __DIR__ . '/controllers/ExamController.php';
 require_once __DIR__ . '/controllers/ForumController.php';
+require_once __DIR__ . '/controllers/AdminController.php';
 
 $action = $_GET['action'] ?? 'home';
 $authController = new AuthController($pdo);
 $examController = new ExamController($pdo);
 $forumController = new ForumController($pdo);
+$adminController = new AdminController($pdo);
 
 switch ($action) {
     case 'home':
@@ -44,7 +46,23 @@ switch ($action) {
             header('Location: index.php?action=login');
             exit;
         }
-        require_once __DIR__ . '/views/dashboard.php';
+        if (($_SESSION['user']['role'] ?? '') === 'admin') {
+            $adminController->dashboard();
+        } else {
+            require_once __DIR__ . '/views/dashboard.php';
+        }
+        break;
+
+    case 'admin_dashboard':
+        $adminController->dashboard();
+        break;
+
+    case 'admin_users':
+        $adminController->manageUsers();
+        break;
+
+    case 'admin_update_user':
+        $adminController->updateUserAction();
         break;
 
     case 'prepare_exam':

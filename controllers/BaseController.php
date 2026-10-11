@@ -14,15 +14,33 @@ class BaseController {
         }
 
         // KIỂM TRA THỜI GIAN THỰC TỪ DATABASE (Chặn ngay nếu tài khoản bị Admin khóa giữa chừng)
-        $stmt = $this->pdo->prepare("SELECT status FROM users WHERE user_id = ?");
+        $stmt = $this->pdo->prepare("SELECT status, role FROM users WHERE user_id = ?");
         $stmt->execute([$_SESSION['user']['id']]);
-        $userStatus = $stmt->fetchColumn();
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$userStatus || $userStatus !== 'active') {
+        if (!$user || $user['status'] !== 'active') {
             unset($_SESSION['user']);
             session_destroy();
             header('Location: index.php?action=login&error=account_locked');
             exit;
+        }
+
+        $_SESSION['user']['role'] = $user['role'];
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+    }
+
+    protected function requirePostWithCsrf() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            exit('Phương thức yêu cầu không được hỗ trợ.');
+        }
+
+        $token = $_POST['csrf_token'] ?? '';
+        if (!is_string($token) || !hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
+            http_response_code(403);
+            exit('Yêu cầu không hợp lệ. Hãy tải lại trang và thử lại.');
         }
     }
 

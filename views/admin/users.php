@@ -148,6 +148,7 @@ $roleLabels = [
                             </td>
                             <td>
                                 <form action="index.php?action=admin_update_user" method="POST" class="m-0">
+                                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                                     <input type="hidden" name="user_id" value="<?= $userId ?>">
                                     <input type="hidden" name="action_type" value="role">
                                     <label class="visually-hidden" for="role-user-<?= $userId ?>">Vai trò của <?= $userName ?></label>
@@ -173,6 +174,7 @@ $roleLabels = [
                             <td class="text-end pe-3 pe-md-4">
                                 <?php if (!$isCurrentUser): ?>
                                     <form action="index.php?action=admin_update_user" method="POST" class="m-0">
+                                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                                         <input type="hidden" name="user_id" value="<?= $userId ?>">
                                         <input type="hidden" name="action_type" value="status">
                                         <?php if ($userStatus === 'active'): ?>
