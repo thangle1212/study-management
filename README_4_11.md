@@ -139,7 +139,13 @@ Một câu hỏi được tính đúng khi tập đáp án học sinh chọn gi�
 - Câu nhiều đáp án: phải chọn đủ và không chọn thừa đáp án đúng.
 - Không chọn hoặc chọn thiếu đều không được tính điểm.
 
-Điểm của lượt thi là tổng `score_weight` của những câu được tính đúng. Việc chấm được thực hiện ở server, không tin vào kết quả do trình duyệt gửi lên.
+Điểm của lượt thi được tính theo tỷ lệ câu đúng và quy đổi về thang điểm 10:
+
+```text
+Điểm = (Số câu đúng / Tổng số câu) × 10
+```
+
+Ví dụ, đúng 8/10 câu được 8 điểm; đúng 12/20 câu được 6 điểm. Cách tính này không phụ thuộc vào việc đề có bao nhiêu câu và không còn mặc định mỗi câu luôn có giá trị 1 điểm. Việc chấm vẫn được thực hiện ở server, không tin vào kết quả do trình duyệt gửi lên.
 
 #### Cách em triển khai
 

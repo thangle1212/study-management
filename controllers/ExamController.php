@@ -169,10 +169,9 @@ class ExamController {
         $this->snapshotCorrectAnswers($attemptId, (int) $attempt['exam_id']);
 
         $stmt = $this->pdo->prepare(
-            "SELECT question_id, MAX(score_weight) AS score_weight
+            "SELECT DISTINCT question_id
              FROM exam_questions
-             WHERE exam_id = ?
-             GROUP BY question_id"
+             WHERE exam_id = ?"
         );
         $stmt->execute([(int) $attempt['exam_id']]);
         $examQuestions = $stmt->fetchAll();
@@ -197,6 +196,7 @@ class ExamController {
              WHERE attempt_id = ? AND question_id = ?"
         );
         $score = 0;
+        $correctQuestionCount = 0;
         foreach ($examQuestions as $examQuestion) {
             $questionId = (int) $examQuestion['question_id'];
             $selectedStmt->execute([$attemptId, $questionId]);
@@ -208,9 +208,10 @@ class ExamController {
             $isCorrect = $selectedIds === $correctIds && !empty($correctIds);
             $markAnswers->execute([$isCorrect ? 1 : 0, $attemptId, $questionId]);
             if ($isCorrect) {
-                $score += (float) $examQuestion['score_weight'];
+                $correctQuestionCount++;
             }
         }
+        $score = round(($correctQuestionCount / count($examQuestions)) * 10, 2);
 
         $reviewStatus = $reason === 'violation_limit' ? 'pending' : 'not_required';
         $update = $this->pdo->prepare(
@@ -937,7 +938,7 @@ class ExamController {
 
         $stmt = $this->pdo->prepare(
             "SELECT ea.attempt_id, ea.exam_id, e.title, ea.total_score, ea.start_time, ea.end_time,
-                    (SELECT COALESCE(SUM(score_weight), 0) FROM exam_questions WHERE exam_id = ea.exam_id) AS max_score,
+                    10 AS max_score,
                     ea.submit_reason, ea.review_status,
                     COUNT(DISTINCT eq.question_id) AS question_count,
                     COUNT(DISTINCT CASE WHEN aa.is_correct = TRUE THEN aa.question_id END) AS correct_count,
