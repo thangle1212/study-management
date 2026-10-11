@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Thống kê bài thi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --brand: #0d6efd; --ink: #17233c; }
+        body { background: linear-gradient(135deg, #eaf4ff 0%, #f8fbff 48%, #fff 100%); color: var(--ink); }
+        .topbar { background: rgba(255,255,255,.9); border-bottom: 1px solid #e5edf8; backdrop-filter: blur(12px); }
+        .brand { color: var(--brand); font-size: 1.35rem; }
+        .stat-card { border: 1px solid #e5edf8; border-radius: 18px; box-shadow: 0 10px 28px rgba(31,74,125,.07); }
+        .page-heading { border: 0; border-radius: 22px; background: linear-gradient(135deg, #0d6efd, #438df4); color: #fff; box-shadow: 0 16px 36px rgba(13,110,253,.18); }
+        .table thead th { color: #6c7b93; font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; border-bottom-width: 1px; }
+        .table tbody tr:last-child td { border-bottom: 0; }
+        .kpi-card { border: 1px solid #e5edf8; border-radius: 16px; box-shadow: 0 8px 24px rgba(31,74,125,.06); }
+        .kpi-icon { width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; border-radius: 11px; }
+        .kpi-value { font-size: 1.45rem; line-height: 1.2; }
+        .table-filter { background: #f7faff; border: 1px solid #e5edf8; border-radius: 12px; }
+    </style>
+</head>
+<body>
+<nav class="navbar topbar sticky-top">
+    <div class="container">
+        <a class="navbar-brand brand fw-bold" href="index.php?action=dashboard"><i class="fa-solid fa-graduation-cap me-2"></i>EduTest</a>
+        <div class="d-flex gap-2">
+            <a href="index.php?action=exam_monitoring&exam_id=<?php echo (int) $exam['exam_id']; ?>" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-tower-broadcast me-1"></i>Giám sát</a>
+            <a href="index.php?action=dashboard" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-arrow-left me-1"></i>Trang tổng quan</a>
+        </div>
+    </div>
+</nav>
+<div class="container py-4 py-md-5">
+    <div class="page-heading p-4 p-md-5 mb-4">
+        <div class="small opacity-75 mb-2"><i class="fa-solid fa-chart-line me-1"></i> BÁO CÁO KẾT QUẢ</div>
+        <h1 class="h2 fw-bold mb-2"><?php echo htmlspecialchars($exam['title']); ?></h1>
+        <p class="mb-0 opacity-75">Theo dõi điểm số và nhận diện những câu hỏi học sinh thường mắc lỗi.</p>
+    </div>
+
+    <?php if (($_GET['settings'] ?? '') === 'saved'): ?>
+        <div class="alert alert-success" role="status">Đã cập nhật cấu hình đề thi.</div>
+    <?php endif; ?>
+
+    <section class="row g-3 mb-4" aria-label="Chỉ số tổng quan">
+        <div class="col-sm-6 col-xl">
+            <div class="card kpi-card h-100"><div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3"><span class="text-muted small">Số lượt tham gia</span><span class="kpi-icon bg-primary-subtle text-primary"><i class="fa-solid fa-users"></i></span></div>
+                <div class="kpi-value fw-bold"><?php echo $participantCount; ?></div>
+                <div class="text-muted small mt-1">Tổng lượt đã hoàn thành</div>
+            </div></div>
+        </div>
+        <div class="col-sm-6 col-xl">
+            <div class="card kpi-card h-100"><div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3"><span class="text-muted small">Điểm trung bình</span><span class="kpi-icon bg-info-subtle text-info"><i class="fa-solid fa-chart-line"></i></span></div>
+                <div class="kpi-value fw-bold"><?php echo $averageScore === null ? '—' : number_format($averageScore, 2); ?></div>
+                <div class="text-muted small mt-1">Tính trên từng lượt thi</div>
+            </div></div>
+        </div>
+        <div class="col-sm-6 col-xl">
+            <div class="card kpi-card h-100"><div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3"><span class="text-muted small">Cao nhất / thấp nhất</span><span class="kpi-icon bg-success-subtle text-success"><i class="fa-solid fa-ranking-star"></i></span></div>
+                <div class="kpi-value fw-bold"><?php echo $highestScore === null ? '—' : number_format($highestScore, 2); ?> <span class="text-danger fs-6">/ <?php echo $lowestScore === null ? '—' : number_format($lowestScore, 2); ?></span></div>
+                <div class="text-muted small mt-1">Tính trên từng lượt thi</div>
+            </div></div>
+        </div>
+        <div class="col-sm-6 col-xl">
+            <div class="card kpi-card h-100"><div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3"><span class="text-muted small">Tỷ lệ đạt</span><span class="kpi-icon bg-warning-subtle text-warning-emphasis"><i class="fa-solid fa-bullseye"></i></span></div>
+                <div class="kpi-value fw-bold"><?php echo $passRate === null ? '—' : number_format($passRate, 1) . '%'; ?></div>
+                <div class="text-muted small mt-1"><?php echo $passCount; ?> lượt đạt ít nhất <?php echo $minimumCorrectCount; ?>/<?php echo $questionCount; ?> câu</div>
+            </div></div>
+        </div>
+        <div class="col-sm-6 col-xl">
+            <div class="card kpi-card h-100"><div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3"><span class="text-muted small">Cảnh báo vi phạm</span><span class="kpi-icon bg-danger-subtle text-danger"><i class="fa-solid fa-triangle-exclamation"></i></span></div>
+                <div class="kpi-value fw-bold"><?php echo $violationWarningCount; ?></div>
+                <div class="text-muted small mt-1">Lượt thi chờ xem xét</div>
+            </div></div>
+        </div>
+    </section>
+
+    <section class="card stat-card mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                <div><h2 class="h5 fw-bold mb-1">Cấu hình giám sát</h2><p class="text-muted small mb-0">Áp dụng cho các lượt thi mới.</p></div>
+                <i class="fa-solid fa-shield-halved text-primary fs-4"></i>
+            </div>
+            <form method="post" action="index.php?action=update_exam_settings" class="row g-3 align-items-end">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>">
+                <input type="hidden" name="exam_id" value="<?php echo (int) $exam['exam_id']; ?>">
+                <div class="col-sm-6 col-lg-3">
+                    <label for="exam-duration" class="form-label">Thời gian (phút)</label>
+                    <input id="exam-duration" class="form-control" type="number" name="duration_minutes" min="1" max="360" value="<?php echo (int) $exam['duration_minutes']; ?>" required>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <label for="violation-limit" class="form-label">Giới hạn vi phạm</label>
+                    <input id="violation-limit" class="form-control" type="number" name="violation_limit" min="1" max="20" value="<?php echo (int) $exam['violation_limit']; ?>" required>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <label for="violation-action" class="form-label">Khi vượt giới hạn</label>
+                    <select id="violation-action" class="form-select" name="violation_action">
+                        <option value="auto_submit" <?php echo $exam['violation_action'] === 'auto_submit' ? 'selected' : ''; ?>>Tự động nộp bài</option>
+                        <option value="log_only" <?php echo $exam['violation_action'] === 'log_only' ? 'selected' : ''; ?>>Chỉ ghi log</option>
+                    </select>
+                </div>
+                <div class="col-sm-6 col-lg-3 d-flex justify-content-between align-items-center gap-3">
+                    <label class="form-check-label" for="anti-cheat-enabled">Chống gian lận</label>
+                    <div class="form-check form-switch fs-5 mb-0">
+                        <input class="form-check-input" type="checkbox" role="switch" id="anti-cheat-enabled" name="anti_cheat_enabled" value="1" <?php echo (int) $exam['anti_cheat_enabled'] ? 'checked' : ''; ?>>
+                    </div>
+                </div>
+                <div class="col-12 text-end"><button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-2"></i>Lưu cấu hình</button></div>
+            </form>
+        </div>
+    </section>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card stat-card h-100">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-1"><i class="fa-solid fa-ranking-star text-primary me-2"></i>Bảng điểm</h5>
+                    <p class="text-muted small mb-4">Danh sách các lượt nộp bài gần nhất</p>
+                    <?php if (!$scores): ?>
+                        <p class="text-muted">Chưa có học sinh nộp bài.</p>
+                    <?php else: ?>
+                        <div class="table-filter p-3 mb-3">
+                            <div class="row g-2">
+                                <div class="col-md-7">
+                                    <label class="visually-hidden" for="score-search">Tìm kiếm sinh viên</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white"><i class="fa-solid fa-magnifying-glass"></i></span>
+                                        <input id="score-search" class="form-control" type="search" placeholder="Tìm theo tên sinh viên">
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="visually-hidden" for="score-status">Lọc trạng thái</label>
+                                    <select id="score-status" class="form-select">
+                                        <option value="all">Tất cả trạng thái</option>
+                                        <option value="submitted">Đã nộp</option>
+                                        <option value="violation">Vi phạm</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="scores-table" class="table align-middle">
+                                <thead><tr><th>Học sinh</th><th>Lần nộp</th><th>Điểm</th><th>Vi phạm</th><th>Trạng thái</th><th>Thời gian</th></tr></thead>
+                                <tbody>
+                                <?php foreach ($scores as $score): ?>
+                                    <tr data-student-name="<?php echo htmlspecialchars(function_exists('mb_strtolower') ? mb_strtolower($score['full_name'], 'UTF-8') : strtolower($score['full_name'])); ?>" data-status="<?php echo $score['review_status'] === 'pending' || $score['submit_reason'] === 'violation_limit' ? 'violation' : 'submitted'; ?>">
+                                        <td><a class="fw-semibold text-decoration-none" href="index.php?action=attempt_detail&attempt_id=<?php echo (int) $score['attempt_id']; ?>"><?php echo htmlspecialchars($score['full_name']); ?></a></td>
+                                        <td><a href="index.php?action=attempt_detail&attempt_id=<?php echo (int) $score['attempt_id']; ?>" class="badge rounded-pill bg-primary-subtle text-primary text-decoration-none">Lần <?php echo (int) $score['attempt_number']; ?></a></td>
+                                        <td class="fw-bold"><?php echo number_format((float) $score['total_score'], 2); ?></td>
+                                        <td><?php echo (int) $score['violation_count']; ?></td>
+                                        <td>
+                                            <?php if ($score['review_status'] === 'pending'): ?>
+                                                <span class="badge bg-warning-subtle text-warning-emphasis">Chờ xem xét</span>
+                                            <?php elseif ($score['submit_reason'] === 'violation_limit'): ?>
+                                                <span class="badge bg-danger-subtle text-danger">Nộp do vi phạm</span>
+                                            <?php elseif ($score['submit_reason'] === 'time_expired'): ?>
+                                                <span class="badge bg-secondary-subtle text-secondary">Hết giờ</span>
+                                            <?php else: ?>
+                                                <span class="badge bg-success-subtle text-success">Đã nộp</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td><a href="index.php?action=attempt_detail&attempt_id=<?php echo (int) $score['attempt_id']; ?>" class="text-decoration-none small"><?php echo htmlspecialchars($score['end_time']); ?> <i class="fa-solid fa-arrow-up-right-from-square ms-1"></i></a></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                            <p id="scores-empty" class="text-muted d-none mb-0">Không có lượt nộp phù hợp với bộ lọc.</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card stat-card h-100">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-1"><i class="fa-solid fa-chart-pie text-primary me-2"></i>Tổng quan đúng / sai</h5>
+                    <p class="text-muted small mb-3">Tổng hợp <?php echo $totalAnsweredQuestions; ?> lượt trả lời từ các bài đã hoàn thành</p>
+                    <?php if (!$scores): ?>
+                        <p class="text-muted">Chưa có dữ liệu để thống kê.</p>
+                    <?php else: ?>
+                        <div class="row g-2 mb-3 text-center">
+                            <div class="col-6"><div class="bg-success-subtle rounded-3 p-2"><div class="small text-success">Đúng</div><strong><?php echo $totalCorrectAnswers; ?></strong> <span class="small text-success">(<?php echo number_format($correctPercentage, 1); ?>%)</span></div></div>
+                            <div class="col-6"><div class="bg-danger-subtle rounded-3 p-2"><div class="small text-danger">Sai</div><strong><?php echo $totalWrongAnswers; ?></strong> <span class="small text-danger">(<?php echo number_format($wrongPercentage, 1); ?>%)</span></div></div>
+                        </div>
+                        <div style="height: 230px;"><canvas id="correctWrongChart"></canvas></div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card stat-card mt-4">
+        <div class="card-body">
+            <h5 class="fw-bold mb-1"><i class="fa-solid fa-arrow-trend-down text-danger me-2"></i>Top câu hỏi có tỷ lệ sai cao nhất</h5>
+            <p class="text-muted small mb-3">Ưu tiên các nội dung cần chữa hoặc giải thích lại trên lớp</p>
+            <?php if (!$topDifficultQuestions || !$scores): ?>
+                <p class="text-muted mb-0">Chưa có dữ liệu để phân tích độ khó câu hỏi.</p>
+            <?php else: ?>
+                <div style="height: <?php echo max(220, count($topDifficultQuestions) * 58); ?>px;"><canvas id="questionDifficultyChart"></canvas></div>
+            <?php endif; ?>
+        </div>
+    </div>
+    <div class="card stat-card mt-4">
+        <div class="card-body">
+            <h5 class="fw-bold mb-1"><i class="fa-solid fa-chart-column text-primary me-2"></i>Phổ điểm</h5>
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <p class="text-muted small mb-0">Mỗi sinh viên được tính một điểm đại diện, trừ chế độ “Tất cả lượt”.</p>
+                <form method="get" class="d-flex align-items-center gap-2">
+                    <input type="hidden" name="action" value="exam_statistics">
+                    <input type="hidden" name="exam_id" value="<?php echo (int) $exam['exam_id']; ?>">
+                    <label class="small text-muted text-nowrap" for="distribution-mode">Tính phổ điểm theo</label>
+                    <select id="distribution-mode" name="distribution_mode" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="first" <?php echo $distributionMode === 'first' ? 'selected' : ''; ?>>Lần đầu</option>
+                        <option value="highest" <?php echo $distributionMode === 'highest' ? 'selected' : ''; ?>>Lần cao nhất</option>
+                        <option value="all" <?php echo $distributionMode === 'all' ? 'selected' : ''; ?>>Tất cả lượt</option>
+                    </select>
+                </form>
+            </div>
+            <?php if (!$scores): ?>
+                <p class="text-muted mb-0">Chưa có dữ liệu để thống kê.</p>
+            <?php else: ?>
+                <div style="height: 280px;"><canvas id="scoreDistributionChart"></canvas></div>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+<?php if ($scores): ?>
+<script>
+const scoreSearch = document.getElementById('score-search');
+const scoreStatus = document.getElementById('score-status');
+const scoreRows = Array.from(document.querySelectorAll('#scores-table tbody tr'));
+const scoresEmpty = document.getElementById('scores-empty');
+function filterScores() {
+    const search = scoreSearch.value.trim().toLocaleLowerCase();
+    const status = scoreStatus.value;
+    let visibleCount = 0;
+    scoreRows.forEach(function (row) {
+        const matchesName = row.dataset.studentName.includes(search);
+        const matchesStatus = status === 'all' || row.dataset.status === status;
+        row.classList.toggle('d-none', !(matchesName && matchesStatus));
+        if (matchesName && matchesStatus) visibleCount++;
+    });
+    scoresEmpty.classList.toggle('d-none', visibleCount !== 0);
+}
+scoreSearch.addEventListener('input', filterScores);
+scoreStatus.addEventListener('change', filterScores);
+
+new Chart(document.getElementById('correctWrongChart'), {
+    type: 'doughnut',
+    data: {
+        labels: [
+            'Đúng <?php echo $totalCorrectAnswers; ?> (<?php echo number_format($correctPercentage, 1); ?>%)',
+            'Sai <?php echo $totalWrongAnswers; ?> (<?php echo number_format($wrongPercentage, 1); ?>%)'
+        ],
+        datasets: [{
+            data: [<?php echo $totalCorrectAnswers; ?>, <?php echo $totalWrongAnswers; ?>],
+            backgroundColor: ['#198754', '#dc3545'],
+            borderColor: '#ffffff',
+            borderWidth: 4,
+            hoverOffset: 8
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '62%',
+        plugins: { legend: { position: 'bottom' } }
+    }
+});
+
+<?php if ($topDifficultQuestions): ?>
+new Chart(document.getElementById('questionDifficultyChart'), {
+    type: 'bar',
+    data: {
+        labels: <?php echo json_encode(array_map(function ($question) {
+            return 'Câu ' . ((int) $question['order_index']);
+        }, $topDifficultQuestions), JSON_UNESCAPED_UNICODE); ?>,
+        datasets: [{
+            label: 'Tỷ lệ sai (%)',
+            data: <?php echo json_encode(array_map(function ($question) {
+                return round((float) $question['wrong_rate'], 1);
+            }, $topDifficultQuestions)); ?>,
+            backgroundColor: '#dc3545',
+            borderRadius: 8,
+            maxBarThickness: 32
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: function (context) { return context.raw + '% sai'; } } }
+        },
+        scales: {
+            x: { beginAtZero: true, max: 100, title: { display: true, text: 'Tỷ lệ sai (%)' } },
+            y: { title: { display: true, text: 'Câu hỏi' } }
+        }
+    }
+});
+<?php endif; ?>
+
+new Chart(document.getElementById('scoreDistributionChart'), {
+    type: 'bar',
+    data: {
+        labels: <?php echo json_encode(array_keys($scoreDistribution), JSON_UNESCAPED_UNICODE); ?>,
+        datasets: [{
+            label: 'Số lượt đạt điểm',
+            data: <?php echo json_encode(array_values($scoreDistribution)); ?>,
+            backgroundColor: '#0d6efd',
+            borderRadius: 8,
+            maxBarThickness: 56
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 }, title: { display: true, text: 'Số lượt' } },
+            x: { title: { display: true, text: 'Mức điểm' } }
+        }
+    }
+});
+</script>
+<?php endif; ?>
+</body>
+</html>
