@@ -48,7 +48,7 @@
     </section>
 
     <div class="row g-3 mb-4">
-        <div class="col-md-4"><div class="card question-card p-3 h-100"><div class="text-muted small">Điểm đạt được</div><div class="h3 fw-bold text-primary mb-0"><?php echo number_format((float) $attempt['total_score'], 2); ?></div></div></div>
+        <div class="col-md-4"><div class="card question-card p-3 h-100"><div class="text-muted small">Điểm đạt được (thang 10)</div><div class="h3 fw-bold text-primary mb-0"><?php echo number_format((float) $attempt['total_score'], 2); ?>/10</div></div></div>
         <div class="col-md-4"><div class="card question-card p-3 h-100"><div class="text-muted small">Bắt đầu làm</div><div class="fw-semibold mt-1"><?php echo htmlspecialchars($attempt['start_time']); ?></div></div></div>
         <div class="col-md-4"><div class="card question-card p-3 h-100"><div class="text-muted small">Nộp bài / thời gian làm</div><div class="fw-semibold mt-1"><?php echo htmlspecialchars($attempt['end_time']); ?></div><div class="text-muted small mt-1"><i class="fa-regular fa-clock me-1"></i><?php echo $durationText; ?></div></div></div>
     </div>
