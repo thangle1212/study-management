@@ -51,6 +51,7 @@ Học sinh chọn đề công khai từ dashboard để mở trang chuẩn bị.
 
 - Tên đề và số câu hỏi.
 - Thời lượng làm bài.
+- Trạng thái tráo thứ tự câu hỏi và đáp án.
 - Trạng thái giám sát, ngưỡng vi phạm và cách xử lý khi chạm ngưỡng.
 - Lịch sử các lượt đã hoàn thành và đường dẫn xem chi tiết.
 - Nút **Bắt đầu làm bài** hoặc **Tiếp tục làm bài** nếu đã có lượt đang làm.
@@ -59,9 +60,9 @@ Khi bắt đầu, trình duyệt hỏi xác nhận và thử yêu cầu chế đ
 
 ### 3.2. Đồng hồ và lượt thi
 
-Khi học sinh bắt đầu, server tạo bản ghi `exam_attempts` với trạng thái `in_progress`. Thời lượng được chụp vào `duration_minutes_snapshot`; cấu hình giám sát cũng được chụp vào các trường snapshot tương ứng.
+Khi học sinh bắt đầu, server tạo bản ghi `exam_attempts` với trạng thái `in_progress`. Thời lượng được chụp vào `duration_minutes_snapshot`; cấu hình giám sát và hai cờ tráo câu hỏi/đáp án cũng được chụp vào các trường snapshot tương ứng.
 
-Deadline được tính từ `start_time` của lượt thi trong database cộng với thời lượng đã chụp. Vì vậy tải lại trang không đặt lại đồng hồ. Khi thời gian còn 60 giây, giao diện đổi màu cảnh báo. Nếu hết giờ, server hoàn tất và chấm lượt thi với lý do `time_expired`.
+Mỗi lượt thi có `shuffle_seed` riêng. Khi bật tráo, server xếp câu hỏi và đáp án theo seed này; cùng một lượt luôn thấy cùng thứ tự khi tải lại, còn lượt mới có thể có thứ tự khác. Deadline được tính từ `start_time` của lượt thi trong database cộng với thời lượng đã chụp. Vì vậy tải lại trang không đặt lại đồng hồ. Khi thời gian còn 60 giây, giao diện đổi màu cảnh báo. Nếu hết giờ, server hoàn tất và chấm lượt thi với lý do `time_expired`.
 
 ### 3.3. Autosave và khôi phục đáp án
 
@@ -128,6 +129,8 @@ Trong trang thống kê của đề do giáo viên sở hữu, giáo viên có t
 
 - Đổi thời lượng làm bài, giới hạn trong khoảng 1-360 phút.
 - Bật hoặc tắt giám sát.
+- Bật hoặc tắt tráo thứ tự câu hỏi.
+- Bật hoặc tắt tráo thứ tự đáp án.
 - Chọn ngưỡng vi phạm từ 1-20 lần.
 - Chọn tự nộp hoặc chỉ ghi log.
 
@@ -138,7 +141,7 @@ Mỗi lần cập nhật được kiểm tra quyền sở hữu đề và CSRF t
 Trang **Giám sát** lấy dữ liệu ban đầu từ server rồi polling khoảng 5 giây một lần. Bảng hiển thị:
 
 - Tên học sinh.
-- Đang làm, đã nộp hoặc đã hủy kết quả.
+- Đang làm, đã nộp, bị thu bài do vi phạm hoặc đã hủy kết quả.
 - Số log vi phạm của lượt.
 - Lý do nộp, thời gian bắt đầu và kết thúc.
 - Liên kết mở chi tiết lượt thi.
@@ -153,6 +156,8 @@ Trang chi tiết lượt thi hiển thị log theo thời gian, loại vi phạm
 - **Cho phép làm lại:** đánh dấu `retake_allowed`, giữ lại ghi chú và thông tin người duyệt.
 
 Quyết định phúc khảo chỉ được thực hiện bởi giáo viên sở hữu đề và chỉ áp dụng cho lượt đang chờ xem xét.
+
+Lượt đã chuyển sang `voided` vẫn được giữ trong bảng điểm với nhãn **“Vi phạm - đã hủy kết quả”** và bộ lọc Vi phạm. Tuy nhiên, lượt đã hủy không được tính vào điểm trung bình, cao/thấp nhất, tỷ lệ đạt, biểu đồ đúng/sai hoặc phổ điểm.
 
 ---
 
@@ -171,8 +176,8 @@ Quyết định phúc khảo chỉ được thực hiện bởi giáo viên sở
 
 ### Bảng dữ liệu
 
-- `exams`: thời lượng, bật/tắt giám sát, ngưỡng và hành động khi vượt ngưỡng.
-- `exam_attempts`: trạng thái, điểm, lý do nộp, kết quả phúc khảo và snapshot cấu hình.
+- `exams`: thời lượng, bật/tắt giám sát, ngưỡng/hành động vi phạm và cờ shuffle câu hỏi/đáp án.
+- `exam_attempts`: trạng thái, điểm, lý do nộp, kết quả phúc khảo, snapshot cấu hình shuffle và `shuffle_seed`.
 - `attempt_answers`: lựa chọn của học sinh và trạng thái đúng/sai.
 - `attempt_correct_answers`: đáp án đúng được chụp tại thời điểm bắt đầu lượt.
 - `violation_logs`: loại sự kiện, chi tiết và thời điểm ghi nhận.
@@ -236,8 +241,19 @@ Các trường hợp nên trình diễn/kiểm tra:
 | Học sinh thử mở dữ liệu attempt của người khác | Server từ chối do kiểm tra student_id/attempt_id. |
 | Giáo viên không sở hữu đề gọi monitor/review | Server từ chối do kiểm tra role và teacher_id. |
 | Giáo viên phúc khảo lượt pending | Lưu `voided` hoặc `retake_allowed`, người duyệt, thời điểm và ghi chú. |
+| Cùng attempt tải lại đề đã tráo | Cùng seed nên câu hỏi và đáp án giữ nguyên thứ tự. |
+| Bắt đầu lượt mới khi shuffle bật | Seed mới có thể tạo thứ tự câu hỏi/đáp án khác. |
+| Tắt riêng một cờ shuffle | Thứ tự tương ứng giữ theo thứ tự gốc; cờ còn lại vẫn hoạt động độc lập. |
+| Giáo viên hủy lượt do vi phạm | Học sinh vẫn hiện trong bảng điểm với nhãn vi phạm; điểm bị loại khỏi các phép tổng hợp. |
 
 Các test integration đã dùng tài khoản và đề tạm để đi qua settings, start, autosave, ngưỡng vi phạm, monitoring và review; dữ liệu tạm được dọn sau test. Khi trình diễn tại máy mới, cần có MariaDB chạy và schema đúng với `db.sql` hiện tại.
+
+Các commit bổ sung gần đây trên nhánh `Dung`:
+
+- `1cafc35` - Lưu cấu hình tráo câu hỏi theo lượt thi.
+- `d67a67b` - Tráo câu hỏi và đáp án ổn định theo lượt thi.
+- `a38cdcf` - Thêm cấu hình tráo câu hỏi và đáp án.
+- `f9b389d` - Giữ lượt bị hủy do vi phạm trong bảng điểm.
 
 ---
 
@@ -258,4 +274,4 @@ Hướng phát triển tiếp:
 
 ## 11. Kết luận
 
-Phần Thành viên 3 nối trải nghiệm làm bài của học sinh với công cụ giám sát và xem xét của giáo viên. Điểm quan trọng nhất là lượt thi có trạng thái server, autosave và deadline dựa trên database; log vi phạm đi qua xác thực quyền; lý do nộp và dữ liệu phúc khảo được lưu để giáo viên có thể giải thích quyết định. Các sự kiện trình duyệt chỉ là tín hiệu hỗ trợ, không thể khẳng định gian lận tuyệt đối.
+Phần Thành viên 3 nối trải nghiệm làm bài của học sinh với công cụ giám sát và xem xét của giáo viên. Mỗi lượt có thể tráo câu hỏi/đáp án theo seed ổn định, autosave và deadline dựa trên database; log vi phạm đi qua xác thực quyền; lý do nộp và dữ liệu phúc khảo được lưu để giáo viên có thể giải thích quyết định. Lượt bị hủy do vi phạm vẫn hiện rõ trên bảng điểm nhưng không làm sai các chỉ số điểm. Các sự kiện trình duyệt chỉ là tín hiệu hỗ trợ, không thể khẳng định gian lận tuyệt đối.
