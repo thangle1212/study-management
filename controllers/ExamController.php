@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../models/Exam.php';
+
 class ExamController {
     private $pdo;
 
@@ -55,6 +57,359 @@ class ExamController {
             exit('Yêu cầu không hợp lệ. Hãy tải lại trang và thử lại.');
         }
     }
+
+    // Loại bỏ thẻ/thuộc tính không an toàn và giữ lại định dạng được phép trong nội dung dán.
+    private function cleanRichTextNode($node) {
+        $allowedTags = ['b', 'strong', 'i', 'em', 'u', 'span', 'font', 'br', 'p', 'div', 'ul', 'ol', 'li'];
+        $discardTags = ['script', 'style', 'iframe', 'object', 'svg', 'math', 'template'];
+        $children = [];
+        foreach ($node->childNodes as $child) {
+            $children[] = $child;
+        }
+
+        foreach ($children as $child) {
+            if ($child->nodeType !== XML_ELEMENT_NODE) {
+                continue;
+            }
+
+            $tag = strtolower($child->nodeName);
+            if (in_array($tag, $discardTags, true)) {
+                $node->removeChild($child);
+                continue;
+            }
+
+            if (!in_array($tag, $allowedTags, true)) {
+                $this->cleanRichTextNode($child);
+                while ($child->firstChild) {
+                    $node->insertBefore($child->firstChild, $child);
+                }
+                $node->removeChild($child);
+                continue;
+            }
+
+            $styles = [];
+            $formatting = [];
+            if ($tag === 'span' && $child->hasAttribute('style')) {
+                foreach (explode(';', $child->getAttribute('style')) as $declaration) {
+                    if (preg_match('/^\s*(color|background-color)\s*:\s*(.*?)\s*$/i', $declaration, $matches)) {
+                        $normalizedColor = $this->normalizeRichTextColor($matches[2]);
+                        if ($normalizedColor !== null) {
+                            $styles[strtolower($matches[1])] = $normalizedColor;
+                        }
+                    } elseif (preg_match('/^\s*font-weight\s*:\s*(bold|[7-9]00)\s*$/i', $declaration)) {
+                        $formatting[] = 'strong';
+                    } elseif (preg_match('/^\s*font-style\s*:\s*italic\s*$/i', $declaration)) {
+                        $formatting[] = 'em';
+                    } elseif (preg_match('/^\s*text-decoration(?:-line)?\s*:\s*[^;]*underline/i', $declaration)) {
+                        $formatting[] = 'u';
+                    }
+                }
+            } elseif ($tag === 'font' && $child->hasAttribute('color')) {
+                $normalizedColor = $this->normalizeRichTextColor($child->getAttribute('color'));
+                if ($normalizedColor !== null) {
+                    $styles['color'] = $normalizedColor;
+                }
+            }
+
+            while ($child->attributes->length > 0) {
+                $child->removeAttributeNode($child->attributes->item(0));
+            }
+
+            if (isset($styles['color'])) {
+                if ($tag === 'font') {
+                    $child->setAttribute('color', $styles['color']);
+                }
+            }
+            if ($tag === 'span' && $styles) {
+                $safeStyles = [];
+                foreach (['color', 'background-color'] as $styleName) {
+                    if (isset($styles[$styleName])) {
+                        $safeStyles[] = $styleName . ': ' . $styles[$styleName];
+                    }
+                }
+                $child->setAttribute('style', implode('; ', $safeStyles));
+            }
+
+            foreach (array_unique($formatting) as $formatTag) {
+                $wrapper = $child->ownerDocument->createElement($formatTag);
+                while ($child->firstChild) {
+                    $wrapper->appendChild($child->firstChild);
+                }
+                $child->appendChild($wrapper);
+            }
+
+            $this->cleanRichTextNode($child);
+        }
+    }
+
+    // Chuẩn hóa màu HTML về mã hex an toàn để lưu và hiển thị nhất quán.
+    private function normalizeRichTextColor($color) {
+        $color = trim($color);
+        if (preg_match('/^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i', $color)) {
+            return strtolower($color);
+        }
+        if (preg_match('/^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/i', $color, $matches)) {
+            $channels = [(int) $matches[1], (int) $matches[2], (int) $matches[3]];
+            if (max($channels) <= 255) {
+                return sprintf('#%02x%02x%02x', $channels[0], $channels[1], $channels[2]);
+            }
+        }
+        return null;
+    }
+
+    // Làm sạch HTML rich-text trước khi lưu hoặc đưa nội dung đáp án ra màn hình làm bài.
+    private function sanitizeRichText($html) {
+        if (!class_exists('DOMDocument')) {
+            throw new RuntimeException('PHP DOM extension is required to safely format answer content.');
+        }
+
+        $document = new DOMDocument('1.0', 'UTF-8');
+        $previousLibxmlState = libxml_use_internal_errors(true);
+        try {
+            $loaded = $document->loadHTML(
+                '<?xml encoding="utf-8" ?><div id="answer-root">' . $html . '</div>',
+                LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NONET
+            );
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previousLibxmlState);
+        }
+
+        if (!$loaded) {
+            throw new RuntimeException('Không thể phân tích nội dung định dạng của đáp án.');
+        }
+        $root = $document->getElementById('answer-root');
+        if (!$root) {
+            throw new RuntimeException('Không thể đọc nội dung định dạng của đáp án.');
+        }
+        $this->cleanRichTextNode($root);
+
+        $safeHtml = '';
+        foreach ($root->childNodes as $child) {
+            $safeHtml .= $document->saveHTML($child);
+        }
+        return trim($safeHtml);
+    }
+
+    // Kiểm tra datetime-local từ biểu mẫu và chuyển sang định dạng DATETIME của MySQL.
+    private function parseExamDateTime($value, $fieldLabel) {
+        if ($value === '') {
+            return null;
+        }
+
+        $date = DateTime::createFromFormat('!Y-m-d\TH:i', $value);
+        $dateErrors = DateTime::getLastErrors();
+        if (!$date || ($dateErrors && ($dateErrors['warning_count'] > 0 || $dateErrors['error_count'] > 0))
+            || $date->format('Y-m-d\TH:i') !== $value) {
+            throw new InvalidArgumentException($fieldLabel . ' không hợp lệ.');
+        }
+        return $date->format('Y-m-d H:i:s');
+    }
+
+    // Xử lý tạo đề: kiểm tra quyền/dữ liệu, nhận đáp án đúng từ định dạng hoặc đánh dấu tay,
+    // rồi chuyển dữ liệu hợp lệ sang model để lưu trong một transaction.
+    // BEGIN EXAM CREATION
+    public function createExam() {
+        $this->requireLogin();
+        $role = $_SESSION['user']['role'] ?? '';
+        if (!in_array($role, ['teacher', 'admin'], true)) {
+            http_response_code(403);
+            exit('Chỉ giáo viên hoặc quản trị viên mới được tạo đề thi.');
+        }
+
+        $userId = (int) $_SESSION['user']['id'];
+        $bankStmt = $this->pdo->prepare(
+            "SELECT bank_id, bank_name, subject
+             FROM question_banks
+             WHERE teacher_id = ?
+             ORDER BY bank_name"
+        );
+        $bankStmt->execute([$userId]);
+        $questionBanks = $bankStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $formData = $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : [
+            'title' => '',
+            'bank_id' => '',
+            'duration_minutes' => '60',
+            'status' => 'draft',
+            'start_time' => '',
+            'end_time' => '',
+            'pasted_exam_html' => ''
+        ];
+        $safePastedExamHtml = '';
+        $formErrors = [];
+        $created = ($_GET['created'] ?? '') === '1';
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->requirePostWithCsrf();
+            try {
+                $pastedExamHtml = $formData['pasted_exam_html'] ?? '';
+                if (!is_string($pastedExamHtml) || strlen($pastedExamHtml) > 4194304) {
+                    throw new InvalidArgumentException('Nội dung đề không hợp lệ hoặc vượt quá giới hạn 4 MB.');
+                }
+                $safePastedExamHtml = $pastedExamHtml === '' ? '' : $this->sanitizeRichText($pastedExamHtml);
+
+                $titleValue = $formData['title'] ?? '';
+                if (!is_string($titleValue)) {
+                    throw new InvalidArgumentException('Tên đề thi không hợp lệ.');
+                }
+                $title = trim($titleValue);
+                if ($title === '' || mb_strlen($title, 'UTF-8') > 200) {
+                    throw new InvalidArgumentException('Tên đề thi là bắt buộc và không được dài quá 200 ký tự.');
+                }
+
+                $bankValue = $formData['bank_id'] ?? null;
+                $bankId = is_scalar($bankValue) ? filter_var($bankValue, FILTER_VALIDATE_INT) : false;
+                $ownedBankIds = array_map('intval', array_column($questionBanks, 'bank_id'));
+                if (!$bankId || !in_array((int) $bankId, $ownedBankIds, true)) {
+                    throw new InvalidArgumentException('Vui lòng chọn ngân hàng câu hỏi của bạn.');
+                }
+
+                $durationValue = $formData['duration_minutes'] ?? null;
+                $duration = is_scalar($durationValue) ? filter_var($durationValue, FILTER_VALIDATE_INT) : false;
+                if ($duration === false || $duration < 1 || $duration > 1440) {
+                    throw new InvalidArgumentException('Thời gian làm bài phải từ 1 đến 1440 phút.');
+                }
+
+                $allowedStatuses = ['draft', 'published', 'scheduled', 'archived'];
+                $statusValue = $formData['status'] ?? 'draft';
+                $status = is_string($statusValue) ? $statusValue : '';
+                if (!in_array($status, $allowedStatuses, true)) {
+                    throw new InvalidArgumentException('Trạng thái đề thi không hợp lệ.');
+                }
+
+                $startValue = $formData['start_time'] ?? '';
+                $endValue = $formData['end_time'] ?? '';
+                if (!is_string($startValue) || !is_string($endValue)) {
+                    throw new InvalidArgumentException('Thời gian đề thi không hợp lệ.');
+                }
+                $startTime = $this->parseExamDateTime($startValue, 'Ngày bắt đầu');
+                $endTime = $this->parseExamDateTime($endValue, 'Ngày kết thúc');
+                if ($startTime !== null && $endTime !== null && strtotime($endTime) < strtotime($startTime)) {
+                    throw new InvalidArgumentException('Ngày kết thúc phải sau ngày bắt đầu.');
+                }
+                if ($status === 'scheduled' && ($startTime === null || $endTime === null)) {
+                    throw new InvalidArgumentException('Đề thi lên lịch cần có ngày bắt đầu và ngày kết thúc.');
+                }
+
+                $questionsInput = $formData['questions'] ?? null;
+                if (!is_array($questionsInput) || count($questionsInput) < 1 || count($questionsInput) > 50) {
+                    throw new InvalidArgumentException('Đề thi cần có từ 1 đến 50 câu hỏi.');
+                }
+
+                $questions = [];
+                foreach (array_values($questionsInput) as $questionIndex => $questionInput) {
+                    if (!is_array($questionInput)) {
+                        throw new InvalidArgumentException('Dữ liệu câu hỏi ' . ($questionIndex + 1) . ' không hợp lệ.');
+                    }
+
+                    $contentValue = $questionInput['content'] ?? '';
+                    if (!is_string($contentValue)) {
+                        throw new InvalidArgumentException('Nội dung câu hỏi ' . ($questionIndex + 1) . ' không hợp lệ.');
+                    }
+                    $content = trim($contentValue);
+                    if ($content === '' || mb_strlen($content, 'UTF-8') > 2000) {
+                        throw new InvalidArgumentException('Câu ' . ($questionIndex + 1) . ' cần có nội dung (tối đa 2000 ký tự).');
+                    }
+
+                    $questionTypeValue = $questionInput['question_type'] ?? '';
+                    $questionType = is_string($questionTypeValue) ? $questionTypeValue : '';
+                    if (!in_array($questionType, ['single_choice', 'multiple_choice'], true)) {
+                        throw new InvalidArgumentException('Loại câu hỏi ' . ($questionIndex + 1) . ' không hợp lệ.');
+                    }
+
+                    $scoreWeight = $questionInput['score_weight'] ?? '';
+                    if (!is_numeric($scoreWeight) || (float) $scoreWeight < 0.01 || (float) $scoreWeight > 999.99) {
+                        throw new InvalidArgumentException('Điểm câu ' . ($questionIndex + 1) . ' phải từ 0,01 đến 999,99.');
+                    }
+
+                    $answersInput = $questionInput['answers'] ?? null;
+                    if (!is_array($answersInput) || count($answersInput) < 2 || count($answersInput) > 8) {
+                        throw new InvalidArgumentException('Câu ' . ($questionIndex + 1) . ' cần có từ 2 đến 8 đáp án.');
+                    }
+
+                    $answers = [];
+                    foreach (array_values($answersInput) as $answerIndex => $answerInput) {
+                        if (!is_array($answerInput)) {
+                            throw new InvalidArgumentException('Đáp án ' . ($answerIndex + 1) . ' của câu ' . ($questionIndex + 1) . ' không hợp lệ.');
+                        }
+
+                        $rawAnswer = $answerInput['content'] ?? '';
+                        if (!is_string($rawAnswer)) {
+                            throw new InvalidArgumentException('Đáp án ' . ($answerIndex + 1) . ' của câu ' . ($questionIndex + 1) . ' không hợp lệ.');
+                        }
+                        if (mb_strlen($rawAnswer, 'UTF-8') > 5000) {
+                            throw new InvalidArgumentException('Mỗi đáp án không được dài quá 5000 ký tự.');
+                        }
+                        $safeAnswer = $this->sanitizeRichText($rawAnswer);
+                        $answerText = trim(html_entity_decode(strip_tags($safeAnswer), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                        if ($answerText === '') {
+                            throw new InvalidArgumentException('Đáp án ' . ($answerIndex + 1) . ' của câu ' . ($questionIndex + 1) . ' không được để trống.');
+                        }
+
+                        $hasFormatting = preg_match('/<(?:b|strong|i|em|u)\b|<span\b[^>]*style="[^"]*(?:color|background-color)\s*:|<font\b[^>]*color=/i', $safeAnswer) === 1;
+                        $isCorrect = $hasFormatting || (($answerInput['manual_correct'] ?? '') === '1');
+                        $answers[] = [
+                            'content' => $safeAnswer,
+                            'is_correct' => $isCorrect
+                        ];
+                    }
+
+                    $correctCount = count(array_filter($answers, function ($answer) {
+                        return $answer['is_correct'];
+                    }));
+                    if ($correctCount === 0 || ($questionType === 'single_choice' && $correctCount !== 1)) {
+                        throw new InvalidArgumentException(
+                            $questionType === 'single_choice'
+                                ? 'Câu ' . ($questionIndex + 1) . ' phải có đúng một đáp án đúng. Hãy định dạng đáp án hoặc chọn ô đánh dấu.'
+                                : 'Câu ' . ($questionIndex + 1) . ' cần ít nhất một đáp án đúng.'
+                        );
+                    }
+
+                    $questions[] = [
+                        'content' => $content,
+                        'question_type' => $questionType,
+                        'score_weight' => number_format((float) $scoreWeight, 2, '.', ''),
+                        'answers' => $answers
+                    ];
+                }
+
+                $examModel = new Exam($this->pdo);
+                $examId = $examModel->createExamAndQuestions([
+                    'teacher_id' => $userId,
+                    'bank_id' => (int) $bankId,
+                    'title' => $title,
+                    'duration_minutes' => (int) $duration,
+                    'start_time' => $startTime,
+                    'end_time' => $endTime,
+                    'status' => $status
+                ], $questions);
+
+                header('Location: index.php?action=qe_exam_create&created=1&exam_id=' . $examId);
+                exit;
+            } catch (InvalidArgumentException $exception) {
+                $formErrors[] = $exception->getMessage();
+            }
+
+            if (isset($formData['questions']) && is_array($formData['questions'])) {
+                foreach ($formData['questions'] as &$questionInput) {
+                    if (is_array($questionInput) && isset($questionInput['answers']) && is_array($questionInput['answers'])) {
+                        foreach ($questionInput['answers'] as &$answerInput) {
+                            if (is_array($answerInput) && isset($answerInput['content']) && is_string($answerInput['content'])) {
+                                $answerInput['content'] = $this->sanitizeRichText($answerInput['content']);
+                            }
+                        }
+                        unset($answerInput);
+                    }
+                }
+                unset($questionInput);
+            }
+        }
+
+        $csrfToken = $_SESSION['csrf_token'];
+        require __DIR__ . '/../views/qe/exam/create.php';
+    }
+    // END EXAM CREATION
 
     private function sendJson($payload, $statusCode = 200) {
         http_response_code($statusCode);
@@ -132,6 +487,36 @@ class ExamController {
                 $insert->execute([$attemptId, $questionId, $answerId]);
             }
         }
+    }
+
+    private function orderAttemptQuestions(array $questions, $seed, $shuffleQuestions, $shuffleAnswers) {
+        foreach ($questions as &$question) {
+            if (!$shuffleAnswers) {
+                continue;
+            }
+            $questionId = (int) $question['question_id'];
+            usort($question['answers'], function ($left, $right) use ($seed, $questionId) {
+                $leftHash = hash_hmac('sha256', 'answer:' . $questionId . ':' . $left['answer_id'], $seed);
+                $rightHash = hash_hmac('sha256', 'answer:' . $questionId . ':' . $right['answer_id'], $seed);
+                $comparison = strcmp($leftHash, $rightHash);
+                return $comparison !== 0 ? $comparison : ((int) $left['answer_id'] <=> (int) $right['answer_id']);
+            });
+        }
+        unset($question);
+
+        $questions = array_values($questions);
+        if ($shuffleQuestions) {
+            usort($questions, function ($left, $right) use ($seed) {
+                $leftId = (int) $left['question_id'];
+                $rightId = (int) $right['question_id'];
+                $leftHash = hash_hmac('sha256', 'question:' . $leftId, $seed);
+                $rightHash = hash_hmac('sha256', 'question:' . $rightId, $seed);
+                $comparison = strcmp($leftHash, $rightHash);
+                return $comparison !== 0 ? $comparison : ($leftId <=> $rightId);
+            });
+        }
+
+        return $questions;
     }
 
     private function ensureUnansweredQuestions($attemptId, $examId) {
@@ -303,7 +688,7 @@ class ExamController {
         $studentId = (int) $_SESSION['user']['id'];
         $stmt = $this->pdo->prepare(
             "SELECT exam_id, duration_minutes, anti_cheat_enabled,
-                    violation_limit, violation_action
+                violation_limit, violation_action, shuffle_questions, shuffle_answers
              FROM exams WHERE exam_id = ? AND status = 'published'"
         );
         $stmt->execute([$examId]);
@@ -319,19 +704,21 @@ class ExamController {
         }
 
         $attemptStmt = $this->pdo->prepare(
-            "SELECT attempt_id FROM exam_attempts
+            "SELECT attempt_id, shuffle_seed FROM exam_attempts
              WHERE exam_id = ? AND student_id = ? AND status = 'in_progress'
              ORDER BY attempt_id DESC LIMIT 1"
         );
         $attemptStmt->execute([$examId, $studentId]);
-        $attemptId = $attemptStmt->fetchColumn();
-        if (!$attemptId) {
+        $attempt = $attemptStmt->fetch();
+        $shuffleSeed = bin2hex(random_bytes(32));
+        if (!$attempt) {
             $attemptStmt = $this->pdo->prepare(
                 "INSERT INTO exam_attempts
                     (exam_id, student_id, status, duration_minutes_snapshot,
                      anti_cheat_enabled_snapshot, violation_limit_snapshot,
-                     violation_action_snapshot)
-                 VALUES (?, ?, 'in_progress', ?, ?, ?, ?)"
+                     violation_action_snapshot, shuffle_questions_snapshot,
+                     shuffle_answers_snapshot, shuffle_seed)
+                 VALUES (?, ?, 'in_progress', ?, ?, ?, ?, ?, ?, ?)"
             );
             $attemptStmt->execute([
                 $examId,
@@ -339,9 +726,30 @@ class ExamController {
                 (int) $exam['duration_minutes'],
                 (int) $exam['anti_cheat_enabled'],
                 (int) $exam['violation_limit'],
-                $exam['violation_action']
+                $exam['violation_action'],
+                (int) $exam['shuffle_questions'],
+                (int) $exam['shuffle_answers'],
+                $shuffleSeed
             ]);
             $attemptId = $this->pdo->lastInsertId();
+        } else {
+            $attemptId = (int) $attempt['attempt_id'];
+            if (empty($attempt['shuffle_seed'])) {
+                $stmt = $this->pdo->prepare(
+                    "UPDATE exam_attempts
+                     SET shuffle_seed = ?,
+                         shuffle_questions_snapshot = COALESCE(shuffle_questions_snapshot, ?),
+                         shuffle_answers_snapshot = COALESCE(shuffle_answers_snapshot, ?)
+                     WHERE attempt_id = ? AND student_id = ? AND status = 'in_progress'"
+                );
+                $stmt->execute([
+                    $shuffleSeed,
+                    (int) $exam['shuffle_questions'],
+                    (int) $exam['shuffle_answers'],
+                    $attemptId,
+                    $studentId
+                ]);
+            }
         }
         $this->snapshotCorrectAnswers((int) $attemptId, $examId);
         header('Location: index.php?action=take_exam&attempt_id=' . (int) $attemptId);
@@ -359,6 +767,9 @@ class ExamController {
                     COALESCE(ea.anti_cheat_enabled_snapshot, e.anti_cheat_enabled) AS anti_cheat_enabled,
                     COALESCE(ea.violation_limit_snapshot, e.violation_limit) AS violation_limit,
                     COALESCE(ea.violation_action_snapshot, e.violation_action) AS violation_action,
+                    COALESCE(ea.shuffle_questions_snapshot, e.shuffle_questions) AS shuffle_questions,
+                    COALESCE(ea.shuffle_answers_snapshot, e.shuffle_answers) AS shuffle_answers,
+                    ea.shuffle_seed,
                     COUNT(eq.id) AS question_count
              FROM exam_attempts ea
              JOIN exams e ON e.exam_id = ea.exam_id
@@ -371,6 +782,24 @@ class ExamController {
         if (!$exam || $exam['status'] !== 'in_progress') {
             http_response_code(403);
             exit('Lượt thi không hợp lệ hoặc đã được nộp.');
+        }
+        if (empty($exam['shuffle_seed'])) {
+            $shuffleSeed = bin2hex(random_bytes(32));
+            $seedStmt = $this->pdo->prepare(
+                "UPDATE exam_attempts
+                 SET shuffle_seed = ?,
+                     shuffle_questions_snapshot = COALESCE(shuffle_questions_snapshot, ?),
+                     shuffle_answers_snapshot = COALESCE(shuffle_answers_snapshot, ?)
+                 WHERE attempt_id = ? AND student_id = ? AND status = 'in_progress'"
+            );
+            $seedStmt->execute([
+                $shuffleSeed,
+                (int) $exam['shuffle_questions'],
+                (int) $exam['shuffle_answers'],
+                $attemptId,
+                $studentId
+            ]);
+            $exam['shuffle_seed'] = $shuffleSeed;
         }
         $gradingError = $this->ensureAutomaticallyGradableExam((int) $exam['exam_id']);
         if ($gradingError !== null) {
@@ -413,9 +842,18 @@ class ExamController {
             }
             $questions[$questionId]['answers'][] = [
                 'answer_id' => $row['answer_id'],
-                'content' => $row['answer_content']
+                'content' => strip_tags(
+                    $this->sanitizeRichText($row['answer_content']),
+                    '<br><p><div><ul><ol><li>'
+                )
             ];
         }
+        $questions = $this->orderAttemptQuestions(
+            $questions,
+            $exam['shuffle_seed'],
+            (bool) $exam['shuffle_questions'],
+            (bool) $exam['shuffle_answers']
+        );
 
         $savedAnswers = [];
         $stmt = $this->pdo->prepare(
@@ -578,7 +1016,8 @@ class ExamController {
 
         $stmt = $this->pdo->prepare(
             "UPDATE exams SET duration_minutes = ?, anti_cheat_enabled = ?,
-                    violation_limit = ?, violation_action = ?
+                violation_limit = ?, violation_action = ?,
+                shuffle_questions = ?, shuffle_answers = ?
              WHERE exam_id = ? AND teacher_id = ?"
         );
         $stmt->execute([
@@ -586,6 +1025,8 @@ class ExamController {
             isset($_POST['anti_cheat_enabled']) ? 1 : 0,
             $limit,
             $action,
+            isset($_POST['shuffle_questions']) ? 1 : 0,
+            isset($_POST['shuffle_answers']) ? 1 : 0,
             $examId,
             $teacherId
         ]);
@@ -703,8 +1144,9 @@ class ExamController {
         $examId = (int) ($_GET['exam_id'] ?? 0);
         $userId = (int) $_SESSION['user']['id'];
         $stmt = $this->pdo->prepare(
-            "SELECT e.exam_id, e.title, e.class_id
+                "SELECT e.exam_id, e.title, e.class_id
                     , e.duration_minutes, e.anti_cheat_enabled
+                    , e.shuffle_questions, e.shuffle_answers
                     , e.violation_limit, e.violation_action
              FROM exams e
              WHERE e.exam_id = ? AND e.teacher_id = ?"
@@ -718,27 +1160,30 @@ class ExamController {
 
         $stmt = $this->pdo->prepare(
                 "SELECT u.full_name, ea.total_score, ea.end_time, ea.attempt_id,
-                    ea.student_id, ea.submit_reason, ea.review_status,
+                    ea.student_id, ea.status, ea.submit_reason, ea.review_status,
                         COUNT(DISTINCT v.violation_id) AS violation_count,
                         COUNT(DISTINCT CASE WHEN aa.is_correct = TRUE THEN aa.question_id END) AS correct_count
                  FROM exam_attempts ea
                  JOIN users u ON u.user_id = ea.student_id
                      LEFT JOIN violation_logs v ON v.attempt_id = ea.attempt_id
                      LEFT JOIN attempt_answers aa ON aa.attempt_id = ea.attempt_id
-                 WHERE ea.exam_id = ? AND ea.status = 'completed'
+                 WHERE ea.exam_id = ? AND ea.status IN ('completed', 'voided')
                  GROUP BY ea.attempt_id, u.full_name, ea.total_score, ea.end_time,
-                      ea.student_id, ea.submit_reason, ea.review_status
+                      ea.student_id, ea.status, ea.submit_reason, ea.review_status
              ORDER BY u.full_name, ea.end_time, ea.attempt_id"
         );
         $stmt->execute([$examId]);
-        $scores = $stmt->fetchAll();
+        $scoreRows = $stmt->fetchAll();
         $attemptNumbers = [];
-        foreach ($scores as &$score) {
+        foreach ($scoreRows as &$score) {
             $studentId = (int) $score['student_id'];
             $attemptNumbers[$studentId] = ($attemptNumbers[$studentId] ?? 0) + 1;
             $score['attempt_number'] = $attemptNumbers[$studentId];
         }
         unset($score);
+        $scores = array_values(array_filter($scoreRows, function ($score) {
+            return $score['status'] === 'completed';
+        }));
 
         $questionCountStmt = $this->pdo->prepare(
             "SELECT COUNT(DISTINCT question_id)
