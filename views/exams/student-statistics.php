@@ -90,7 +90,7 @@
                 <h2 class="h5 fw-bold mb-3"><i class="fa-solid fa-clock-rotate-left text-primary me-2"></i>Lịch sử làm bài</h2>
                 <div class="table-responsive">
                     <table class="table align-middle mb-0">
-                        <thead><tr><th>Lần thi</th><th>Đề thi</th><th>Điểm</th><th>Đúng</th><th>Sai</th><th>Thời lượng</th><th>Hoàn thành</th><th>Trạng thái</th><th></th></tr></thead>
+                        <thead><tr><th>Lần thi</th><th>Đề thi</th><th>Điểm /10</th><th>Đúng</th><th>Sai</th><th>Thời lượng</th><th>Hoàn thành</th><th>Trạng thái</th><th></th></tr></thead>
                         <tbody>
                         <?php foreach (array_reverse($attempts) as $attemptIndex => $attempt): ?>
                             <?php $durationSeconds = max(0, strtotime($attempt['end_time']) - strtotime($attempt['start_time'])); ?>

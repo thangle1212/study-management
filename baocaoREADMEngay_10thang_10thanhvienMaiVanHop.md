@@ -81,7 +81,13 @@ Ví dụ câu hỏi có hai đáp án đúng là A và C:
 | A, B, C | Sai |
 | Không chọn | Sai |
 
-Sau khi xác định câu đúng, hệ thống cộng `score_weight` của câu đó vào tổng điểm.
+Sau khi xác định số câu đúng, hệ thống tính tỷ lệ đúng trên tổng số câu rồi quy đổi về thang điểm 10:
+
+```text
+Điểm = (Số câu đúng / Tổng số câu) × 10
+```
+
+Ví dụ, một đề có 20 câu và học sinh trả lời đúng 15 câu thì điểm là `(15 / 20) × 10 = 7.5`. Vì vậy điểm không còn được tính theo giả định mỗi câu luôn có giá trị 1 điểm; số lượng câu của đề có thể thay đổi nhưng kết quả vẫn thống nhất trên thang 10.
 
 ### 3.2. Vì sao phải chấm ở server?
 
@@ -220,10 +226,10 @@ Học sinh cũng có thể lọc theo từng đề. Khi chọn một đề cụ 
 
 ### 5.3. Biểu đồ tiến bộ
 
-Các đề có thể có tổng điểm khác nhau, nên biểu đồ không chỉ dùng điểm thô. Điểm được quy đổi về phần trăm để so sánh dễ hơn:
+Điểm của mỗi lượt thi đã được quy đổi thống nhất về thang 10. Khi cần so sánh tiến bộ trên biểu đồ, hệ thống tiếp tục quy đổi điểm này về phần trăm của thang 10:
 
 ```text
-Tỷ lệ điểm = Điểm đạt được / Tổng điểm của đề × 100
+Tỷ lệ điểm = Điểm thang 10 / 10 × 100
 ```
 
 Biểu đồ sử dụng đường ít cong hơn để tránh tạo cảm giác số liệu vượt quá giá trị thật. Nhãn phần trăm cũng được hiển thị ngay trên từng điểm dữ liệu, không bắt buộc học sinh phải rê chuột mới thấy điểm.
@@ -358,6 +364,5 @@ Module hiện tại đã đáp ứng việc chấm tự động cho câu hỏi m
 - Thêm bộ test tự động cho các trường hợp chấm điểm.
 - Ghi lại lịch sử thay đổi đáp án và cấu hình đề.
 - Cho phép giáo viên lưu hoặc xuất báo cáo phân tích câu hỏi để dùng khi chữa bài.
-
 
 

@@ -146,7 +146,7 @@
                         </div>
                         <div class="table-responsive">
                             <table id="scores-table" class="table align-middle">
-                                <thead><tr><th>Học sinh</th><th>Lần nộp</th><th>Điểm</th><th>Vi phạm</th><th>Trạng thái</th><th>Thời gian</th></tr></thead>
+                                <thead><tr><th>Học sinh</th><th>Lần nộp</th>                                <th>Điểm /10</th><th>Vi phạm</th><th>Trạng thái</th><th>Thời gian</th></tr></thead>
                                 <tbody>
                                 <?php foreach ($scores as $score): ?>
                                     <tr data-student-name="<?php echo htmlspecialchars(function_exists('mb_strtolower') ? mb_strtolower($score['full_name'], 'UTF-8') : strtolower($score['full_name'])); ?>" data-status="<?php echo $score['review_status'] === 'pending' || $score['submit_reason'] === 'violation_limit' ? 'violation' : 'submitted'; ?>">
