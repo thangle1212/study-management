@@ -116,20 +116,6 @@ CREATE TABLE `exams` (
     REFERENCES `classes` (`class_id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-<<<<<<< HEAD
--- 11. BẢNG CHI TIẾT ĐÁP ÁN HỌC SINH CHỌN (Phục vụ chấm điểm tự động)
-CREATE TABLE attempt_answers (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    attempt_id INT NOT NULL,
-    question_id INT NOT NULL,
-    answer_id INT, -- Đáp án học sinh chọn (dành cho trắc nghiệm)
-    answer_text TEXT, -- Câu trả lời chữ (dành cho tự luận nếu mở rộng)
-    is_correct BOOLEAN DEFAULT FALSE,
-    FOREIGN KEY (attempt_id) REFERENCES exam_attempts(attempt_id) ON DELETE CASCADE,
-    FOREIGN KEY (question_id) REFERENCES questions(question_id) ON DELETE CASCADE,
-    FOREIGN KEY (answer_id) REFERENCES answers(answer_id) ON DELETE SET NULL
-);
-=======
 CREATE TABLE `exam_questions` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `exam_id` int(11) NOT NULL,
@@ -317,4 +303,3 @@ INSERT INTO `attempt_answers` (`id`, `attempt_id`, `question_id`, `answer_id`, `
 (9, 3, 2, 5, NULL, 1),
 (10, 4, 1, 2, NULL, 1),
 (11, 4, 2, 5, NULL, 0);
->>>>>>> 4f05e28 (fix(core):update code to latest version after resolving conflict)
