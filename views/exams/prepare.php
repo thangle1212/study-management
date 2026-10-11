@@ -83,7 +83,7 @@
                                     </div>
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
-                                    <strong class="history-score text-end text-primary fs-5"><?php echo number_format((float) $history['total_score'], 2); ?> điểm</strong>
+                                    <strong class="history-score text-end text-primary fs-5"><?php echo number_format((float) $history['total_score'], 2); ?>/10 điểm</strong>
                                     <a class="btn btn-outline-primary btn-sm text-nowrap" href="index.php?action=attempt_detail&amp;attempt_id=<?php echo (int) $history['attempt_id']; ?>&amp;from=exam&amp;exam_id=<?php echo (int) $exam['exam_id']; ?>">
                                         <i class="fa-solid fa-eye me-1"></i>Xem chi tiết
                                     </a>
