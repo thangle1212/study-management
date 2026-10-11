@@ -18,42 +18,21 @@ Ngân hàng câu hỏi
 Bài thi
 3. Quy trình sử dụng đề xuất
 Bước 1: Tạo ngân hàng câu hỏi
-Vào Ngân hàng câu hỏi → Tạo ngân hàng câu hỏi.
+Từ bảng điều khiển giáo viên, mở Ngân hàng câu hỏi → Tạo ngân hàng.
 
-Nhập:
-
-Tên ngân hàng
-Mô tả
-Danh mục
-Trạng thái
-Cài đặt số lượng câu hỏi hoặc thời gian nếu có
-Sau đó chọn Tạo ngân hàng câu hỏi.
-
-Màn hình này nằm ở question-bank/create.php.
+Nhập tên ngân hàng và môn học. Sau khi tạo, có thể mở ngân hàng để thêm câu hỏi hoặc sửa thông tin. Trang được điều hướng qua `index.php?action=qe_banks`; dữ liệu chỉ hiển thị cho chủ sở hữu.
 
 Bước 2: Thêm câu hỏi
 Mở một ngân hàng câu hỏi, sau đó chọn Thêm câu hỏi.
 
-Có thể tạo các loại câu hỏi:
+Hiện có thể tạo các loại câu hỏi được hỗ trợ bởi luồng làm bài:
 
 Trắc nghiệm một đáp án
 Trắc nghiệm nhiều đáp án
-Điền khuyết
-Tự luận
-Người dùng nhập:
-
-Nội dung câu hỏi
-Đáp án
-Đáp án đúng
-Giải thích
-Độ khó
-Trạng thái
-Các ô nội dung câu hỏi và đáp án sẽ tự động kéo dài theo văn bản. Chức năng này nằm ở question-create.php và question-edit.php.
+Nhập nội dung, từ 2 đến 10 đáp án, chọn đáp án đúng, độ khó và tùy chọn URL hình ảnh. Có thể thêm, sửa hoặc xóa câu hỏi từ trang chi tiết ngân hàng.
 
 Bước 3: Chỉnh sửa câu hỏi
-Trong danh sách câu hỏi, chọn Sửa câu hỏi.
-
-Màn hình question-edit.php cho phép cập nhật chi tiết câu hỏi, đáp án và đáp án đúng.
+Trong trang chi tiết ngân hàng, chọn Sửa hoặc Xóa cạnh câu hỏi. Câu hỏi thuộc đề đã công bố/lên lịch hoặc đã có lượt làm sẽ không thể sửa; câu hỏi đã liên kết với bất kỳ đề thi nào không thể xóa và ngân hàng chứa câu hỏi đó cũng không thể xóa. Điều này giữ nguyên đề và kết quả cũ.
 
 Bước 4: Tạo đề thi
 Từ bảng điều khiển của giáo viên, chọn Tạo đề thi. Chọn một ngân hàng câu hỏi của bạn, nhập thông tin đề, rồi dán toàn bộ nội dung theo dạng:
@@ -67,18 +46,10 @@ Các câu hỏi bắt đầu bằng số thứ tự (1., 2.); đáp án có nhã
 Định dạng chỉ dùng để nhận diện đáp án khi tạo đề và không hiển thị cho học sinh lúc làm bài.
 
 Có thể chọn trạng thái Nháp, Đã công bố, Đã lên lịch hoặc Lưu trữ. Đề lên lịch cần có ngày giờ bắt đầu và kết thúc.
-Màn hình này nằm ở exam/create.php.
+Màn hình được xử lý qua `index.php?action=qe_exam_create`. Nếu chưa có ngân hàng, tạo một ngân hàng ở `index.php?action=qe_bank_create` trước; biểu mẫu tạo đề sẽ khóa nút gửi cho đến khi có ngân hàng.
 
-Bước 5: Thêm câu hỏi vào bài thi
-Trong danh sách bài thi, chọn Câu hỏi.
-
-Tại exam/questions.php, người dùng có thể:
-
-Xem các câu hỏi trong bài thi
-Thêm câu hỏi từ ngân hàng câu hỏi
-Sắp xếp thứ tự câu hỏi
-Xóa câu hỏi khỏi bài thi
-Kiểm tra điểm của từng câu
+Bước 5: Quản lý câu hỏi đã tạo
+Câu hỏi được quét từ nội dung đề sẽ được lưu vào ngân hàng đã chọn và liên kết với đề thi. Mở ngân hàng để xem, sửa hoặc xóa câu hỏi. Để giữ nguyên đề và kết quả đã làm, câu hỏi đã được dùng trong đề/lượt thi và ngân hàng chứa các câu hỏi đó sẽ được bảo vệ khỏi việc sửa/xóa.
 Bước 6: Xem hoặc chỉnh sửa bài thi
 Chọn Xem để xem thông tin tổng quan bài thi.
 Chọn Sửa để thay đổi tên, thời gian, mô tả, trạng thái hoặc ngày mở bài thi.

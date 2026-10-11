@@ -58,6 +58,7 @@ class ExamController {
         }
     }
 
+    // Loại bỏ thẻ/thuộc tính không an toàn và giữ lại định dạng được phép trong nội dung dán.
     private function cleanRichTextNode($node) {
         $allowedTags = ['b', 'strong', 'i', 'em', 'u', 'span', 'font', 'br', 'p', 'div', 'ul', 'ol', 'li'];
         $discardTags = ['script', 'style', 'iframe', 'object', 'svg', 'math', 'template'];
@@ -141,6 +142,7 @@ class ExamController {
         }
     }
 
+    // Chuẩn hóa màu HTML về mã hex an toàn để lưu và hiển thị nhất quán.
     private function normalizeRichTextColor($color) {
         $color = trim($color);
         if (preg_match('/^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i', $color)) {
@@ -155,6 +157,7 @@ class ExamController {
         return null;
     }
 
+    // Làm sạch HTML rich-text trước khi lưu hoặc đưa nội dung đáp án ra màn hình làm bài.
     private function sanitizeRichText($html) {
         if (!class_exists('DOMDocument')) {
             throw new RuntimeException('PHP DOM extension is required to safely format answer content.');
@@ -188,6 +191,7 @@ class ExamController {
         return trim($safeHtml);
     }
 
+    // Kiểm tra datetime-local từ biểu mẫu và chuyển sang định dạng DATETIME của MySQL.
     private function parseExamDateTime($value, $fieldLabel) {
         if ($value === '') {
             return null;
@@ -202,7 +206,9 @@ class ExamController {
         return $date->format('Y-m-d H:i:s');
     }
 
-    // BEGIN EXAM CREATION: validate the form, derive correct answers, and persist atomically.
+    // Xử lý tạo đề: kiểm tra quyền/dữ liệu, nhận đáp án đúng từ định dạng hoặc đánh dấu tay,
+    // rồi chuyển dữ liệu hợp lệ sang model để lưu trong một transaction.
+    // BEGIN EXAM CREATION
     public function createExam() {
         $this->requireLogin();
         $role = $_SESSION['user']['role'] ?? '';

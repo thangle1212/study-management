@@ -6,6 +6,7 @@ class Exam {
         $this->pdo = $pdo;
     }
 
+    // Lưu đề thi, câu hỏi, đáp án và thứ tự câu; rollback toàn bộ nếu bất kỳ bước nào lỗi.
     public function createExamAndQuestions($examData, $questions) {
         $this->pdo->beginTransaction();
         try {

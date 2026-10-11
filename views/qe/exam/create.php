@@ -127,7 +127,9 @@ $escape = function ($value) {
                                     <?php endforeach; ?>
                                 </select>
                                 <?php if (!$questionBanks): ?>
-                                    <div class="form-text text-danger">Bạn cần có ít nhất một ngân hàng câu hỏi trước khi tạo đề.</div>
+                                    <div class="form-text text-danger">Bạn cần có ít nhất một ngân hàng câu hỏi trước khi tạo đề.
+                                        <a href="index.php?action=qe_bank_create">Tạo ngân hàng câu hỏi</a>
+                                    </div>
                                 <?php endif; ?>
                             </div>
                             <div class="col-md-4">
@@ -193,7 +195,7 @@ $escape = function ($value) {
 
                     <div class="d-flex justify-content-end gap-2 mb-5">
                         <a href="index.php?action=dashboard" class="btn btn-secondary"><i class="fa-solid fa-xmark me-2"></i>Hủy</a>
-                        <button type="submit" class="btn btn-primary" id="create-exam-button"><i class="fa-solid fa-plus me-2"></i>Tạo đề thi</button>
+                        <button type="submit" class="btn btn-primary" id="create-exam-button" <?= !$questionBanks ? 'disabled' : '' ?>><i class="fa-solid fa-plus me-2"></i>Tạo đề thi</button>
                     </div>
                 </form>
                 <!-- END BULK EXAM CREATION -->
@@ -404,6 +406,11 @@ $escape = function ($value) {
             }
 
             function parseExam() {
+                const previousSelections = questions.map(function (question) {
+                    return question.answers.map(function (answer) {
+                        return { text: answer.text, manual: answer.manual };
+                    });
+                });
                 questions = [];
                 parseError = '';
                 const safeRoot = document.createElement('div');
@@ -445,8 +452,14 @@ $escape = function ($value) {
                             html: answerHtml,
                             text: answerText,
                             correct: marker.test(answerHtml),
-                            manual: Boolean(initialAnswerSelections[questions.length - 1]
-                                && initialAnswerSelections[questions.length - 1][questions[questions.length - 1].answers.length])
+                            manual: Boolean(
+                                (initialAnswerSelections[questions.length - 1]
+                                    && initialAnswerSelections[questions.length - 1][questions[questions.length - 1].answers.length])
+                                || (previousSelections[questions.length - 1]
+                                    && previousSelections[questions.length - 1][questions[questions.length - 1].answers.length]
+                                    && previousSelections[questions.length - 1][questions[questions.length - 1].answers.length].text === answerText
+                                    && previousSelections[questions.length - 1][questions[questions.length - 1].answers.length].manual)
+                            )
                         });
                         current = { kind: 'answer', answers: questions[questions.length - 1].answers };
                         return;
@@ -463,8 +476,15 @@ $escape = function ($value) {
                     if (question.answers.length < 2 || question.answers.length > 8) {
                         parseError = 'Câu ' + (index + 1) + ' cần có từ 2 đến 8 đáp án dạng A), B), C)...';
                     }
-                    const correctCount = question.answers.filter(function (answer) { return answer.correct; }).length;
+                    const correctCount = question.answers.filter(function (answer) {
+                        return answer.correct || answer.manual;
+                    }).length;
                     if (correctCount > 1) question.question_type = 'multiple_choice';
+                    if (correctCount === 0) {
+                        parseError = 'Câu ' + (index + 1) + ' chưa có đáp án đúng. Hãy đánh dấu đáp án đúng trong phần xem trước.';
+                    } else if (question.question_type === 'single_choice' && correctCount !== 1) {
+                        parseError = 'Câu ' + (index + 1) + ' đang ở dạng một đáp án nhưng có nhiều đáp án đúng.';
+                    }
                 });
             }
 
@@ -525,7 +545,7 @@ $escape = function ($value) {
                     typeSelect.value = question.question_type;
                     typeSelect.addEventListener('change', function () {
                         question.question_type = typeSelect.value;
-                        syncQuestionInputs();
+                        renderPreview();
                     });
                     typeLabel.appendChild(typeSelect);
                     options.appendChild(typeLabel);

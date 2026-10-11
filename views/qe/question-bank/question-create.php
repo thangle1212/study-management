@@ -1,3 +1,11 @@
+<?php
+$target = '../../../index.php?action=qe_question_create';
+if (isset($_GET['bank_id']) && ctype_digit((string) $_GET['bank_id'])) {
+    $target .= '&bank_id=' . (int) $_GET['bank_id'];
+}
+header('Location: ' . $target);
+exit;
+?>
 <!doctype html>
 <html lang="vi">
 
