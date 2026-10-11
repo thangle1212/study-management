@@ -15,7 +15,19 @@ class AdminController extends BaseController {
         $this->requireAdmin(); // Bắt buộc phải là Admin mới được vào
 
         $roleFilter = $_GET['role'] ?? null;
+        if ($roleFilter !== null && !is_string($roleFilter)) {
+            http_response_code(400);
+            exit('Bộ lọc vai trò không hợp lệ.');
+        }
+        if ($roleFilter === null || $roleFilter === '') {
+            $roleFilter = null;
+        } elseif (!in_array($roleFilter, ['student', 'teacher', 'admin'], true)) {
+            http_response_code(400);
+            exit('Bộ lọc vai trò không hợp lệ.');
+        }
+
         $users = $this->userModel->getAllUsers($roleFilter);
+        $csrfToken = $_SESSION['csrf_token'];
 
         require __DIR__ . '/../views/admin/users.php';
     }
@@ -23,32 +35,33 @@ class AdminController extends BaseController {
     // Xử lý đổi trạng thái tài khoản (Khóa / Mở khóa) hoặc đổi Role qua POST
     public function updateUserAction() {
         $this->requireAdmin();
+        $this->requirePostWithCsrf();
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $userId = $_POST['user_id'] ?? null;
-            $actionType = $_POST['action_type'] ?? null; // 'status' hoặc 'role'
-            $value = $_POST['value'] ?? null;
+        $userId = filter_var($_POST['user_id'] ?? null, FILTER_VALIDATE_INT);
+        $actionType = $_POST['action_type'] ?? null;
+        $value = $_POST['value'] ?? null;
 
-            if (!$userId) {
-                header('Location: index.php?action=admin_users&error=invalid_user');
-                exit;
-            }
-
-            // Không cho phép Admin tự khóa chính tài khoản của mình
-            if ($userId == $_SESSION['user']['id']) {
-                header('Location: index.php?action=admin_users&error=self_action_forbidden');
-                exit;
-            }
-
-            if ($actionType === 'status' && in_array($value, ['active', 'locked'])) {
-                $this->userModel->updateStatus($userId, $value);
-            } elseif ($actionType === 'role' && in_array($value, ['student', 'teacher', 'admin'])) {
-                $this->userModel->updateRole($userId, $value);
-            }
-
-            header('Location: index.php?action=admin_users&success=updated');
+        if ($userId === false || $userId < 1 || !is_string($actionType) || !is_string($value)) {
+            header('Location: index.php?action=admin_users&error=invalid_user');
             exit;
         }
+
+        if ($userId === (int) $_SESSION['user']['id']) {
+            header('Location: index.php?action=admin_users&error=self_action_forbidden');
+            exit;
+        }
+
+        if ($actionType === 'status' && in_array($value, ['active', 'locked'], true)) {
+            $this->userModel->updateStatus($userId, $value);
+        } elseif ($actionType === 'role' && in_array($value, ['student', 'teacher', 'admin'], true)) {
+            $this->userModel->updateRole($userId, $value);
+        } else {
+            header('Location: index.php?action=admin_users&error=invalid_action');
+            exit;
+        }
+
+        header('Location: index.php?action=admin_users&success=updated');
+        exit;
     }
     // Hiển thị Dashboard riêng cho Admin
     public function dashboard() {

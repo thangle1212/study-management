@@ -48,7 +48,7 @@ class AuthController {
         $error = '';
         $success = '';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $role = $_POST['role'] ?? 'student';
+            $role = 'student';
             $fullName = trim($_POST['full_name'] ?? '');
             $email = trim($_POST['email'] ?? '');
             $schoolName = trim($_POST['school_name'] ?? '');

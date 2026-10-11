@@ -7,12 +7,20 @@ require_once __DIR__ . '/config/env.php';
 require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/controllers/AuthController.php';
 require_once __DIR__ . '/controllers/ExamController.php';
+<<<<<<< HEAD
 require_once __DIR__ . '/controllers/ForumController.php';
+=======
+require_once __DIR__ . '/controllers/AdminController.php';
+>>>>>>> 4f05e28 (fix(core):update code to latest version after resolving conflict)
 
 $action = $_GET['action'] ?? 'home';
 $authController = new AuthController($pdo);
 $examController = new ExamController($pdo);
+<<<<<<< HEAD
 $forumController = new ForumController($pdo);
+=======
+$adminController = new AdminController($pdo);
+>>>>>>> 4f05e28 (fix(core):update code to latest version after resolving conflict)
 
 switch ($action) {
     case 'home':
@@ -44,7 +52,23 @@ switch ($action) {
             header('Location: index.php?action=login');
             exit;
         }
-        require_once __DIR__ . '/views/dashboard.php';
+        if (($_SESSION['user']['role'] ?? '') === 'admin') {
+            $adminController->dashboard();
+        } else {
+            require_once __DIR__ . '/views/dashboard.php';
+        }
+        break;
+
+    case 'admin_dashboard':
+        $adminController->dashboard();
+        break;
+
+    case 'admin_users':
+        $adminController->manageUsers();
+        break;
+
+    case 'admin_update_user':
+        $adminController->updateUserAction();
         break;
 
     case 'prepare_exam':
