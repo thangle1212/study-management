@@ -72,6 +72,12 @@ $roleLabels = [
             <i class="fa-solid fa-circle-exclamation me-2"></i>
             <?php if ($_GET['error'] === 'self_action_forbidden'): ?>
                 Bạn không thể thay đổi trạng thái hoặc vai trò của chính tài khoản đang đăng nhập.
+            <?php elseif ($_GET['error'] === 'email_exists'): ?>
+                Email này đã được sử dụng bởi tài khoản khác.
+            <?php elseif ($_GET['error'] === 'invalid_profile'): ?>
+                Email không hợp lệ hoặc mật khẩu mới có ít hơn 6 ký tự.
+            <?php elseif ($_GET['error'] === 'invalid_create'): ?>
+                Thông tin tạo tài khoản không hợp lệ. Hãy kiểm tra email, vai trò và mật khẩu tối thiểu 6 ký tự.
             <?php else: ?>
                 Không thể thực hiện thao tác. Vui lòng kiểm tra lại thông tin và thử lại.
             <?php endif; ?>
@@ -79,9 +85,51 @@ $roleLabels = [
     <?php endif; ?>
     <?php if (isset($_GET['success'])): ?>
         <div class="alert alert-success border-0 rounded-3 shadow-sm" role="status">
-            <i class="fa-solid fa-circle-check me-2"></i>Cập nhật tài khoản thành công.
+            <i class="fa-solid fa-circle-check me-2"></i>
+            <?= $_GET['success'] === 'created' ? 'Tạo tài khoản thành công.' : 'Cập nhật tài khoản thành công.' ?>
         </div>
     <?php endif; ?>
+
+    <details class="card page-card mb-4">
+        <summary class="card-body p-3 p-md-4 fw-semibold text-primary">
+            <i class="fa-solid fa-user-plus me-2"></i>Tạo tài khoản mới
+        </summary>
+        <div class="card-body border-top p-3 p-md-4">
+            <form action="index.php?action=admin_create_user" method="POST" class="row g-3">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                <div class="col-md-6">
+                    <label for="new-full-name" class="form-label">Họ và tên</label>
+                    <input id="new-full-name" name="full_name" type="text" class="form-control" maxlength="100" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="new-email" class="form-label">Email</label>
+                    <input id="new-email" name="email" type="email" class="form-control" maxlength="100" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="new-password" class="form-label">Mật khẩu khởi tạo</label>
+                    <input id="new-password" name="password" type="password" class="form-control" minlength="6" autocomplete="new-password" required>
+                    <div class="form-text">Tối thiểu 6 ký tự.</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="new-role" class="form-label">Phân quyền</label>
+                    <select id="new-role" name="role" class="form-select" required>
+                        <?php foreach ($roleLabels as $role => $label): ?>
+                            <option value="<?= htmlspecialchars($role, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="new-school" class="form-label">Trường học <span class="text-muted">(không bắt buộc)</span></label>
+                    <input id="new-school" name="school_name" type="text" class="form-control" maxlength="150">
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary rounded-3">
+                        <i class="fa-solid fa-user-plus me-1"></i>Tạo tài khoản
+                    </button>
+                </div>
+            </form>
+        </div>
+    </details>
 
     <section class="card page-card mb-4">
         <div class="card-body p-3 p-md-4">
@@ -172,8 +220,29 @@ $roleLabels = [
                                 <?= !empty($user['created_at']) ? htmlspecialchars(date('d/m/Y', strtotime($user['created_at'])), ENT_QUOTES, 'UTF-8') : '—' ?>
                             </td>
                             <td class="text-end pe-3 pe-md-4">
-                                <?php if (!$isCurrentUser): ?>
-                                    <form action="index.php?action=admin_update_user" method="POST" class="m-0">
+                                <div class="d-flex flex-column align-items-end gap-2">
+                                    <details class="text-start">
+                                        <summary class="btn btn-sm btn-outline-primary text-nowrap">
+                                            <i class="fa-solid fa-pen-to-square me-1"></i>Sửa email / mật khẩu
+                                        </summary>
+                                        <form action="index.php?action=admin_update_user" method="POST" class="mt-2 p-3 border rounded-3 bg-white" style="min-width: 250px">
+                                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                                            <input type="hidden" name="user_id" value="<?= $userId ?>">
+                                            <input type="hidden" name="action_type" value="profile">
+                                            <div class="mb-2">
+                                                <label for="email-user-<?= $userId ?>" class="form-label small">Email</label>
+                                                <input id="email-user-<?= $userId ?>" name="email" type="email" class="form-control form-control-sm" value="<?= $userEmail ?>" maxlength="100" required>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label for="password-user-<?= $userId ?>" class="form-label small">Đặt mật khẩu mới</label>
+                                                <input id="password-user-<?= $userId ?>" name="new_password" type="password" class="form-control form-control-sm" minlength="6" autocomplete="new-password" placeholder="Để trống nếu không đổi">
+                                                <div class="form-text">Mật khẩu cũ không thể xem; để trống để giữ nguyên.</div>
+                                            </div>
+                                            <button type="submit" class="btn btn-sm btn-primary">Lưu thay đổi</button>
+                                        </form>
+                                    </details>
+                                    <?php if (!$isCurrentUser): ?>
+                                        <form action="index.php?action=admin_update_user" method="POST" class="m-0">
                                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                                         <input type="hidden" name="user_id" value="<?= $userId ?>">
                                         <input type="hidden" name="action_type" value="status">
@@ -188,10 +257,11 @@ $roleLabels = [
                                                 <i class="fa-solid fa-lock-open me-1"></i>Mở khóa
                                             </button>
                                         <?php endif; ?>
-                                    </form>
-                                <?php else: ?>
-                                    <span class="text-muted small"><i class="fa-solid fa-user-shield me-1"></i>Bạn</span>
-                                <?php endif; ?>
+                                        </form>
+                                    <?php else: ?>
+                                        <span class="text-muted small"><i class="fa-solid fa-user-shield me-1"></i>Bạn</span>
+                                    <?php endif; ?>
+                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>

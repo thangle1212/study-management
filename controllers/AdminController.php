@@ -37,16 +37,27 @@ class AdminController extends BaseController {
         $this->requireAdmin();
         $this->requirePostWithCsrf();
 
-        $userId = filter_var($_POST['user_id'] ?? null, FILTER_VALIDATE_INT);
+        $rawUserId = $_POST['user_id'] ?? null;
         $actionType = $_POST['action_type'] ?? null;
         $value = $_POST['value'] ?? null;
 
-        if ($userId === false || $userId < 1 || !is_string($actionType) || !is_string($value)) {
+        if (!is_string($rawUserId) || !is_string($actionType)) {
+            header('Location: index.php?action=admin_users&error=invalid_user');
+            exit;
+        }
+        $userId = filter_var($rawUserId, FILTER_VALIDATE_INT);
+        if ($userId === false || $userId < 1) {
             header('Location: index.php?action=admin_users&error=invalid_user');
             exit;
         }
 
-        if ($userId === (int) $_SESSION['user']['id']) {
+        if (!$this->userModel->existsById($userId)) {
+            header('Location: index.php?action=admin_users&error=invalid_user');
+            exit;
+        }
+
+        if (in_array($actionType, ['status', 'role'], true)
+            && $userId === (int) $_SESSION['user']['id']) {
             header('Location: index.php?action=admin_users&error=self_action_forbidden');
             exit;
         }
@@ -55,12 +66,90 @@ class AdminController extends BaseController {
             $this->userModel->updateStatus($userId, $value);
         } elseif ($actionType === 'role' && in_array($value, ['student', 'teacher', 'admin'], true)) {
             $this->userModel->updateRole($userId, $value);
+        } elseif ($actionType === 'profile') {
+            $email = $_POST['email'] ?? null;
+            $newPassword = $_POST['new_password'] ?? '';
+            if (!is_string($email) || !is_string($newPassword)) {
+                header('Location: index.php?action=admin_users&error=invalid_profile');
+                exit;
+            }
+            $email = trim($email);
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)
+                || strlen($email) > 100
+                || !is_string($newPassword)
+                || ($newPassword !== '' && !preg_match('/^.{6,}$/us', $newPassword))) {
+                header('Location: index.php?action=admin_users&error=invalid_profile');
+                exit;
+            }
+            if ($this->userModel->emailExists($email, $userId)) {
+                header('Location: index.php?action=admin_users&error=email_exists');
+                exit;
+            }
+
+            try {
+                $this->userModel->updateAccountDetails(
+                    $userId,
+                    $email,
+                    $newPassword === '' ? null : $newPassword
+                );
+            } catch (PDOException $exception) {
+                if (($exception->errorInfo[1] ?? null) === 1062) {
+                    header('Location: index.php?action=admin_users&error=email_exists');
+                    exit;
+                }
+                throw $exception;
+            }
         } else {
             header('Location: index.php?action=admin_users&error=invalid_action');
             exit;
         }
 
         header('Location: index.php?action=admin_users&success=updated');
+        exit;
+    }
+
+    public function createUserAction() {
+        $this->requireAdmin();
+        $this->requirePostWithCsrf();
+
+        $fullName = $_POST['full_name'] ?? null;
+        $email = $_POST['email'] ?? null;
+        $schoolName = $_POST['school_name'] ?? '';
+        $password = $_POST['password'] ?? '';
+        $role = $_POST['role'] ?? '';
+
+        if (!is_string($fullName) || !is_string($email)
+            || !is_string($schoolName)
+            || !is_string($password) || !preg_match('/^.{6,}$/us', $password)
+            || !is_string($role) || !in_array($role, ['student', 'teacher', 'admin'], true)) {
+            header('Location: index.php?action=admin_users&error=invalid_create');
+            exit;
+        }
+        $fullName = trim($fullName);
+        $email = trim($email);
+        $schoolName = trim($schoolName);
+        if ($fullName === '' || strlen($fullName) > 100
+            || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 100
+            || strlen($schoolName) > 150) {
+            header('Location: index.php?action=admin_users&error=invalid_create');
+            exit;
+        }
+        if ($this->userModel->emailExists($email)) {
+            header('Location: index.php?action=admin_users&error=email_exists');
+            exit;
+        }
+
+        try {
+            $this->userModel->create($role, $fullName, $email, $schoolName, $password);
+        } catch (PDOException $exception) {
+            if (($exception->errorInfo[1] ?? null) === 1062) {
+                header('Location: index.php?action=admin_users&error=email_exists');
+                exit;
+            }
+            throw $exception;
+        }
+
+        header('Location: index.php?action=admin_users&success=created');
         exit;
     }
     // Hiển thị Dashboard riêng cho Admin
