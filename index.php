@@ -65,6 +65,10 @@ switch ($action) {
         $adminController->updateUserAction();
         break;
 
+    case 'admin_create_user':
+        $adminController->createUserAction();
+        break;
+
     case 'prepare_exam':
         $examController->prepare();
         break;
