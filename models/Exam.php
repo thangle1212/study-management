@@ -6,6 +6,72 @@ class Exam {
         $this->pdo = $pdo;
     }
 
+    public function createExamAndQuestions($examData, $questions) {
+        $this->pdo->beginTransaction();
+        try {
+            $examStmt = $this->pdo->prepare(
+                "INSERT INTO exams
+                    (teacher_id, title, duration_minutes, start_time, end_time, status)
+                 VALUES (?, ?, ?, ?, ?, ?)"
+            );
+            $examStmt->execute([
+                $examData['teacher_id'],
+                $examData['title'],
+                $examData['duration_minutes'],
+                $examData['start_time'],
+                $examData['end_time'],
+                $examData['status']
+            ]);
+            $examId = (int) $this->pdo->lastInsertId();
+
+            $questionStmt = $this->pdo->prepare(
+                "INSERT INTO questions (bank_id, content, question_type, difficulty_level)
+                 VALUES (?, ?, ?, 'medium')"
+            );
+            $answerStmt = $this->pdo->prepare(
+                "INSERT INTO answers (question_id, content, is_correct, order_index)
+                 VALUES (?, ?, ?, ?)"
+            );
+            $examQuestionStmt = $this->pdo->prepare(
+                "INSERT INTO exam_questions (exam_id, question_id, score_weight, order_index)
+                 VALUES (?, ?, ?, ?)"
+            );
+
+            foreach ($questions as $questionIndex => $question) {
+                $questionStmt->execute([
+                    $examData['bank_id'],
+                    $question['content'],
+                    $question['question_type']
+                ]);
+                $questionId = (int) $this->pdo->lastInsertId();
+
+                foreach ($question['answers'] as $answerIndex => $answer) {
+                    $answerStmt->execute([
+                        $questionId,
+                        $answer['content'],
+                        $answer['is_correct'] ? 1 : 0,
+                        $answerIndex
+                    ]);
+                }
+
+                $examQuestionStmt->execute([
+                    $examId,
+                    $questionId,
+                    $question['score_weight'],
+                    $questionIndex
+                ]);
+            }
+
+            $this->pdo->commit();
+            return $examId;
+        } catch (Throwable $exception) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $exception;
+        }
+    }
+
     public function findPublishedExam($examId) {
         $stmt = $this->pdo->prepare(
             "SELECT * FROM exams

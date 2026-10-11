@@ -63,7 +63,7 @@
                         <div class="text-muted">Quản lý các bài kiểm tra đánh giá</div>
                     </div>
                     <div class="page-actions">
-                        <a class="btn btn-primary" href="create.php"><i class="fa-solid fa-plus me-2"></i>Tạo bài thi</a>
+                        <a class="btn btn-primary" href="../../../index.php?action=qe_exam_create"><i class="fa-solid fa-plus me-2"></i>Tạo bài thi</a>
                     </div>
                 </div>
 
@@ -191,7 +191,7 @@
                     <i class="fa-solid fa-clipboard-question"></i>
                     <h3>Chưa có bài thi nào</h3>
                     <p class="text-muted">Hãy tạo bài thi đầu tiên để bắt đầu lập kế hoạch đánh giá.</p>
-                    <a class="btn btn-primary" href="create.php">Tạo bài thi</a>
+                    <a class="btn btn-primary" href="../../../index.php?action=qe_exam_create">Tạo bài thi</a>
                 </div>
             </section>
         </main>

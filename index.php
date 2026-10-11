@@ -69,6 +69,12 @@ switch ($action) {
         $adminController->createUserAction();
         break;
 
+    // BEGIN EXAM CREATION ROUTE
+    case 'qe_exam_create':
+        $examController->createExam();
+        break;
+    // END EXAM CREATION ROUTE
+
     case 'prepare_exam':
         $examController->prepare();
         break;

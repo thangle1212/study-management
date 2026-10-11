@@ -55,19 +55,18 @@ Trong danh sách câu hỏi, chọn Sửa câu hỏi.
 
 Màn hình question-edit.php cho phép cập nhật chi tiết câu hỏi, đáp án và đáp án đúng.
 
-Bước 4: Tạo bài thi
-Vào Bài thi → Tạo bài thi.
+Bước 4: Tạo đề thi
+Từ bảng điều khiển của giáo viên, chọn Tạo đề thi. Chọn một ngân hàng câu hỏi của bạn, nhập thông tin đề, rồi dán toàn bộ nội dung theo dạng:
 
-Nhập:
+1. Nội dung câu hỏi
+A) Đáp án thứ nhất
+B) Đáp án thứ hai
 
-Tên bài thi
-Ngân hàng câu hỏi
-Thời gian làm bài
-Số câu hỏi
-Trạng thái
-Ngày bắt đầu
-Ngày kết thúc
-Mô tả bài thi
+Các câu hỏi bắt đầu bằng số thứ tự (1., 2.); đáp án có nhãn A), B), C)... trên từng dòng. Có thể dán nội dung dạng văn bản thường hoặc giữ nguyên danh sách đánh số khi sao chép từ Word/Google Docs. Đáp án in đậm, in nghiêng, gạch chân hoặc tô màu sẽ được tự nhận diện là đáp án đúng. Nếu chưa được định dạng, chọn đáp án đúng trong phần xem trước sau khi quét. Nếu có nhiều đáp án đúng, chọn loại câu hỏi nhiều đáp án.
+
+Định dạng chỉ dùng để nhận diện đáp án khi tạo đề và không hiển thị cho học sinh lúc làm bài.
+
+Có thể chọn trạng thái Nháp, Đã công bố, Đã lên lịch hoặc Lưu trữ. Đề lên lịch cần có ngày giờ bắt đầu và kết thúc.
 Màn hình này nằm ở exam/create.php.
 
 Bước 5: Thêm câu hỏi vào bài thi
@@ -90,4 +89,3 @@ Nháp: bài thi hoặc câu hỏi đang được xây dựng, chưa sử dụng.
 Đã công bố/Hoạt động: nội dung đã sẵn sàng để sử dụng.
 Đã lên lịch: bài thi sẽ mở trong khoảng thời gian đã cài đặt.
 Lưu trữ: không còn sử dụng nhưng vẫn giữ lại dữ liệu.
-

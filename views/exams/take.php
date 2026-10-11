@@ -63,7 +63,7 @@ $deadline = strtotime($exam['start_time']) + ((int) $exam['duration_minutes'] * 
                     <?php foreach ($question['answers'] as $answer): ?>
                         <label class="answer-option d-block rounded-3 p-3 mt-3">
                             <input type="<?php echo $question['question_type'] === 'multiple_choice' ? 'checkbox' : 'radio'; ?>" name="answers[<?php echo (int) $question['question_id']; ?>]<?php echo $question['question_type'] === 'multiple_choice' ? '[]' : ''; ?>" value="<?php echo (int) $answer['answer_id']; ?>" class="me-2" <?php echo in_array((int) $answer['answer_id'], $savedAnswers[$question['question_id']] ?? [], true) ? 'checked' : ''; ?>>
-                            <?php echo htmlspecialchars($answer['content']); ?>
+                            <?php echo $answer['content']; ?>
                         </label>
                     <?php endforeach; ?>
                 </div>
