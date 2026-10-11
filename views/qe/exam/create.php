@@ -55,7 +55,7 @@ $escape = function ($value) {
             <div class="sidebar-section-label">Không gian làm việc</div>
             <nav class="sidebar-menu">
                 <a href="index.php?action=dashboard"><i class="fa-solid fa-gauge-high"></i><span>Bảng điều khiển</span></a>
-                <a href="index.php?action=dashboard"><i class="fa-solid fa-layer-group"></i><span>Ngân hàng câu hỏi</span></a>
+                <a href="index.php?action=qe_banks"><i class="fa-solid fa-layer-group"></i><span>Ngân hàng câu hỏi</span></a>
                 <a class="active" href="index.php?action=qe_exam_create"><i class="fa-solid fa-file-signature"></i><span>Bài thi</span></a>
             </nav>
             <div class="sidebar-user">
