@@ -658,7 +658,8 @@ class ExamController {
 
         $stmt = $this->pdo->prepare(
             "UPDATE exams SET duration_minutes = ?, anti_cheat_enabled = ?,
-                    violation_limit = ?, violation_action = ?
+                violation_limit = ?, violation_action = ?,
+                shuffle_questions = ?, shuffle_answers = ?
              WHERE exam_id = ? AND teacher_id = ?"
         );
         $stmt->execute([
@@ -666,6 +667,8 @@ class ExamController {
             isset($_POST['anti_cheat_enabled']) ? 1 : 0,
             $limit,
             $action,
+            isset($_POST['shuffle_questions']) ? 1 : 0,
+            isset($_POST['shuffle_answers']) ? 1 : 0,
             $examId,
             $teacherId
         ]);
@@ -783,8 +786,9 @@ class ExamController {
         $examId = (int) ($_GET['exam_id'] ?? 0);
         $userId = (int) $_SESSION['user']['id'];
         $stmt = $this->pdo->prepare(
-            "SELECT e.exam_id, e.title, e.class_id
+                "SELECT e.exam_id, e.title, e.class_id
                     , e.duration_minutes, e.anti_cheat_enabled
+                    , e.shuffle_questions, e.shuffle_answers
                     , e.violation_limit, e.violation_action
              FROM exams e
              WHERE e.exam_id = ? AND e.teacher_id = ?"

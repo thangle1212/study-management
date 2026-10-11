@@ -111,6 +111,18 @@
                         <input class="form-check-input" type="checkbox" role="switch" id="anti-cheat-enabled" name="anti_cheat_enabled" value="1" <?php echo (int) $exam['anti_cheat_enabled'] ? 'checked' : ''; ?>>
                     </div>
                 </div>
+                <div class="col-sm-6 col-lg-3 d-flex justify-content-between align-items-center gap-3">
+                    <label class="form-check-label" for="shuffle-questions">Tráo thứ tự câu hỏi</label>
+                    <div class="form-check form-switch fs-5 mb-0">
+                        <input class="form-check-input" type="checkbox" role="switch" id="shuffle-questions" name="shuffle_questions" value="1" <?php echo (int) $exam['shuffle_questions'] ? 'checked' : ''; ?>>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-3 d-flex justify-content-between align-items-center gap-3">
+                    <label class="form-check-label" for="shuffle-answers">Tráo thứ tự đáp án</label>
+                    <div class="form-check form-switch fs-5 mb-0">
+                        <input class="form-check-input" type="checkbox" role="switch" id="shuffle-answers" name="shuffle_answers" value="1" <?php echo (int) $exam['shuffle_answers'] ? 'checked' : ''; ?>>
+                    </div>
+                </div>
                 <div class="col-12 text-end"><button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-2"></i>Lưu cấu hình</button></div>
             </form>
         </div>
