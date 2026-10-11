@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../models/Exam.php';
+
 class ExamController {
     private $pdo;
 
@@ -55,6 +57,359 @@ class ExamController {
             exit('Yêu cầu không hợp lệ. Hãy tải lại trang và thử lại.');
         }
     }
+
+    // Loại bỏ thẻ/thuộc tính không an toàn và giữ lại định dạng được phép trong nội dung dán.
+    private function cleanRichTextNode($node) {
+        $allowedTags = ['b', 'strong', 'i', 'em', 'u', 'span', 'font', 'br', 'p', 'div', 'ul', 'ol', 'li'];
+        $discardTags = ['script', 'style', 'iframe', 'object', 'svg', 'math', 'template'];
+        $children = [];
+        foreach ($node->childNodes as $child) {
+            $children[] = $child;
+        }
+
+        foreach ($children as $child) {
+            if ($child->nodeType !== XML_ELEMENT_NODE) {
+                continue;
+            }
+
+            $tag = strtolower($child->nodeName);
+            if (in_array($tag, $discardTags, true)) {
+                $node->removeChild($child);
+                continue;
+            }
+
+            if (!in_array($tag, $allowedTags, true)) {
+                $this->cleanRichTextNode($child);
+                while ($child->firstChild) {
+                    $node->insertBefore($child->firstChild, $child);
+                }
+                $node->removeChild($child);
+                continue;
+            }
+
+            $styles = [];
+            $formatting = [];
+            if ($tag === 'span' && $child->hasAttribute('style')) {
+                foreach (explode(';', $child->getAttribute('style')) as $declaration) {
+                    if (preg_match('/^\s*(color|background-color)\s*:\s*(.*?)\s*$/i', $declaration, $matches)) {
+                        $normalizedColor = $this->normalizeRichTextColor($matches[2]);
+                        if ($normalizedColor !== null) {
+                            $styles[strtolower($matches[1])] = $normalizedColor;
+                        }
+                    } elseif (preg_match('/^\s*font-weight\s*:\s*(bold|[7-9]00)\s*$/i', $declaration)) {
+                        $formatting[] = 'strong';
+                    } elseif (preg_match('/^\s*font-style\s*:\s*italic\s*$/i', $declaration)) {
+                        $formatting[] = 'em';
+                    } elseif (preg_match('/^\s*text-decoration(?:-line)?\s*:\s*[^;]*underline/i', $declaration)) {
+                        $formatting[] = 'u';
+                    }
+                }
+            } elseif ($tag === 'font' && $child->hasAttribute('color')) {
+                $normalizedColor = $this->normalizeRichTextColor($child->getAttribute('color'));
+                if ($normalizedColor !== null) {
+                    $styles['color'] = $normalizedColor;
+                }
+            }
+
+            while ($child->attributes->length > 0) {
+                $child->removeAttributeNode($child->attributes->item(0));
+            }
+
+            if (isset($styles['color'])) {
+                if ($tag === 'font') {
+                    $child->setAttribute('color', $styles['color']);
+                }
+            }
+            if ($tag === 'span' && $styles) {
+                $safeStyles = [];
+                foreach (['color', 'background-color'] as $styleName) {
+                    if (isset($styles[$styleName])) {
+                        $safeStyles[] = $styleName . ': ' . $styles[$styleName];
+                    }
+                }
+                $child->setAttribute('style', implode('; ', $safeStyles));
+            }
+
+            foreach (array_unique($formatting) as $formatTag) {
+                $wrapper = $child->ownerDocument->createElement($formatTag);
+                while ($child->firstChild) {
+                    $wrapper->appendChild($child->firstChild);
+                }
+                $child->appendChild($wrapper);
+            }
+
+            $this->cleanRichTextNode($child);
+        }
+    }
+
+    // Chuẩn hóa màu HTML về mã hex an toàn để lưu và hiển thị nhất quán.
+    private function normalizeRichTextColor($color) {
+        $color = trim($color);
+        if (preg_match('/^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i', $color)) {
+            return strtolower($color);
+        }
+        if (preg_match('/^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/i', $color, $matches)) {
+            $channels = [(int) $matches[1], (int) $matches[2], (int) $matches[3]];
+            if (max($channels) <= 255) {
+                return sprintf('#%02x%02x%02x', $channels[0], $channels[1], $channels[2]);
+            }
+        }
+        return null;
+    }
+
+    // Làm sạch HTML rich-text trước khi lưu hoặc đưa nội dung đáp án ra màn hình làm bài.
+    private function sanitizeRichText($html) {
+        if (!class_exists('DOMDocument')) {
+            throw new RuntimeException('PHP DOM extension is required to safely format answer content.');
+        }
+
+        $document = new DOMDocument('1.0', 'UTF-8');
+        $previousLibxmlState = libxml_use_internal_errors(true);
+        try {
+            $loaded = $document->loadHTML(
+                '<?xml encoding="utf-8" ?><div id="answer-root">' . $html . '</div>',
+                LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NONET
+            );
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previousLibxmlState);
+        }
+
+        if (!$loaded) {
+            throw new RuntimeException('Không thể phân tích nội dung định dạng của đáp án.');
+        }
+        $root = $document->getElementById('answer-root');
+        if (!$root) {
+            throw new RuntimeException('Không thể đọc nội dung định dạng của đáp án.');
+        }
+        $this->cleanRichTextNode($root);
+
+        $safeHtml = '';
+        foreach ($root->childNodes as $child) {
+            $safeHtml .= $document->saveHTML($child);
+        }
+        return trim($safeHtml);
+    }
+
+    // Kiểm tra datetime-local từ biểu mẫu và chuyển sang định dạng DATETIME của MySQL.
+    private function parseExamDateTime($value, $fieldLabel) {
+        if ($value === '') {
+            return null;
+        }
+
+        $date = DateTime::createFromFormat('!Y-m-d\TH:i', $value);
+        $dateErrors = DateTime::getLastErrors();
+        if (!$date || ($dateErrors && ($dateErrors['warning_count'] > 0 || $dateErrors['error_count'] > 0))
+            || $date->format('Y-m-d\TH:i') !== $value) {
+            throw new InvalidArgumentException($fieldLabel . ' không hợp lệ.');
+        }
+        return $date->format('Y-m-d H:i:s');
+    }
+
+    // Xử lý tạo đề: kiểm tra quyền/dữ liệu, nhận đáp án đúng từ định dạng hoặc đánh dấu tay,
+    // rồi chuyển dữ liệu hợp lệ sang model để lưu trong một transaction.
+    // BEGIN EXAM CREATION
+    public function createExam() {
+        $this->requireLogin();
+        $role = $_SESSION['user']['role'] ?? '';
+        if (!in_array($role, ['teacher', 'admin'], true)) {
+            http_response_code(403);
+            exit('Chỉ giáo viên hoặc quản trị viên mới được tạo đề thi.');
+        }
+
+        $userId = (int) $_SESSION['user']['id'];
+        $bankStmt = $this->pdo->prepare(
+            "SELECT bank_id, bank_name, subject
+             FROM question_banks
+             WHERE teacher_id = ?
+             ORDER BY bank_name"
+        );
+        $bankStmt->execute([$userId]);
+        $questionBanks = $bankStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $formData = $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : [
+            'title' => '',
+            'bank_id' => '',
+            'duration_minutes' => '60',
+            'status' => 'draft',
+            'start_time' => '',
+            'end_time' => '',
+            'pasted_exam_html' => ''
+        ];
+        $safePastedExamHtml = '';
+        $formErrors = [];
+        $created = ($_GET['created'] ?? '') === '1';
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->requirePostWithCsrf();
+            try {
+                $pastedExamHtml = $formData['pasted_exam_html'] ?? '';
+                if (!is_string($pastedExamHtml) || strlen($pastedExamHtml) > 4194304) {
+                    throw new InvalidArgumentException('Nội dung đề không hợp lệ hoặc vượt quá giới hạn 4 MB.');
+                }
+                $safePastedExamHtml = $pastedExamHtml === '' ? '' : $this->sanitizeRichText($pastedExamHtml);
+
+                $titleValue = $formData['title'] ?? '';
+                if (!is_string($titleValue)) {
+                    throw new InvalidArgumentException('Tên đề thi không hợp lệ.');
+                }
+                $title = trim($titleValue);
+                if ($title === '' || mb_strlen($title, 'UTF-8') > 200) {
+                    throw new InvalidArgumentException('Tên đề thi là bắt buộc và không được dài quá 200 ký tự.');
+                }
+
+                $bankValue = $formData['bank_id'] ?? null;
+                $bankId = is_scalar($bankValue) ? filter_var($bankValue, FILTER_VALIDATE_INT) : false;
+                $ownedBankIds = array_map('intval', array_column($questionBanks, 'bank_id'));
+                if (!$bankId || !in_array((int) $bankId, $ownedBankIds, true)) {
+                    throw new InvalidArgumentException('Vui lòng chọn ngân hàng câu hỏi của bạn.');
+                }
+
+                $durationValue = $formData['duration_minutes'] ?? null;
+                $duration = is_scalar($durationValue) ? filter_var($durationValue, FILTER_VALIDATE_INT) : false;
+                if ($duration === false || $duration < 1 || $duration > 1440) {
+                    throw new InvalidArgumentException('Thời gian làm bài phải từ 1 đến 1440 phút.');
+                }
+
+                $allowedStatuses = ['draft', 'published', 'scheduled', 'archived'];
+                $statusValue = $formData['status'] ?? 'draft';
+                $status = is_string($statusValue) ? $statusValue : '';
+                if (!in_array($status, $allowedStatuses, true)) {
+                    throw new InvalidArgumentException('Trạng thái đề thi không hợp lệ.');
+                }
+
+                $startValue = $formData['start_time'] ?? '';
+                $endValue = $formData['end_time'] ?? '';
+                if (!is_string($startValue) || !is_string($endValue)) {
+                    throw new InvalidArgumentException('Thời gian đề thi không hợp lệ.');
+                }
+                $startTime = $this->parseExamDateTime($startValue, 'Ngày bắt đầu');
+                $endTime = $this->parseExamDateTime($endValue, 'Ngày kết thúc');
+                if ($startTime !== null && $endTime !== null && strtotime($endTime) < strtotime($startTime)) {
+                    throw new InvalidArgumentException('Ngày kết thúc phải sau ngày bắt đầu.');
+                }
+                if ($status === 'scheduled' && ($startTime === null || $endTime === null)) {
+                    throw new InvalidArgumentException('Đề thi lên lịch cần có ngày bắt đầu và ngày kết thúc.');
+                }
+
+                $questionsInput = $formData['questions'] ?? null;
+                if (!is_array($questionsInput) || count($questionsInput) < 1 || count($questionsInput) > 50) {
+                    throw new InvalidArgumentException('Đề thi cần có từ 1 đến 50 câu hỏi.');
+                }
+
+                $questions = [];
+                foreach (array_values($questionsInput) as $questionIndex => $questionInput) {
+                    if (!is_array($questionInput)) {
+                        throw new InvalidArgumentException('Dữ liệu câu hỏi ' . ($questionIndex + 1) . ' không hợp lệ.');
+                    }
+
+                    $contentValue = $questionInput['content'] ?? '';
+                    if (!is_string($contentValue)) {
+                        throw new InvalidArgumentException('Nội dung câu hỏi ' . ($questionIndex + 1) . ' không hợp lệ.');
+                    }
+                    $content = trim($contentValue);
+                    if ($content === '' || mb_strlen($content, 'UTF-8') > 2000) {
+                        throw new InvalidArgumentException('Câu ' . ($questionIndex + 1) . ' cần có nội dung (tối đa 2000 ký tự).');
+                    }
+
+                    $questionTypeValue = $questionInput['question_type'] ?? '';
+                    $questionType = is_string($questionTypeValue) ? $questionTypeValue : '';
+                    if (!in_array($questionType, ['single_choice', 'multiple_choice'], true)) {
+                        throw new InvalidArgumentException('Loại câu hỏi ' . ($questionIndex + 1) . ' không hợp lệ.');
+                    }
+
+                    $scoreWeight = $questionInput['score_weight'] ?? '';
+                    if (!is_numeric($scoreWeight) || (float) $scoreWeight < 0.01 || (float) $scoreWeight > 999.99) {
+                        throw new InvalidArgumentException('Điểm câu ' . ($questionIndex + 1) . ' phải từ 0,01 đến 999,99.');
+                    }
+
+                    $answersInput = $questionInput['answers'] ?? null;
+                    if (!is_array($answersInput) || count($answersInput) < 2 || count($answersInput) > 8) {
+                        throw new InvalidArgumentException('Câu ' . ($questionIndex + 1) . ' cần có từ 2 đến 8 đáp án.');
+                    }
+
+                    $answers = [];
+                    foreach (array_values($answersInput) as $answerIndex => $answerInput) {
+                        if (!is_array($answerInput)) {
+                            throw new InvalidArgumentException('Đáp án ' . ($answerIndex + 1) . ' của câu ' . ($questionIndex + 1) . ' không hợp lệ.');
+                        }
+
+                        $rawAnswer = $answerInput['content'] ?? '';
+                        if (!is_string($rawAnswer)) {
+                            throw new InvalidArgumentException('Đáp án ' . ($answerIndex + 1) . ' của câu ' . ($questionIndex + 1) . ' không hợp lệ.');
+                        }
+                        if (mb_strlen($rawAnswer, 'UTF-8') > 5000) {
+                            throw new InvalidArgumentException('Mỗi đáp án không được dài quá 5000 ký tự.');
+                        }
+                        $safeAnswer = $this->sanitizeRichText($rawAnswer);
+                        $answerText = trim(html_entity_decode(strip_tags($safeAnswer), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                        if ($answerText === '') {
+                            throw new InvalidArgumentException('Đáp án ' . ($answerIndex + 1) . ' của câu ' . ($questionIndex + 1) . ' không được để trống.');
+                        }
+
+                        $hasFormatting = preg_match('/<(?:b|strong|i|em|u)\b|<span\b[^>]*style="[^"]*(?:color|background-color)\s*:|<font\b[^>]*color=/i', $safeAnswer) === 1;
+                        $isCorrect = $hasFormatting || (($answerInput['manual_correct'] ?? '') === '1');
+                        $answers[] = [
+                            'content' => $safeAnswer,
+                            'is_correct' => $isCorrect
+                        ];
+                    }
+
+                    $correctCount = count(array_filter($answers, function ($answer) {
+                        return $answer['is_correct'];
+                    }));
+                    if ($correctCount === 0 || ($questionType === 'single_choice' && $correctCount !== 1)) {
+                        throw new InvalidArgumentException(
+                            $questionType === 'single_choice'
+                                ? 'Câu ' . ($questionIndex + 1) . ' phải có đúng một đáp án đúng. Hãy định dạng đáp án hoặc chọn ô đánh dấu.'
+                                : 'Câu ' . ($questionIndex + 1) . ' cần ít nhất một đáp án đúng.'
+                        );
+                    }
+
+                    $questions[] = [
+                        'content' => $content,
+                        'question_type' => $questionType,
+                        'score_weight' => number_format((float) $scoreWeight, 2, '.', ''),
+                        'answers' => $answers
+                    ];
+                }
+
+                $examModel = new Exam($this->pdo);
+                $examId = $examModel->createExamAndQuestions([
+                    'teacher_id' => $userId,
+                    'bank_id' => (int) $bankId,
+                    'title' => $title,
+                    'duration_minutes' => (int) $duration,
+                    'start_time' => $startTime,
+                    'end_time' => $endTime,
+                    'status' => $status
+                ], $questions);
+
+                header('Location: index.php?action=qe_exam_create&created=1&exam_id=' . $examId);
+                exit;
+            } catch (InvalidArgumentException $exception) {
+                $formErrors[] = $exception->getMessage();
+            }
+
+            if (isset($formData['questions']) && is_array($formData['questions'])) {
+                foreach ($formData['questions'] as &$questionInput) {
+                    if (is_array($questionInput) && isset($questionInput['answers']) && is_array($questionInput['answers'])) {
+                        foreach ($questionInput['answers'] as &$answerInput) {
+                            if (is_array($answerInput) && isset($answerInput['content']) && is_string($answerInput['content'])) {
+                                $answerInput['content'] = $this->sanitizeRichText($answerInput['content']);
+                            }
+                        }
+                        unset($answerInput);
+                    }
+                }
+                unset($questionInput);
+            }
+        }
+
+        $csrfToken = $_SESSION['csrf_token'];
+        require __DIR__ . '/../views/qe/exam/create.php';
+    }
+    // END EXAM CREATION
 
     private function sendJson($payload, $statusCode = 200) {
         http_response_code($statusCode);
@@ -487,7 +842,10 @@ class ExamController {
             }
             $questions[$questionId]['answers'][] = [
                 'answer_id' => $row['answer_id'],
-                'content' => $row['answer_content']
+                'content' => strip_tags(
+                    $this->sanitizeRichText($row['answer_content']),
+                    '<br><p><div><ul><ol><li>'
+                )
             ];
         }
         $questions = $this->orderAttemptQuestions(

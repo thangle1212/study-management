@@ -68,7 +68,13 @@
     <?php else: ?>
         <div class="d-flex justify-content-between align-items-end mb-3">
             <div><h2 class="h4 fw-bold mb-1">Đề thi của bạn</h2><p class="text-muted small mb-0">Theo dõi kết quả và mức độ hoàn thành</p></div>
-            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2"><?php echo count($teacherExams); ?> đề thi</span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2"><?php echo count($teacherExams); ?> đề thi</span>
+                <?php if ($_SESSION['user']['role'] === 'teacher'): ?>
+                    <a href="index.php?action=qe_banks" class="btn btn-sm btn-outline-primary rounded-3"><i class="fa-solid fa-layer-group me-1"></i>Ngân hàng câu hỏi</a>
+                    <a href="index.php?action=qe_exam_create" class="btn btn-sm btn-primary rounded-3"><i class="fa-solid fa-plus me-1"></i>Tạo đề thi</a>
+                <?php endif; ?>
+            </div>
         </div>
         <div class="row g-3">
             <?php if (!$teacherExams): ?>

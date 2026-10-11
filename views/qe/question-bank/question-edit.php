@@ -1,4 +1,10 @@
-<!doctype html>
+<?php
+$questionId = filter_var($_GET['id'] ?? null, FILTER_VALIDATE_INT);
+$target = $questionId ? '../../../index.php?action=qe_question_edit&id=' . (int) $questionId : '../../../index.php?action=qe_banks';
+header('Location: ' . $target);
+exit;
+?>
+<!DOCTYPE html>
 <html lang="vi">
 
 <head>

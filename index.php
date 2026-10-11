@@ -7,12 +7,14 @@ require_once __DIR__ . '/config/env.php';
 require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/controllers/AuthController.php';
 require_once __DIR__ . '/controllers/ExamController.php';
+require_once __DIR__ . '/controllers/QuestionBankController.php';
 require_once __DIR__ . '/controllers/ForumController.php';
 require_once __DIR__ . '/controllers/AdminController.php';
 
 $action = $_GET['action'] ?? 'home';
 $authController = new AuthController($pdo);
 $examController = new ExamController($pdo);
+$questionBankController = new QuestionBankController($pdo);
 $forumController = new ForumController($pdo);
 $adminController = new AdminController($pdo);
 
@@ -68,6 +70,46 @@ switch ($action) {
     case 'admin_create_user':
         $adminController->createUserAction();
         break;
+
+    // BEGIN EXAM CREATION ROUTE
+    case 'qe_exam_create':
+        $examController->createExam();
+        break;
+    // END EXAM CREATION ROUTE
+
+    // BEGIN QUESTION BANK MANAGEMENT ROUTES
+    case 'qe_banks':
+        $questionBankController->index();
+        break;
+
+    case 'qe_bank_create':
+        $questionBankController->createBank();
+        break;
+
+    case 'qe_bank_show':
+        $questionBankController->showBank();
+        break;
+
+    case 'qe_bank_edit':
+        $questionBankController->editBank();
+        break;
+
+    case 'qe_bank_delete':
+        $questionBankController->deleteBank();
+        break;
+
+    case 'qe_question_create':
+        $questionBankController->createQuestion();
+        break;
+
+    case 'qe_question_edit':
+        $questionBankController->editQuestion();
+        break;
+
+    case 'qe_question_delete':
+        $questionBankController->deleteQuestion();
+        break;
+    // END QUESTION BANK MANAGEMENT ROUTES
 
     case 'prepare_exam':
         $examController->prepare();
