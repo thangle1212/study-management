@@ -11,6 +11,26 @@ class ExamController {
             header('Location: index.php?action=login');
             exit;
         }
+
+        $userId = filter_var($_SESSION['user']['id'] ?? null, FILTER_VALIDATE_INT);
+        if ($userId === false || $userId < 1) {
+            unset($_SESSION['user'], $_SESSION['csrf_token']);
+            header('Location: index.php?action=login&error=session_expired');
+            exit;
+        }
+
+        $stmt = $this->pdo->prepare(
+            "SELECT status, role FROM users WHERE user_id = ?"
+        );
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$user || $user['status'] !== 'active') {
+            unset($_SESSION['user'], $_SESSION['csrf_token']);
+            header('Location: index.php?action=login&error=session_expired');
+            exit;
+        }
+
+        $_SESSION['user']['role'] = $user['role'];
         if (empty($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         }
