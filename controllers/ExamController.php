@@ -802,27 +802,30 @@ class ExamController {
 
         $stmt = $this->pdo->prepare(
                 "SELECT u.full_name, ea.total_score, ea.end_time, ea.attempt_id,
-                    ea.student_id, ea.submit_reason, ea.review_status,
+                    ea.student_id, ea.status, ea.submit_reason, ea.review_status,
                         COUNT(DISTINCT v.violation_id) AS violation_count,
                         COUNT(DISTINCT CASE WHEN aa.is_correct = TRUE THEN aa.question_id END) AS correct_count
                  FROM exam_attempts ea
                  JOIN users u ON u.user_id = ea.student_id
                      LEFT JOIN violation_logs v ON v.attempt_id = ea.attempt_id
                      LEFT JOIN attempt_answers aa ON aa.attempt_id = ea.attempt_id
-                 WHERE ea.exam_id = ? AND ea.status = 'completed'
+                 WHERE ea.exam_id = ? AND ea.status IN ('completed', 'voided')
                  GROUP BY ea.attempt_id, u.full_name, ea.total_score, ea.end_time,
-                      ea.student_id, ea.submit_reason, ea.review_status
+                      ea.student_id, ea.status, ea.submit_reason, ea.review_status
              ORDER BY u.full_name, ea.end_time, ea.attempt_id"
         );
         $stmt->execute([$examId]);
-        $scores = $stmt->fetchAll();
+        $scoreRows = $stmt->fetchAll();
         $attemptNumbers = [];
-        foreach ($scores as &$score) {
+        foreach ($scoreRows as &$score) {
             $studentId = (int) $score['student_id'];
             $attemptNumbers[$studentId] = ($attemptNumbers[$studentId] ?? 0) + 1;
             $score['attempt_number'] = $attemptNumbers[$studentId];
         }
         unset($score);
+        $scores = array_values(array_filter($scoreRows, function ($score) {
+            return $score['status'] === 'completed';
+        }));
 
         $questionCountStmt = $this->pdo->prepare(
             "SELECT COUNT(DISTINCT question_id)
