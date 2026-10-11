@@ -134,6 +134,36 @@ class ExamController {
         }
     }
 
+    private function orderAttemptQuestions(array $questions, $seed, $shuffleQuestions, $shuffleAnswers) {
+        foreach ($questions as &$question) {
+            if (!$shuffleAnswers) {
+                continue;
+            }
+            $questionId = (int) $question['question_id'];
+            usort($question['answers'], function ($left, $right) use ($seed, $questionId) {
+                $leftHash = hash_hmac('sha256', 'answer:' . $questionId . ':' . $left['answer_id'], $seed);
+                $rightHash = hash_hmac('sha256', 'answer:' . $questionId . ':' . $right['answer_id'], $seed);
+                $comparison = strcmp($leftHash, $rightHash);
+                return $comparison !== 0 ? $comparison : ((int) $left['answer_id'] <=> (int) $right['answer_id']);
+            });
+        }
+        unset($question);
+
+        $questions = array_values($questions);
+        if ($shuffleQuestions) {
+            usort($questions, function ($left, $right) use ($seed) {
+                $leftId = (int) $left['question_id'];
+                $rightId = (int) $right['question_id'];
+                $leftHash = hash_hmac('sha256', 'question:' . $leftId, $seed);
+                $rightHash = hash_hmac('sha256', 'question:' . $rightId, $seed);
+                $comparison = strcmp($leftHash, $rightHash);
+                return $comparison !== 0 ? $comparison : ($leftId <=> $rightId);
+            });
+        }
+
+        return $questions;
+    }
+
     private function ensureUnansweredQuestions($attemptId, $examId) {
         $stmt = $this->pdo->prepare(
             "INSERT INTO attempt_answers (attempt_id, question_id, answer_id, is_correct)
@@ -303,7 +333,7 @@ class ExamController {
         $studentId = (int) $_SESSION['user']['id'];
         $stmt = $this->pdo->prepare(
             "SELECT exam_id, duration_minutes, anti_cheat_enabled,
-                    violation_limit, violation_action
+                violation_limit, violation_action, shuffle_questions, shuffle_answers
              FROM exams WHERE exam_id = ? AND status = 'published'"
         );
         $stmt->execute([$examId]);
@@ -319,19 +349,21 @@ class ExamController {
         }
 
         $attemptStmt = $this->pdo->prepare(
-            "SELECT attempt_id FROM exam_attempts
+            "SELECT attempt_id, shuffle_seed FROM exam_attempts
              WHERE exam_id = ? AND student_id = ? AND status = 'in_progress'
              ORDER BY attempt_id DESC LIMIT 1"
         );
         $attemptStmt->execute([$examId, $studentId]);
-        $attemptId = $attemptStmt->fetchColumn();
-        if (!$attemptId) {
+        $attempt = $attemptStmt->fetch();
+        $shuffleSeed = bin2hex(random_bytes(32));
+        if (!$attempt) {
             $attemptStmt = $this->pdo->prepare(
                 "INSERT INTO exam_attempts
                     (exam_id, student_id, status, duration_minutes_snapshot,
                      anti_cheat_enabled_snapshot, violation_limit_snapshot,
-                     violation_action_snapshot)
-                 VALUES (?, ?, 'in_progress', ?, ?, ?, ?)"
+                     violation_action_snapshot, shuffle_questions_snapshot,
+                     shuffle_answers_snapshot, shuffle_seed)
+                 VALUES (?, ?, 'in_progress', ?, ?, ?, ?, ?, ?, ?)"
             );
             $attemptStmt->execute([
                 $examId,
@@ -339,9 +371,30 @@ class ExamController {
                 (int) $exam['duration_minutes'],
                 (int) $exam['anti_cheat_enabled'],
                 (int) $exam['violation_limit'],
-                $exam['violation_action']
+                $exam['violation_action'],
+                (int) $exam['shuffle_questions'],
+                (int) $exam['shuffle_answers'],
+                $shuffleSeed
             ]);
             $attemptId = $this->pdo->lastInsertId();
+        } else {
+            $attemptId = (int) $attempt['attempt_id'];
+            if (empty($attempt['shuffle_seed'])) {
+                $stmt = $this->pdo->prepare(
+                    "UPDATE exam_attempts
+                     SET shuffle_seed = ?,
+                         shuffle_questions_snapshot = COALESCE(shuffle_questions_snapshot, ?),
+                         shuffle_answers_snapshot = COALESCE(shuffle_answers_snapshot, ?)
+                     WHERE attempt_id = ? AND student_id = ? AND status = 'in_progress'"
+                );
+                $stmt->execute([
+                    $shuffleSeed,
+                    (int) $exam['shuffle_questions'],
+                    (int) $exam['shuffle_answers'],
+                    $attemptId,
+                    $studentId
+                ]);
+            }
         }
         $this->snapshotCorrectAnswers((int) $attemptId, $examId);
         header('Location: index.php?action=take_exam&attempt_id=' . (int) $attemptId);
@@ -359,6 +412,9 @@ class ExamController {
                     COALESCE(ea.anti_cheat_enabled_snapshot, e.anti_cheat_enabled) AS anti_cheat_enabled,
                     COALESCE(ea.violation_limit_snapshot, e.violation_limit) AS violation_limit,
                     COALESCE(ea.violation_action_snapshot, e.violation_action) AS violation_action,
+                    COALESCE(ea.shuffle_questions_snapshot, e.shuffle_questions) AS shuffle_questions,
+                    COALESCE(ea.shuffle_answers_snapshot, e.shuffle_answers) AS shuffle_answers,
+                    ea.shuffle_seed,
                     COUNT(eq.id) AS question_count
              FROM exam_attempts ea
              JOIN exams e ON e.exam_id = ea.exam_id
@@ -371,6 +427,24 @@ class ExamController {
         if (!$exam || $exam['status'] !== 'in_progress') {
             http_response_code(403);
             exit('Lượt thi không hợp lệ hoặc đã được nộp.');
+        }
+        if (empty($exam['shuffle_seed'])) {
+            $shuffleSeed = bin2hex(random_bytes(32));
+            $seedStmt = $this->pdo->prepare(
+                "UPDATE exam_attempts
+                 SET shuffle_seed = ?,
+                     shuffle_questions_snapshot = COALESCE(shuffle_questions_snapshot, ?),
+                     shuffle_answers_snapshot = COALESCE(shuffle_answers_snapshot, ?)
+                 WHERE attempt_id = ? AND student_id = ? AND status = 'in_progress'"
+            );
+            $seedStmt->execute([
+                $shuffleSeed,
+                (int) $exam['shuffle_questions'],
+                (int) $exam['shuffle_answers'],
+                $attemptId,
+                $studentId
+            ]);
+            $exam['shuffle_seed'] = $shuffleSeed;
         }
         $gradingError = $this->ensureAutomaticallyGradableExam((int) $exam['exam_id']);
         if ($gradingError !== null) {
@@ -416,6 +490,12 @@ class ExamController {
                 'content' => $row['answer_content']
             ];
         }
+        $questions = $this->orderAttemptQuestions(
+            $questions,
+            $exam['shuffle_seed'],
+            (bool) $exam['shuffle_questions'],
+            (bool) $exam['shuffle_answers']
+        );
 
         $savedAnswers = [];
         $stmt = $this->pdo->prepare(
@@ -578,7 +658,8 @@ class ExamController {
 
         $stmt = $this->pdo->prepare(
             "UPDATE exams SET duration_minutes = ?, anti_cheat_enabled = ?,
-                    violation_limit = ?, violation_action = ?
+                violation_limit = ?, violation_action = ?,
+                shuffle_questions = ?, shuffle_answers = ?
              WHERE exam_id = ? AND teacher_id = ?"
         );
         $stmt->execute([
@@ -586,6 +667,8 @@ class ExamController {
             isset($_POST['anti_cheat_enabled']) ? 1 : 0,
             $limit,
             $action,
+            isset($_POST['shuffle_questions']) ? 1 : 0,
+            isset($_POST['shuffle_answers']) ? 1 : 0,
             $examId,
             $teacherId
         ]);
@@ -703,8 +786,9 @@ class ExamController {
         $examId = (int) ($_GET['exam_id'] ?? 0);
         $userId = (int) $_SESSION['user']['id'];
         $stmt = $this->pdo->prepare(
-            "SELECT e.exam_id, e.title, e.class_id
+                "SELECT e.exam_id, e.title, e.class_id
                     , e.duration_minutes, e.anti_cheat_enabled
+                    , e.shuffle_questions, e.shuffle_answers
                     , e.violation_limit, e.violation_action
              FROM exams e
              WHERE e.exam_id = ? AND e.teacher_id = ?"
@@ -718,27 +802,30 @@ class ExamController {
 
         $stmt = $this->pdo->prepare(
                 "SELECT u.full_name, ea.total_score, ea.end_time, ea.attempt_id,
-                    ea.student_id, ea.submit_reason, ea.review_status,
+                    ea.student_id, ea.status, ea.submit_reason, ea.review_status,
                         COUNT(DISTINCT v.violation_id) AS violation_count,
                         COUNT(DISTINCT CASE WHEN aa.is_correct = TRUE THEN aa.question_id END) AS correct_count
                  FROM exam_attempts ea
                  JOIN users u ON u.user_id = ea.student_id
                      LEFT JOIN violation_logs v ON v.attempt_id = ea.attempt_id
                      LEFT JOIN attempt_answers aa ON aa.attempt_id = ea.attempt_id
-                 WHERE ea.exam_id = ? AND ea.status = 'completed'
+                 WHERE ea.exam_id = ? AND ea.status IN ('completed', 'voided')
                  GROUP BY ea.attempt_id, u.full_name, ea.total_score, ea.end_time,
-                      ea.student_id, ea.submit_reason, ea.review_status
+                      ea.student_id, ea.status, ea.submit_reason, ea.review_status
              ORDER BY u.full_name, ea.end_time, ea.attempt_id"
         );
         $stmt->execute([$examId]);
-        $scores = $stmt->fetchAll();
+        $scoreRows = $stmt->fetchAll();
         $attemptNumbers = [];
-        foreach ($scores as &$score) {
+        foreach ($scoreRows as &$score) {
             $studentId = (int) $score['student_id'];
             $attemptNumbers[$studentId] = ($attemptNumbers[$studentId] ?? 0) + 1;
             $score['attempt_number'] = $attemptNumbers[$studentId];
         }
         unset($score);
+        $scores = array_values(array_filter($scoreRows, function ($score) {
+            return $score['status'] === 'completed';
+        }));
 
         $questionCountStmt = $this->pdo->prepare(
             "SELECT COUNT(DISTINCT question_id)

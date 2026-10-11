@@ -111,6 +111,18 @@
                         <input class="form-check-input" type="checkbox" role="switch" id="anti-cheat-enabled" name="anti_cheat_enabled" value="1" <?php echo (int) $exam['anti_cheat_enabled'] ? 'checked' : ''; ?>>
                     </div>
                 </div>
+                <div class="col-sm-6 col-lg-3 d-flex justify-content-between align-items-center gap-3">
+                    <label class="form-check-label" for="shuffle-questions">Tráo thứ tự câu hỏi</label>
+                    <div class="form-check form-switch fs-5 mb-0">
+                        <input class="form-check-input" type="checkbox" role="switch" id="shuffle-questions" name="shuffle_questions" value="1" <?php echo (int) $exam['shuffle_questions'] ? 'checked' : ''; ?>>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-3 d-flex justify-content-between align-items-center gap-3">
+                    <label class="form-check-label" for="shuffle-answers">Tráo thứ tự đáp án</label>
+                    <div class="form-check form-switch fs-5 mb-0">
+                        <input class="form-check-input" type="checkbox" role="switch" id="shuffle-answers" name="shuffle_answers" value="1" <?php echo (int) $exam['shuffle_answers'] ? 'checked' : ''; ?>>
+                    </div>
+                </div>
                 <div class="col-12 text-end"><button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-2"></i>Lưu cấu hình</button></div>
             </form>
         </div>
@@ -122,7 +134,7 @@
                 <div class="card-body">
                     <h5 class="fw-bold mb-1"><i class="fa-solid fa-ranking-star text-primary me-2"></i>Bảng điểm</h5>
                     <p class="text-muted small mb-4">Danh sách các lượt nộp bài gần nhất</p>
-                    <?php if (!$scores): ?>
+                    <?php if (!$scoreRows): ?>
                         <p class="text-muted">Chưa có học sinh nộp bài.</p>
                     <?php else: ?>
                         <div class="table-filter p-3 mb-3">
@@ -148,14 +160,16 @@
                             <table id="scores-table" class="table align-middle">
                                 <thead><tr><th>Học sinh</th><th>Lần nộp</th>                                <th>Điểm /10</th><th>Vi phạm</th><th>Trạng thái</th><th>Thời gian</th></tr></thead>
                                 <tbody>
-                                <?php foreach ($scores as $score): ?>
-                                    <tr data-student-name="<?php echo htmlspecialchars(function_exists('mb_strtolower') ? mb_strtolower($score['full_name'], 'UTF-8') : strtolower($score['full_name'])); ?>" data-status="<?php echo $score['review_status'] === 'pending' || $score['submit_reason'] === 'violation_limit' ? 'violation' : 'submitted'; ?>">
+                                <?php foreach ($scoreRows as $score): ?>
+                                    <tr data-student-name="<?php echo htmlspecialchars(function_exists('mb_strtolower') ? mb_strtolower($score['full_name'], 'UTF-8') : strtolower($score['full_name'])); ?>" data-status="<?php echo $score['status'] === 'voided' || $score['review_status'] === 'pending' || $score['submit_reason'] === 'violation_limit' ? 'violation' : 'submitted'; ?>">
                                         <td><a class="fw-semibold text-decoration-none" href="index.php?action=attempt_detail&attempt_id=<?php echo (int) $score['attempt_id']; ?>"><?php echo htmlspecialchars($score['full_name']); ?></a></td>
                                         <td><a href="index.php?action=attempt_detail&attempt_id=<?php echo (int) $score['attempt_id']; ?>" class="badge rounded-pill bg-primary-subtle text-primary text-decoration-none">Lần <?php echo (int) $score['attempt_number']; ?></a></td>
                                         <td class="fw-bold"><?php echo number_format((float) $score['total_score'], 2); ?></td>
                                         <td><?php echo (int) $score['violation_count']; ?></td>
                                         <td>
-                                            <?php if ($score['review_status'] === 'pending'): ?>
+                                            <?php if ($score['status'] === 'voided'): ?>
+                                                <span class="badge bg-danger-subtle text-danger">Vi phạm - đã hủy kết quả</span>
+                                            <?php elseif ($score['review_status'] === 'pending'): ?>
                                                 <span class="badge bg-warning-subtle text-warning-emphasis">Chờ xem xét</span>
                                             <?php elseif ($score['submit_reason'] === 'violation_limit'): ?>
                                                 <span class="badge bg-danger-subtle text-danger">Nộp do vi phạm</span>

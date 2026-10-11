@@ -34,6 +34,8 @@
             <h2 class="h5 fw-bold mb-3">Thông tin bài thi</h2>
             <div class="policy-row d-flex justify-content-between py-3 gap-3"><span>Số câu hỏi</span><strong><?php echo (int) $exam['question_count']; ?></strong></div>
             <div class="policy-row d-flex justify-content-between py-3 gap-3"><span>Thời gian làm bài</span><strong><?php echo (int) $exam['duration_minutes']; ?> phút</strong></div>
+            <div class="policy-row d-flex justify-content-between py-3 gap-3"><span>Tráo thứ tự câu hỏi</span><strong><?php echo (int) $exam['shuffle_questions'] ? 'Có' : 'Không'; ?></strong></div>
+            <div class="policy-row d-flex justify-content-between py-3 gap-3"><span>Tráo thứ tự đáp án</span><strong><?php echo (int) $exam['shuffle_answers'] ? 'Có' : 'Không'; ?></strong></div>
             <div class="policy-row d-flex justify-content-between py-3 gap-3"><span>Giám sát</span><strong><?php echo (int) $exam['anti_cheat_enabled'] ? 'Đang bật' : 'Đang tắt'; ?></strong></div>
             <?php if ((int) $exam['anti_cheat_enabled']): ?>
                 <div class="policy-row d-flex justify-content-between py-3 gap-3"><span>Giới hạn vi phạm</span><strong><?php echo (int) $exam['violation_limit']; ?> lần</strong></div>
