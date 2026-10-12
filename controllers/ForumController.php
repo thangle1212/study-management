@@ -32,9 +32,25 @@ class ForumController {
         
         $params = [];
         if ($search !== '') {
-            $query .= " AND (p.title LIKE ? OR p.content LIKE ?)";
-            $params[] = "%$search%";
-            $params[] = "%$search%";
+            if (strpos($search, '@') !== false) {
+                $parts = explode('@', $search);
+                $userSearch = trim(end($parts));
+                if ($userSearch !== '') {
+                    $query .= " AND u.full_name LIKE ?";
+                    $params[] = "%$userSearch%";
+                }
+            } elseif (strpos($search, '#') !== false) {
+                $parts = explode('#', $search);
+                $tagSearch = trim(end($parts));
+                if ($tagSearch !== '') {
+                    $query .= " AND p.hashtag LIKE ?";
+                    $params[] = "%$tagSearch%";
+                }
+            } else {
+                $query .= " AND (p.title LIKE ? OR p.content LIKE ?)";
+                $params[] = "%$search%";
+                $params[] = "%$search%";
+            }
         }
         if ($filterExam > 0) {
             $query .= " AND p.exam_id = ?";
@@ -99,6 +115,7 @@ class ForumController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $title = trim($_POST['title'] ?? '');
             $content = trim($_POST['content'] ?? '');
+            $hashtag = trim($_POST['hashtag'] ?? '');
             $examId = $_POST['exam_id'] !== '' ? (int)$_POST['exam_id'] : null;
             $questionId = $_POST['question_id'] !== '' ? (int)$_POST['question_id'] : null;
             $userId = (int)$_SESSION['user']['id'];
@@ -107,10 +124,10 @@ class ForumController {
                 $error = 'Vui lòng nhập đầy đủ tiêu đề và nội dung bài viết.';
             } else {
                 $stmt = $this->pdo->prepare(
-                    "INSERT INTO forum_posts (user_id, exam_id, question_id, title, content) 
-                     VALUES (?, ?, ?, ?, ?)"
+                    "INSERT INTO forum_posts (user_id, exam_id, question_id, title, content, hashtag) 
+                     VALUES (?, ?, ?, ?, ?, ?)"
                 );
-                if ($stmt->execute([$userId, $examId, $questionId, $title, $content])) {
+                if ($stmt->execute([$userId, $examId, $questionId, $title, $content, $hashtag])) {
                     header('Location: index.php?action=forum');
                     exit;
                 } else {
@@ -156,6 +173,7 @@ class ForumController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $title = trim($_POST['title'] ?? '');
             $content = trim($_POST['content'] ?? '');
+            $hashtag = trim($_POST['hashtag'] ?? '');
             $examId = $_POST['exam_id'] !== '' ? (int)$_POST['exam_id'] : null;
             $questionId = $_POST['question_id'] !== '' ? (int)$_POST['question_id'] : null;
 
@@ -164,10 +182,10 @@ class ForumController {
             } else {
                 $stmt = $this->pdo->prepare(
                     "UPDATE forum_posts 
-                     SET title = ?, content = ?, exam_id = ?, question_id = ? 
+                     SET title = ?, content = ?, exam_id = ?, question_id = ?, hashtag = ? 
                      WHERE post_id = ?"
                 );
-                if ($stmt->execute([$title, $content, $examId, $questionId, $postId])) {
+                if ($stmt->execute([$title, $content, $examId, $questionId, $hashtag, $postId])) {
                     header("Location: index.php?action=forum_detail&post_id=$postId");
                     exit;
                 } else {

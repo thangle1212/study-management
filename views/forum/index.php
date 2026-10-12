@@ -59,19 +59,22 @@
             <input type="hidden" name="action" value="forum">
             <div class="col-md-5">
                 <div class="input-group">
-                    <input type="text" name="search" class="form-control search-box" placeholder="Tìm kiếm bài viết..." value="<?php echo htmlspecialchars($search); ?>">
-                    <button class="btn btn-primary search-btn px-4" type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+                    <input type="text" name="search" class="form-control search-box" placeholder="Tìm kiếm bài viết, @tên_người_dùng hoặc #hashtag..." value="<?php echo htmlspecialchars($search); ?>">
+                    <button class="btn btn-primary search-btn px-4" type="submit" title="Tìm kiếm"><i class="fa-solid fa-magnifying-glass me-1"></i> Tìm</button>
                 </div>
             </div>
             <div class="col-md-5">
-                <select name="exam_id" class="form-select filter-select py-2" onchange="this.form.submit()">
-                    <option value="">-- Tất cả đề thi --</option>
-                    <?php foreach ($exams as $exam): ?>
-                        <option value="<?php echo (int) $exam['exam_id']; ?>" <?php echo $filterExam === (int) $exam['exam_id'] ? 'selected' : ''; ?>>
-                            <?php echo htmlspecialchars($exam['title']); ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-0 rounded-start-3"><i class="fa-solid fa-filter text-muted"></i></span>
+                    <select name="exam_id" class="form-select filter-select py-2" onchange="this.form.submit()">
+                        <option value="">-- Tất cả danh mục (Đề thi) --</option>
+                        <?php foreach ($exams as $exam): ?>
+                            <option value="<?php echo (int) $exam['exam_id']; ?>" <?php echo $filterExam === (int) $exam['exam_id'] ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($exam['title']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
             </div>
             <div class="col-md-2 d-grid">
                 <a href="index.php?action=forum" class="btn btn-outline-secondary rounded-3 py-2"><i class="fa-solid fa-rotate-left me-1"></i>Đặt lại</a>
@@ -84,12 +87,22 @@
         <?php if (empty($posts)): ?>
             <div class="col-12">
                 <div class="card p-5 text-center text-muted border-0 shadow-sm rounded-4">
-                    <i class="fa-regular fa-comments fs-1 mb-3 text-secondary"></i>
-                    <h4 class="fw-bold text-dark">Chưa có bài viết nào</h4>
-                    <p class="mb-0">Hãy là người đầu tiên bắt đầu cuộc trò chuyện!</p>
-                    <div class="mt-3">
-                        <a href="index.php?action=forum_create" class="btn btn-primary rounded-pill px-4"><i class="fa-solid fa-plus me-1"></i> Đăng bài viết ngay</a>
-                    </div>
+                    
+                    <?php if ($search !== '' || $filterExam > 0): ?>
+                        <i class="fa-regular fa-face-frown fs-1 mb-3 text-secondary"></i>
+                        <h4 class="fw-bold text-dark">Không tìm thấy bài viết phù hợp</h4>
+                        <p class="mb-0">Không có bài viết nào khớp với từ khóa tìm kiếm hoặc danh mục đã chọn.</p>
+                        <div class="mt-3">
+                            <a href="index.php?action=forum" class="btn btn-outline-primary rounded-pill px-4"><i class="fa-solid fa-rotate-left me-1"></i> Xem tất cả bài viết</a>
+                        </div>
+                    <?php else: ?>
+                        <i class="fa-regular fa-face-smile fs-1 mb-3 text-secondary"></i>
+                        <h4 class="fw-bold text-dark">Chưa có bài viết nào</h4>
+                        <p class="mb-0">Hãy là người đầu tiên bắt đầu cuộc trò chuyện!</p>
+                        <div class="mt-3">
+                            <a href="index.php?action=forum_create" class="btn btn-primary rounded-pill px-4"><i class="fa-solid fa-plus me-1"></i> Đăng bài viết ngay</a>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         <?php else: ?>
@@ -137,12 +150,30 @@
                             </div>
                         </div>
 
-                        <!-- Tiêu đề & Nội dung bài viết -->
+                        <!-- Tiêu đề-->
                         <h3 class="h5 fw-bold mb-2">
                             <a href="index.php?action=forum_detail&post_id=<?php echo (int) $post['post_id']; ?>" class="text-dark text-decoration-none hover-primary">
                                 <?php echo htmlspecialchars($post['title']); ?>
                             </a>
                         </h3>
+
+                        <!-- Hashtag (nếu có) -->
+                        <?php if (!empty($post['hashtag'])): ?>
+                            <div class="mb-2 d-flex flex-wrap gap-1">
+                                <?php 
+                                    $tags = explode(' ', $post['hashtag']);
+                                    foreach ($tags as $tag) {
+                                        $tag = trim($tag);
+                                        if ($tag !== '') {
+                                            $formattedTag = (strpos($tag, '#') === 0) ? $tag : '#' . $tag;
+                                            echo '<span class="badge bg-light text-primary border border-light-subtle rounded-pill px-2 py-1 small">' . htmlspecialchars($formattedTag) . '</span>';
+                                        }
+                                    }
+                                ?>
+                            </div>
+                        <?php endif; ?>
+
+                        <!-- Nội dung bài viết -->
                         <p class="text-muted mb-3">
                             <?php 
                                 $plainText = strip_tags($post['content']);

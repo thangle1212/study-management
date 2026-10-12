@@ -45,5 +45,74 @@ class User {
         $stmt = $this->pdo->prepare("UPDATE users SET password = ?, reset_token = NULL, reset_token_expires = NULL WHERE user_id = ?");
         return $stmt->execute([$hashedPassword, $userId]);
     }
+
+    public function getAllUsers($role = null) {
+        $sql = "SELECT user_id, full_name, email, phone, role, school_name, status, created_at
+                FROM users";
+        $params = [];
+
+        if ($role !== null && $role !== '') {
+            $sql .= " WHERE role = ?";
+            $params[] = $role;
+        }
+
+        $sql .= " ORDER BY created_at DESC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function existsById($userId) {
+        $stmt = $this->pdo->prepare("SELECT 1 FROM users WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        return (bool) $stmt->fetchColumn();
+    }
+
+    public function updateStatus($userId, $status) {
+        if (!in_array($status, ['active', 'locked'], true)) {
+            throw new InvalidArgumentException('Trạng thái tài khoản không hợp lệ.');
+        }
+
+        $stmt = $this->pdo->prepare("UPDATE users SET status = ? WHERE user_id = ?");
+        return $stmt->execute([$status, $userId]);
+    }
+
+    public function updateRole($userId, $role) {
+        if (!in_array($role, ['student', 'teacher', 'admin'], true)) {
+            throw new InvalidArgumentException('Vai trò người dùng không hợp lệ.');
+        }
+
+        $stmt = $this->pdo->prepare("UPDATE users SET role = ? WHERE user_id = ?");
+        return $stmt->execute([$role, $userId]);
+    }
+
+    public function emailExists($email, $excludeUserId = null) {
+        $sql = "SELECT 1 FROM users WHERE email = ?";
+        $params = [$email];
+        if ($excludeUserId !== null) {
+            $sql .= " AND user_id <> ?";
+            $params[] = $excludeUserId;
+        }
+
+        $stmt = $this->pdo->prepare($sql . " LIMIT 1");
+        $stmt->execute($params);
+        return (bool) $stmt->fetchColumn();
+    }
+
+    public function updateAccountDetails($userId, $email, $newPassword = null) {
+        if ($newPassword === null) {
+            $stmt = $this->pdo->prepare("UPDATE users SET email = ? WHERE user_id = ?");
+            return $stmt->execute([$email, $userId]);
+        }
+
+        $passwordHash = password_hash($newPassword, PASSWORD_DEFAULT);
+        $stmt = $this->pdo->prepare(
+            "UPDATE users
+             SET email = ?, password = ?, reset_token = NULL, reset_token_expires = NULL
+             WHERE user_id = ?"
+        );
+        return $stmt->execute([$email, $passwordHash, $userId]);
+    }
 }
 ?>

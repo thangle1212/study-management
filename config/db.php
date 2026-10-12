@@ -1,7 +1,7 @@
 <?php
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 $host = 'localhost';
-$db   = 'db'; // Tên CSDL của bạn
+$db   = 'study_management';
 $user = 'root';
 $pass = '';
 $charset = 'utf8mb4';

@@ -27,22 +27,6 @@
             width: 100%;
             max-width: 480px;
         }
-        .role-option { display: none; }
-        .role-label {
-            border: 2px solid #dee2e6;
-            border-radius: 12px;
-            padding: 12px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            width: 100%;
-        }
-        .role-option:checked + .role-label {
-            border-color: #0d6efd;
-            background-color: #e7f1ff;
-            color: #0d6efd;
-            font-weight: 600;
-        }
         .input-group-text { background-color: #f8f9fa; border-right: none; }
         .form-control-with-icon { border-left: none; }
         .form-control-with-icon:focus { box-shadow: none; border-color: #dee2e6; }
@@ -82,25 +66,9 @@
         <?php endif; ?>
 
         <form action="index.php?action=register" method="POST">
-            <!-- Chọn Vai trò -->
-            <div class="mb-3">
-                <label class="form-label fw-semibold d-block">Bạn là:</label>
-                <div class="row g-2">
-                    <div class="col-6">
-                        <input type="radio" class="role-option" name="role" id="roleStudent" value="student" <?php echo (!isset($_POST['role']) || $_POST['role'] === 'student') ? 'checked' : ''; ?>>
-                        <label class="role-label" for="roleStudent">
-                            <i class="fa-solid fa-user-graduate d-block fs-4 mb-1"></i>
-                            Học sinh / SV
-                        </label>
-                    </div>
-                    <div class="col-6">
-                        <input type="radio" class="role-option" name="role" id="roleTeacher" value="teacher" <?php echo (isset($_POST['role']) && $_POST['role'] === 'teacher') ? 'checked' : ''; ?>>
-                        <label class="role-label" for="roleTeacher">
-                            <i class="fa-solid fa-chalkboard-user d-block fs-4 mb-1"></i>
-                            Giáo viên
-                        </label>
-                    </div>
-                </div>
+            <div class="alert alert-primary py-2 small">
+                <i class="fa-solid fa-circle-info me-1"></i>
+                Tài khoản mới mặc định là học sinh. Quản trị viên có thể cấp quyền giáo viên sau khi đăng ký.
             </div>
 
             <div class="mb-3">
