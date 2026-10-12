@@ -54,6 +54,15 @@ switch ($action) {
             require_once __DIR__ . '/views/dashboard.php';
         }
         break;
+    // --- ROUTE ĐĂNG NHẬP ADMIN ---
+    case 'admin':
+    case 'admin_login':
+        $adminController->login();
+        break;
+
+    case 'admin_login_process':
+        $adminController->handleLogin();
+        break;
 
     case 'admin_dashboard':
         $adminController->dashboard();

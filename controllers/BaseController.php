@@ -46,7 +46,22 @@ class BaseController {
 
     // 2. Chỉ cho phép Admin truy cập
     protected function requireAdmin() {
-        $this->requireLogin();
+        if (!isset($_SESSION['user'])) {
+            header('Location: index.php?action=admin_login');
+            exit;
+        }
+        // Kiểm tra trạng thái active từ DB
+        $stmt = $this->pdo->prepare("SELECT status FROM users WHERE user_id = ?");
+        $stmt->execute([$_SESSION['user']['id']]);
+        $userStatus = $stmt->fetchColumn();
+
+        if (!$userStatus || $userStatus !== 'active') {
+            unset($_SESSION['user']);
+            session_destroy();
+            header('Location: index.php?action=admin_login&error=account_locked');
+            exit;
+        }
+
         if ($_SESSION['user']['role'] !== 'admin') {
             http_response_code(403);
             die('<h3>403 Forbidden</h3><p>Bạn không có quyền truy cập trang quản trị hệ thống!</p>');
