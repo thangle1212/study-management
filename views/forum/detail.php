@@ -77,8 +77,24 @@
         </div>
 
         <!-- Tiêu đề & Nội dung -->
-        <h1 class="h2 fw-bold text-dark mb-4"><?php echo htmlspecialchars($post['title']); ?></h1>
+        <h1 class="h2 fw-bold text-dark mb-3"><?php echo htmlspecialchars($post['title']); ?></h1>
         
+        <!-- Hashtag (nếu có) -->
+        <?php if (!empty($post['hashtag'])): ?>
+            <div class="mb-3 d-flex flex-wrap gap-1">
+                <?php 
+                    $tags = explode(' ', $post['hashtag']);
+                    foreach ($tags as $tag) {
+                        $tag = trim($tag);
+                        if ($tag !== '') {
+                            $formattedTag = (strpos($tag, '#') === 0) ? $tag : '#' . $tag;
+                            echo '<span class="badge bg-light text-primary border border-light-subtle rounded-pill px-2 py-1 small">' . htmlspecialchars($formattedTag) . '</span>';
+                        }
+                    }
+                ?>
+            </div>
+        <?php endif; ?>
+
         <div class="post-content text-dark fs-6 lh-lg mb-4" style="white-space: pre-line;">
             <?php echo htmlspecialchars($post['content']); ?>
         </div>

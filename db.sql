@@ -217,6 +217,7 @@ CREATE TABLE `forum_posts` (
   `question_id` int(11) DEFAULT NULL,
   `title` varchar(200) DEFAULT NULL,
   `content` text DEFAULT NULL,
+  `hashtag` varchar(100) DEFAULT NULL,
   `status` varchar(20) DEFAULT 'active',
   `created_at` datetime DEFAULT current_timestamp(),
   PRIMARY KEY (`post_id`),
