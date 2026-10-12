@@ -101,7 +101,36 @@ class ForumController {
              ORDER BY c.created_at ASC"
         );
         $stmt->execute([$postId]);
-        $comments = $stmt->fetchAll();
+        $allComments = $stmt->fetchAll();
+
+        $commentUsers = [];
+        foreach ($allComments as $c) {
+            $commentUsers[$c['comment_id']] = $c['full_name'];
+        }
+
+        $commentMap = [];
+        foreach ($allComments as $c) {
+            $commentMap[$c['comment_id']] = $c;
+        }
+
+        $comments = [];
+        $repliesMap = [];
+        foreach ($allComments as $c) {
+            $targetName = $c['parent_id'] !== null ? ($commentUsers[$c['parent_id']] ?? '') : '';
+            $c['reply_target_name'] = $targetName;
+
+            if ($c['parent_id'] === null) {
+                $comments[] = $c;
+            } else {
+                $rootId = $c['parent_id'];
+                $curr = $c;
+                while ($curr['parent_id'] !== null && isset($commentMap[$curr['parent_id']])) {
+                    $curr = $commentMap[$curr['parent_id']];
+                    $rootId = $curr['comment_id'];
+                }
+                $repliesMap[$rootId][] = $c;
+            }
+        }
 
         require __DIR__ . '/../views/forum/detail.php';
     }
@@ -234,13 +263,23 @@ class ForumController {
             $postId = (int) ($_POST['post_id'] ?? 0);
             $content = trim($_POST['content'] ?? '');
             $userId = (int) $_SESSION['user']['id'];
+            $rawParentId = isset($_POST['parent_id']) && $_POST['parent_id'] !== '' ? (int)$_POST['parent_id'] : null;
+
+            $parentId = null;
+            if ($rawParentId > 0) {
+                $stmt = $this->pdo->prepare("SELECT comment_id FROM forum_comments WHERE comment_id = ? AND post_id = ? AND status = 'active'");
+                $stmt->execute([$rawParentId, $postId]);
+                if ($stmt->fetch()) {
+                    $parentId = $rawParentId;
+                }
+            }
 
             if ($content !== '' && $postId > 0) {
                 $stmt = $this->pdo->prepare(
-                    "INSERT INTO forum_comments (post_id, user_id, content) 
-                     VALUES (?, ?, ?)"
+                    "INSERT INTO forum_comments (post_id, user_id, parent_id, content) 
+                     VALUES (?, ?, ?, ?)"
                 );
-                $stmt->execute([$postId, $userId, $content]);
+                $stmt->execute([$postId, $userId, $parentId, $content]);
             }
             header("Location: index.php?action=forum_detail&post_id=$postId");
             exit;
