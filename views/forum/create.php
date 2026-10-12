@@ -56,6 +56,13 @@
                 <textarea class="form-control" id="content" name="content" rows="8" placeholder="Viết nội dung thắc mắc hoặc thông tin cần thảo luận chi tiết tại đây..." required><?php echo htmlspecialchars($post['content'] ?? ''); ?></textarea>
             </div>
 
+            <!-- Hashtag -->
+            <div class="mb-4">
+                <label for="hashtag" class="form-label">Hashtag (Không bắt buộc)</label>
+                <input type="text" class="form-control" id="hashtag" name="hashtag" placeholder="VD: #toan #luyenthi #hoctap" value="<?php echo htmlspecialchars($post['hashtag'] ?? ''); ?>">
+                <div class="form-text">Các hashtag cách nhau bởi khoảng trắng (VD: #toan #vatly).</div>
+            </div>
+
             <div class="row">
                 <!-- Liên kết đề thi -->
                 <div class="col-md-6 mb-4">

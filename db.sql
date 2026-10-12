@@ -217,6 +217,7 @@ CREATE TABLE `forum_posts` (
   `question_id` int(11) DEFAULT NULL,
   `title` varchar(200) DEFAULT NULL,
   `content` text DEFAULT NULL,
+  `hashtag` varchar(100) DEFAULT NULL,
   `status` varchar(20) DEFAULT 'active',
   `created_at` datetime DEFAULT current_timestamp(),
   PRIMARY KEY (`post_id`),
@@ -235,16 +236,20 @@ CREATE TABLE `forum_comments` (
   `comment_id` int(11) NOT NULL AUTO_INCREMENT,
   `post_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
+  `parent_id` int(11) DEFAULT NULL,
   `content` text NOT NULL,
   `status` varchar(20) DEFAULT 'active',
   `created_at` datetime DEFAULT current_timestamp(),
   PRIMARY KEY (`comment_id`),
   KEY `post_id` (`post_id`),
   KEY `user_id` (`user_id`),
+  KEY `parent_id` (`parent_id`),
   CONSTRAINT `forum_comments_ibfk_1` FOREIGN KEY (`post_id`)
     REFERENCES `forum_posts` (`post_id`) ON DELETE CASCADE,
   CONSTRAINT `forum_comments_ibfk_2` FOREIGN KEY (`user_id`)
-    REFERENCES `users` (`user_id`) ON DELETE CASCADE
+    REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+  CONSTRAINT `forum_comments_ibfk_3` FOREIGN KEY (`parent_id`)
+    REFERENCES `forum_comments` (`comment_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE `lessons` (
