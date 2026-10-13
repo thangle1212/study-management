@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap');
+
 /* ============================================================
    EduTest - Question Bank Module
    Phong cách: Azota Dashboard + startpage.php palette
@@ -6,35 +8,35 @@
 
 /* ---------- BIẾN TOÀN CỤC ---------- */
 :root {
-    --primary-color: #0d6efd;
-    --primary-hover: #0b5ed7;
-    --primary-soft: #e7f1ff;
+    --primary-color: #176b87;
+    --primary-hover: #0f5268;
+    --primary-soft: #e7f4f4;
 
     --success-color: #198754;
     --success-soft: #d1e7dd;
 
-    --warning-color: #ffc107;
-    --warning-soft: #fff3cd;
+    --warning-color: #e7a93b;
+    --warning-soft: #fff4d9;
 
     --danger-color: #dc3545;
     --danger-soft: #f8d7da;
 
-    --purple-color: #6f42c1;
-    --purple-soft: #e2d9f3;
+    --purple-color: #6b5ca5;
+    --purple-soft: #eeeafa;
 
-    --text-primary: #212529;
-    --text-secondary: #495057;
-    --text-muted: #6c757d;
+    --text-primary: #102a43;
+    --text-secondary: #486581;
+    --text-muted: #829ab1;
 
-    --border-color: #e9ecef;
-    --bg-body: #f8f9fa;
+    --border-color: #dce7e5;
+    --bg-body: #f5f8f6;
     --bg-card: #ffffff;
 
     --sidebar-width: 260px;
 
     --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
 
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
     --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -46,7 +48,7 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Be Vietnam Pro', 'Segoe UI', sans-serif;
     background: var(--bg-body);
     color: var(--text-primary);
     min-height: 100vh;
@@ -224,6 +226,10 @@ body {
     box-shadow: var(--shadow-sm);
 }
 
+.exam-create-page .member2-topbar {
+    position: relative;
+}
+
 .topbar-title {
     font-size: 1.1rem;
     font-weight: 600;
@@ -273,6 +279,10 @@ body {
    ============================================================ */
 .member2-page {
     padding: 1.5rem 2rem 4rem;
+}
+
+.exam-create-page .member2-page {
+    padding-top: 2rem;
 }
 
 .page-header {
@@ -325,6 +335,14 @@ body {
     background: var(--primary-hover);
     border-color: var(--primary-hover);
     color: #fff;
+}
+
+.btn:focus-visible,
+.form-control:focus-visible,
+.form-select:focus-visible,
+a:focus-visible {
+    box-shadow: 0 0 0 4px rgba(231, 169, 59, .3);
+    outline: none;
 }
 
 .btn-outline-primary {
@@ -610,12 +628,62 @@ textarea.form-control {
 }
 
 .table-card tbody tr:hover {
-    background: #f8f9fa;
+    background: #f1f7f5;
 }
 
 .table-title {
     font-weight: 600;
     color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+    .member2-sidebar {
+        width: 220px;
+    }
+
+    .member2-main {
+        margin-left: 220px;
+    }
+
+    .member2-page {
+        padding: 1.25rem 1rem 3rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .member2-sidebar {
+        width: 100%;
+        min-height: auto;
+        position: relative;
+        padding: 1rem;
+    }
+
+    .member2-app {
+        display: block;
+    }
+
+    .member2-main {
+        margin-left: 0;
+    }
+
+    .member2-topbar {
+        position: relative;
+        padding: .75rem 1rem;
+    }
+
+    .member2-page {
+        padding: 1rem .75rem 2.5rem;
+    }
+
+    .grid-form {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        transition-duration: .01ms !important;
+    }
 }
 
 /* ============================================================

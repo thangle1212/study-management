@@ -227,9 +227,10 @@ class ExamController {
         $bankStmt->execute([$userId]);
         $questionBanks = $bankStmt->fetchAll(PDO::FETCH_ASSOC);
 
+        $initialBankId = filter_var($_GET['bank_id'] ?? null, FILTER_VALIDATE_INT);
         $formData = $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : [
             'title' => '',
-            'bank_id' => '',
+            'bank_id' => $initialBankId && $initialBankId > 0 ? (string) $initialBankId : '',
             'duration_minutes' => '60',
             'status' => 'draft',
             'start_time' => '',
@@ -1400,6 +1401,15 @@ class ExamController {
         $this->requireLogin();
         $studentId = (int) $_SESSION['user']['id'];
         $selectedExamId = (int) ($_GET['exam_id'] ?? 0);
+        $selectedExamType = is_string($_GET['exam_type'] ?? null) ? $_GET['exam_type'] : '';
+        $examTypeConditions = [
+            'auto' => "(LOWER(e.title) LIKE '%tự động%' OR LOWER(e.title) LIKE '%tu dong%' OR LOWER(e.title) LIKE '%auto%')",
+            'sample' => "(LOWER(e.title) LIKE '%đề kiểm tra mẫu%' OR LOWER(e.title) LIKE '%đề mẫu%' OR LOWER(e.title) LIKE '%de kiem tra mau%' OR LOWER(e.title) LIKE '%de mau%')",
+            'hop' => "(LOWER(e.title) LIKE '%kiểm tra hợp%' OR LOWER(e.title) LIKE '%kiem tra hop%')"
+        ];
+        if (!isset($examTypeConditions[$selectedExamType])) {
+            $selectedExamType = '';
+        }
 
         $stmt = $this->pdo->prepare(
             "SELECT ea.attempt_id, ea.exam_id, e.title, ea.total_score, ea.start_time, ea.end_time,
@@ -1413,7 +1423,8 @@ class ExamController {
              LEFT JOIN exam_questions eq ON eq.exam_id = ea.exam_id
              LEFT JOIN attempt_answers aa ON aa.attempt_id = ea.attempt_id
              WHERE ea.student_id = ? AND ea.status = 'completed'"
-            . ($selectedExamId ? " AND ea.exam_id = ?" : "") . "
+            . ($selectedExamId ? " AND ea.exam_id = ?" : "")
+            . ($selectedExamType !== '' ? " AND " . $examTypeConditions[$selectedExamType] : "") . "
              GROUP BY ea.attempt_id, ea.exam_id, e.title, ea.total_score, ea.start_time,
                       ea.end_time, ea.submit_reason, ea.review_status
              ORDER BY ea.end_time ASC"

@@ -1,0 +1,202 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap');
+
+:root {
+    --edu-ink: #102a43;
+    --edu-ink-soft: #486581;
+    --edu-teal: #176b87;
+    --edu-teal-dark: #0f5268;
+    --edu-teal-soft: #e7f4f4;
+    --edu-saffron: #e7a93b;
+    --edu-paper: #f5f8f6;
+    --edu-line: #dce7e5;
+    --edu-shadow: 0 18px 48px rgba(16, 42, 67, .09);
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Be Vietnam Pro', 'Segoe UI', sans-serif !important;
+    color: var(--edu-ink) !important;
+    background: var(--edu-paper) !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -.025em;
+}
+
+.navbar,
+.topbar {
+    background: rgba(255, 255, 255, .92) !important;
+    border-bottom: 1px solid var(--edu-line) !important;
+    box-shadow: 0 4px 18px rgba(16, 42, 67, .04) !important;
+    backdrop-filter: blur(14px);
+}
+
+.navbar-brand,
+.brand {
+    color: var(--edu-teal) !important;
+    letter-spacing: -.04em;
+}
+
+.btn-primary {
+    background: var(--edu-teal) !important;
+    border-color: var(--edu-teal) !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus-visible {
+    background: var(--edu-teal-dark) !important;
+    border-color: var(--edu-teal-dark) !important;
+}
+
+.btn-outline-primary {
+    color: var(--edu-teal) !important;
+    border-color: var(--edu-teal) !important;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus-visible {
+    color: #fff !important;
+    background: var(--edu-teal) !important;
+    border-color: var(--edu-teal) !important;
+}
+
+.btn,
+.form-control,
+.form-select {
+    border-radius: 10px !important;
+}
+
+.btn:focus-visible,
+.form-control:focus,
+.form-select:focus,
+.navbar-toggler:focus-visible,
+a:focus-visible {
+    box-shadow: 0 0 0 4px rgba(231, 169, 59, .3) !important;
+    outline: none;
+}
+
+.welcome,
+.forum-header,
+.page-heading {
+    background: linear-gradient(120deg, var(--edu-ink) 0%, #176b87 70%, #3c98a0 100%) !important;
+    border-radius: 14px !important;
+    box-shadow: var(--edu-shadow) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section {
+    background:
+        radial-gradient(circle at 78% 18%, rgba(231, 169, 59, .16), transparent 28%),
+        linear-gradient(135deg, #edf7f5 0%, #f5f8f6 60%, #e6f1f1 100%) !important;
+}
+
+.hero-section h1 {
+    max-width: 680px;
+    font-size: clamp(2.5rem, 5vw, 4.2rem);
+    line-height: 1.08;
+}
+
+.hero-section h1 .text-primary {
+    color: var(--edu-teal) !important;
+}
+
+.hero-section .lead {
+    max-width: 620px;
+}
+
+.hero-section img {
+    border: 10px solid rgba(255, 255, 255, .72);
+    box-shadow: var(--edu-shadow) !important;
+}
+
+.cta-section {
+    background: linear-gradient(120deg, var(--edu-ink), var(--edu-teal)) !important;
+}
+
+.welcome::after,
+.forum-header::after,
+.page-heading::after {
+    content: '';
+    width: 220px;
+    height: 220px;
+    border: 1px solid rgba(255, 255, 255, .16);
+    border-radius: 50%;
+    position: absolute;
+    right: -70px;
+    top: -110px;
+}
+
+.exam-card,
+.post-card,
+.question-card {
+    border: 1px solid var(--edu-line) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 26px rgba(16, 42, 67, .05) !important;
+}
+
+.exam-card:hover,
+.post-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 32px rgba(16, 42, 67, .1) !important;
+}
+
+.card-feature {
+    border: 1px solid var(--edu-line) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 26px rgba(16, 42, 67, .05) !important;
+}
+
+.feature-icon,
+.exam-icon {
+    background: var(--edu-teal-soft) !important;
+    color: var(--edu-teal) !important;
+}
+
+.auth-card {
+    border: 1px solid var(--edu-line);
+    box-shadow: var(--edu-shadow) !important;
+}
+
+.auth-card .text-primary {
+    color: var(--edu-teal) !important;
+}
+
+.table thead th {
+    color: var(--edu-ink-soft);
+    font-size: .72rem;
+    letter-spacing: .045em;
+    text-transform: uppercase;
+}
+
+@media (max-width: 575.98px) {
+    .container {
+        --bs-gutter-x: 1.25rem;
+    }
+
+    .welcome,
+    .forum-header,
+    .page-heading {
+        border-radius: 10px !important;
+    }
+
+    .welcome .display-3 {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        transition-duration: .01ms !important;
+        animation-duration: .01ms !important;
+    }
+}

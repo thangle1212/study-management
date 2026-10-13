@@ -16,6 +16,7 @@
         .exam-card:hover { transform: translateY(-3px); box-shadow: 0 13px 30px rgba(31,74,125,.11); }
         .exam-icon { width: 42px; height: 42px; display: inline-flex; align-items: center; justify-content: center; border-radius: 12px; }
     </style>
+    <link rel="stylesheet" href="assets/css/edutest.css">
 </head>
 <body>
 <nav class="navbar topbar sticky-top">

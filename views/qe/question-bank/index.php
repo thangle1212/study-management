@@ -17,8 +17,10 @@ $successMessages = [
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Ngân hàng câu hỏi - EduTest</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="views/qe/qe.css">
+    <link rel="stylesheet" href="assets/css/edutest.css">
 </head>
-<body class="bg-light">
+<body>
 <main class="container py-4">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
@@ -37,13 +39,13 @@ $successMessages = [
         <div class="alert alert-danger" role="alert"><?= $escape($error) ?></div>
     <?php endif; ?>
     <?php if (!$banks): ?>
-        <div class="card card-body text-center py-5">
+        <div class="content-card text-center py-5">
             <h2 class="h5">Bạn chưa có ngân hàng câu hỏi</h2>
             <p class="text-muted">Tạo ngân hàng trước, sau đó thêm câu hỏi và chọn ngân hàng này khi tạo đề thi.</p>
             <a class="btn btn-primary align-self-center" href="index.php?action=qe_bank_create">Tạo ngân hàng câu hỏi</a>
         </div>
     <?php else: ?>
-        <div class="table-responsive card shadow-sm">
+        <div class="table-responsive content-card p-0">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr><th>Tên ngân hàng</th><th>Môn học</th><th>Số câu</th><th>Ngày tạo</th><th class="text-end">Thao tác</th></tr>

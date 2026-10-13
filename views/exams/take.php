@@ -23,6 +23,7 @@ $deadline = strtotime($exam['start_time']) + ((int) $exam['duration_minutes'] * 
         .answer-option input { accent-color: var(--brand); }
         .submit-bar { position: sticky; bottom: 18px; z-index: 5; }
     </style>
+    <link rel="stylesheet" href="assets/css/edutest.css">
 </head>
 <body>
 <nav class="navbar topbar sticky-top">

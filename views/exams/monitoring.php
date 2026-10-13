@@ -14,6 +14,7 @@
         .monitor-table { border: 1px solid #e5edf8; border-radius: 8px; overflow: hidden; }
         .table thead th { color: #64748b; font-size: .78rem; text-transform: uppercase; }
     </style>
+    <link rel="stylesheet" href="assets/css/edutest.css">
 </head>
 <body>
 <nav class="navbar bg-white border-bottom">

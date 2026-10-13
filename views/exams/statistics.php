@@ -21,6 +21,7 @@
         .kpi-value { font-size: 1.45rem; line-height: 1.2; }
         .table-filter { background: #f7faff; border: 1px solid #e5edf8; border-radius: 12px; }
     </style>
+    <link rel="stylesheet" href="assets/css/edutest.css">
 </head>
 <body>
 <nav class="navbar topbar sticky-top">

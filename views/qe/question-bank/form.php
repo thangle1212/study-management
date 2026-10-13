@@ -12,8 +12,9 @@ $escape = static function ($value) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="views/qe/qe.css">
+    <link rel="stylesheet" href="assets/css/edutest.css">
 </head>
-<body class="bg-light">
+<body>
 <main class="container py-4" style="max-width: 900px">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>

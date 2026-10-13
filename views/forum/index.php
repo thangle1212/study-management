@@ -23,6 +23,7 @@
         .search-btn { border-radius: 30px; }
         .filter-select { border-radius: 12px; }
     </style>
+    <link rel="stylesheet" href="assets/css/edutest.css">
 </head>
 <body>
 <nav class="navbar topbar sticky-top">

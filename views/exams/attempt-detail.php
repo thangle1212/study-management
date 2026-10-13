@@ -18,6 +18,7 @@
         .answer-correct { background: #eefaf3; border-color: #8bd3a8; }
         .answer-wrong { background: #fff2f2; border-color: #f1aeb5; }
     </style>
+    <link rel="stylesheet" href="assets/css/edutest.css">
 </head>
 <body>
 <nav class="navbar topbar sticky-top">

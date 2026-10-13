@@ -22,6 +22,7 @@
         .relation-box { background-color: var(--soft); border-left: 4px solid var(--brand); border-radius: 4px 12px 12px 4px; }
         .comment-btn { border-radius: 10px; }
     </style>
+    <link rel="stylesheet" href="assets/css/edutest.css">
 </head>
 <body>
 <nav class="navbar topbar sticky-top">

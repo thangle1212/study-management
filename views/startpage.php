@@ -46,6 +46,7 @@
             border-radius: 20px;
         }
     </style>
+    <link rel="stylesheet" href="assets/css/edutest.css">
 </head>
 <body>
 

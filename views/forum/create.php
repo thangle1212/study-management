@@ -16,6 +16,7 @@
         .form-control, .form-select { border-radius: 10px; border: 1px solid #ced4da; padding: 0.75rem 1rem; }
         .form-control:focus, .form-select:focus { border-color: var(--brand); box-shadow: 0 0 0 0.25rem rgba(13,110,253,.15); }
     </style>
+    <link rel="stylesheet" href="assets/css/edutest.css">
 </head>
 <body>
 <nav class="navbar topbar sticky-top">

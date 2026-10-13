@@ -16,6 +16,7 @@
         .history-score { min-width: 86px; }
         .history-card.history-extra { display: none; }
     </style>
+    <link rel="stylesheet" href="assets/css/edutest.css">
 </head>
 <body>
 <nav class="navbar bg-white border-bottom">
