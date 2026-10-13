@@ -1,3 +1,4 @@
+<?php header('Location: ../../../index.php?action=qe_banks'); exit; ?>
 <!doctype html>
 <html lang="vi">
 
