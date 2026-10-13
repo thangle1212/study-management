@@ -108,7 +108,7 @@
                         <div class="col-12">
                             <div class="answer-row p-3 <?php echo $selected ? ($answer['is_correct'] ? 'answer-correct' : 'answer-wrong') : ($answer['is_correct'] ? 'answer-correct' : ''); ?>">
                                 <i class="fa-solid <?php echo $selected ? ($answer['is_correct'] ? 'fa-circle-check text-success' : 'fa-circle-xmark text-danger') : ($answer['is_correct'] ? 'fa-check text-success' : 'fa-circle text-muted'); ?> me-2"></i>
-                                <?php echo htmlspecialchars($answer['content']); ?>
+                                <?php echo htmlspecialchars(trim(html_entity_decode(strip_tags((string) $answer['content']), ENT_QUOTES | ENT_HTML5, 'UTF-8'))); ?>
                                 <?php if ($selected): ?><span class="badge bg-primary-subtle text-primary ms-2">Sinh viên chọn</span><?php endif; ?>
                                 <?php if ($answer['is_correct']): ?><span class="badge bg-success-subtle text-success ms-2">Đáp án đúng</span><?php endif; ?>
                             </div>
