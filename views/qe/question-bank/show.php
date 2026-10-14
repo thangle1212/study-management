@@ -23,18 +23,21 @@ $difficultyLabels = ['easy' => 'Dễ', 'medium' => 'Trung bình', 'hard' => 'Kh�
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= $escape($bank['bank_name']) ?> - Ngân hàng câu hỏi</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="views/qe/qe.css">
+    <link rel="stylesheet" href="assets/css/edutest.css">
 </head>
-<body class="bg-light">
+<body>
 <main class="container py-4">
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
         <div>
-            <a href="index.php?action=qe_banks" class="text-decoration-none">&larr; Ngân hàng câu hỏi</a>
+            <a href="index.php?action=qe_banks" class="text-decoration-none"><i class="fa-solid fa-arrow-left me-1"></i>Ngân hàng câu hỏi</a>
             <h1 class="h3 mt-2 mb-1"><?= $escape($bank['bank_name']) ?></h1>
             <p class="text-muted mb-0"><?= $escape($bank['subject'] ?: 'Chưa chọn môn học') ?> · <?= count($questions) ?> câu hỏi</p>
         </div>
         <div class="d-flex flex-wrap gap-2">
             <a class="btn btn-outline-secondary" href="index.php?action=qe_bank_edit&id=<?= (int) $bank['bank_id'] ?>">Sửa ngân hàng</a>
-            <a class="btn btn-outline-primary" href="index.php?action=qe_exam_create">Tạo đề thi</a>
+            <a class="btn btn-outline-primary" href="index.php?action=qe_exam_create&bank_id=<?= (int) $bank['bank_id'] ?>">Tạo đề thi từ ngân hàng này</a>
             <a class="btn btn-primary" href="index.php?action=qe_question_create&bank_id=<?= (int) $bank['bank_id'] ?>">Thêm câu hỏi</a>
         </div>
     </div>
@@ -53,7 +56,7 @@ $difficultyLabels = ['easy' => 'Dễ', 'medium' => 'Trung bình', 'hard' => 'Kh�
     <?php else: ?>
         <div class="vstack gap-3">
             <?php foreach ($questions as $index => $question): ?>
-                <article class="card shadow-sm">
+                <article class="card content-card">
                     <div class="card-body">
                         <div class="d-flex flex-wrap justify-content-between gap-3">
                             <div class="flex-grow-1">

@@ -10,6 +10,7 @@
         body { background: linear-gradient(135deg, #e3f2fd 0%, #f8f9fa 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
         .auth-card { border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.08); background: #fff; width: 100%; max-width: 420px; }
     </style>
+    <link rel="stylesheet" href="assets/css/edutest.css">
 </head>
 <body>
 <div class="auth-card p-4">

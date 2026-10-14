@@ -42,7 +42,7 @@ $escape = function ($value) {
         .parse-guide { background: #f4f8ff; border-radius: 10px; padding: 14px 16px; }
     </style>
 </head>
-<body>
+<body class="exam-create-page">
     <div class="member2-app">
         <aside class="member2-sidebar" id="sidebar">
             <div class="sidebar-brand">
@@ -55,7 +55,7 @@ $escape = function ($value) {
             <div class="sidebar-section-label">Không gian làm việc</div>
             <nav class="sidebar-menu">
                 <a href="index.php?action=dashboard"><i class="fa-solid fa-gauge-high"></i><span>Bảng điều khiển</span></a>
-                <a href="index.php?action=dashboard"><i class="fa-solid fa-layer-group"></i><span>Ngân hàng câu hỏi</span></a>
+                <a href="index.php?action=qe_banks"><i class="fa-solid fa-layer-group"></i><span>Ngân hàng câu hỏi</span></a>
                 <a class="active" href="index.php?action=qe_exam_create"><i class="fa-solid fa-file-signature"></i><span>Bài thi</span></a>
             </nav>
             <div class="sidebar-user">
@@ -89,7 +89,7 @@ $escape = function ($value) {
                         <div class="text-muted">Dán toàn bộ nội dung, hệ thống sẽ quét câu hỏi và đáp án một lượt.</div>
                     </div>
                     <div class="page-actions">
-                        <a href="index.php?action=dashboard" class="btn btn-secondary"><i class="fa-solid fa-arrow-left me-2"></i>Quay lại</a>
+                        <a href="index.php?action=qe_banks" class="btn btn-secondary"><i class="fa-solid fa-arrow-left me-2"></i>Quay lại ngân hàng</a>
                     </div>
                 </div>
 
@@ -194,7 +194,7 @@ $escape = function ($value) {
                     </section>
 
                     <div class="d-flex justify-content-end gap-2 mb-5">
-                        <a href="index.php?action=dashboard" class="btn btn-secondary"><i class="fa-solid fa-xmark me-2"></i>Hủy</a>
+                        <a href="index.php?action=qe_banks" class="btn btn-secondary"><i class="fa-solid fa-xmark me-2"></i>Hủy</a>
                         <button type="submit" class="btn btn-primary" id="create-exam-button" <?= !$questionBanks ? 'disabled' : '' ?>><i class="fa-solid fa-plus me-2"></i>Tạo đề thi</button>
                     </div>
                 </form>

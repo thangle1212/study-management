@@ -37,6 +37,7 @@
         .input-group:focus-within .input-group-text,
         .input-group:focus-within .form-control { border-color: #86b7fe; }
     </style>
+    <link rel="stylesheet" href="assets/css/edutest.css">
 </head>
 <body>
 

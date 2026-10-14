@@ -15,13 +15,14 @@
         .page-heading { border: 0; border-radius: 22px; background: linear-gradient(135deg, #0d6efd, #438df4); color: #fff; box-shadow: 0 16px 36px rgba(13,110,253,.18); }
         .stat-card { border: 1px solid #e5edf8; border-radius: 18px; box-shadow: 0 10px 28px rgba(31,74,125,.07); }
         .metric { border-radius: 14px; background: #f7faff; border: 1px solid #e5edf8; }
-        .chart-wrap { min-height: 290px; }
+        .chart-wrap { min-height: 320px; }
         .empty-state { min-height: 260px; }
         .metric { height: 100%; }
         .chart-center { position: relative; height: 290px; }
         .chart-center canvas { position: relative; z-index: 1; }
         .chart-center-label { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; z-index: 2; }
     </style>
+    <link rel="stylesheet" href="assets/css/edutest.css">
 </head>
 <body>
 <nav class="navbar topbar sticky-top">
@@ -42,7 +43,14 @@
         <form method="get" class="card stat-card mb-4">
             <div class="card-body d-flex flex-wrap align-items-center gap-3">
                 <input type="hidden" name="action" value="student_statistics">
-                <label for="exam-filter" class="fw-semibold mb-0">Xem theo đề thi:</label>
+                <label for="exam-type-filter" class="fw-semibold mb-0">Nhóm bài kiểm tra:</label>
+                <select id="exam-type-filter" name="exam_type" class="form-select w-auto" onchange="this.form.submit()">
+                    <option value="" <?php echo $selectedExamType === '' ? 'selected' : ''; ?>>Tất cả</option>
+                    <option value="auto" <?php echo $selectedExamType === 'auto' ? 'selected' : ''; ?>>Đề tự động</option>
+                    <option value="sample" <?php echo $selectedExamType === 'sample' ? 'selected' : ''; ?>>Đề kiểm tra mẫu</option>
+                    <option value="hop" <?php echo $selectedExamType === 'hop' ? 'selected' : ''; ?>>Kiểm tra hợp</option>
+                </select>
+                <label for="exam-filter" class="fw-semibold mb-0">Đề thi cụ thể:</label>
                 <select id="exam-filter" name="exam_id" class="form-select w-auto" onchange="this.form.submit()">
                     <option value="0">Tất cả đề thi</option>
                     <?php foreach ($availableExams as $availableExam): ?>
@@ -59,7 +67,7 @@
         </section>
     <?php else: ?>
         <div class="row row-cols-2 row-cols-lg-5 g-3 mb-4">
-            <div class="col"><div class="metric p-3"><div class="text-muted small">Số đề đã tham gia</div><div class="h3 fw-bold text-primary mb-0"><?php echo $examCount; ?></div></div></div>
+            <div class="col"><div class="metric p-3"><div class="text-muted small">Số người đã tham gia</div><div class="h3 fw-bold text-primary mb-0"><?php echo $examCount; ?></div></div></div>
             <div class="col"><div class="metric p-3"><div class="text-muted small">Tổng lượt làm</div><div class="h3 fw-bold text-primary mb-0"><?php echo $attemptCount; ?></div></div></div>
             <div class="col"><div class="metric p-3"><div class="text-muted small">Điểm trung bình</div><div class="h3 fw-bold text-info mb-0"><?php echo number_format($averageScore, 2); ?></div></div></div>
             <div class="col"><div class="metric p-3"><div class="text-muted small">Tỷ lệ chính xác</div><div class="h3 fw-bold text-success mb-0"><?php echo number_format($accuracy, 1); ?>%</div><div class="small text-muted"><?php echo $totalCorrect; ?> đúng / <?php echo $totalWrong; ?> sai</div></div></div>
@@ -94,7 +102,7 @@
                         <tbody>
                         <?php foreach (array_reverse($attempts) as $attemptIndex => $attempt): ?>
                             <?php $durationSeconds = max(0, strtotime($attempt['end_time']) - strtotime($attempt['start_time'])); ?>
-                            <tr>
+                            <tr class="<?php echo $attemptIndex >= 10 ? 'history-extra d-none' : ''; ?>">
                                 <td class="text-nowrap">Lần <?php echo count($attempts) - $attemptIndex; ?></td>
                                 <td class="fw-semibold"><?php echo htmlspecialchars($attempt['title']); ?></td>
                                 <td class="fw-bold text-primary"><?php echo number_format((float) $attempt['total_score'], 2); ?></td>
@@ -117,6 +125,13 @@
                         </tbody>
                     </table>
                 </div>
+                <?php if (count($attempts) > 10): ?>
+                    <div class="text-center mt-3">
+                        <button type="button" class="btn btn-outline-primary rounded-3" id="show-more-history">
+                            <i class="fa-solid fa-chevron-down me-1"></i>Xem thêm lịch sử
+                        </button>
+                    </div>
+                <?php endif; ?>
             </div>
         </section>
     <?php endif; ?>
@@ -124,38 +139,37 @@
 
 <?php if ($attempts): ?>
 <script>
+const scoreTitles = <?php echo json_encode(array_map(function ($attempt) {
+    $title = trim((string) $attempt['title']);
+    return $title === '' ? $title : mb_strtoupper(mb_substr($title, 0, 1, 'UTF-8'), 'UTF-8') . mb_substr($title, 1);
+}, $attempts), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
 const scoreLabels = <?php echo json_encode(array_map(function ($attempt, $index) {
-    return $attempt['title'] . ' - Lần ' . ($index + 1);
+    return 'Lần ' . ($index + 1);
 }, $attempts, array_keys($attempts)), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
 const scoreData = <?php echo json_encode(array_map(function ($attempt) {
     $maxScore = (float) $attempt['max_score'];
     return $maxScore > 0 ? round(((float) $attempt['total_score'] / $maxScore) * 100, 1) : 0;
 }, $attempts)); ?>;
-const scoreLabelPlugin = {
-    id: 'scoreLabelPlugin',
-    afterDatasetsDraw: function (chart) {
-        const context = chart.ctx;
-        chart.getDatasetMeta(0).data.forEach(function (point, index) {
-            context.save();
-            context.fillStyle = '#17233c';
-            context.font = '600 11px sans-serif';
-            context.textAlign = 'center';
-            context.fillText(chart.data.datasets[0].data[index] + '%', point.x, point.y - 10);
-            context.restore();
-        });
-    }
-};
 new Chart(document.getElementById('scoreChart'), {
     type: 'line',
-    data: { labels: scoreLabels, datasets: [{ label: 'Tỷ lệ điểm (%)', data: scoreData, borderColor: '#0d6efd', backgroundColor: 'rgba(13,110,253,.12)', fill: true, tension: 0.2, pointRadius: 4, pointBackgroundColor: '#0d6efd', pointBorderColor: '#fff', pointBorderWidth: 2 }] },
-    plugins: [scoreLabelPlugin],
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: function (context) { return context.raw + '%'; } } } }, scales: { y: { beginAtZero: true, max: 100, title: { display: true, text: 'Tỷ lệ điểm (%)' } } } }
+    data: { labels: scoreLabels, datasets: [{ label: 'Tỷ lệ điểm (%)', data: scoreData, borderColor: '#176b87', backgroundColor: 'rgba(23,107,135,.13)', fill: true, tension: 0.2, pointRadius: 4, pointHoverRadius: 6, pointBackgroundColor: '#176b87', pointBorderColor: '#fff', pointBorderWidth: 2 }] },
+    options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'nearest' }, plugins: { legend: { display: false }, tooltip: { callbacks: { title: function (items) { return scoreTitles[items[0].dataIndex] || 'Bài kiểm tra'; }, label: function (context) { return 'Lần ' + (context.dataIndex + 1) + ': ' + context.raw + '%'; } } } }, scales: { x: { ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 } }, y: { beginAtZero: true, max: 110, ticks: { stepSize: 20, callback: function (value) { return value <= 100 ? value : ''; } }, title: { display: true, text: 'Tỷ lệ điểm (%)' } } } }
 });
 new Chart(document.getElementById('accuracyChart'), {
     type: 'doughnut',
     data: { labels: ['Đúng', 'Sai'], datasets: [{ data: [<?php echo $totalCorrect; ?>, <?php echo $totalWrong; ?>], backgroundColor: ['#198754', '#dc3545'], borderWidth: 0 }] },
     options: { responsive: true, maintainAspectRatio: false, cutout: '68%', plugins: { legend: { position: 'bottom' } } }
 });
+
+const showMoreHistory = document.getElementById('show-more-history');
+if (showMoreHistory) {
+    showMoreHistory.addEventListener('click', function () {
+        document.querySelectorAll('.history-extra').forEach(function (row) {
+            row.classList.remove('d-none');
+        });
+        showMoreHistory.remove();
+    });
+}
 </script>
 <?php endif; ?>
 </body>

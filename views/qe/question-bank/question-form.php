@@ -24,8 +24,10 @@ unset($answer);
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= $isEditing ? 'Sửa' : 'Tạo' ?> câu hỏi - EduTest</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="views/qe/qe.css">
+    <link rel="stylesheet" href="assets/css/edutest.css">
 </head>
-<body class="bg-light">
+<body>
 <main class="container py-4" style="max-width: 1000px">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
         <div>

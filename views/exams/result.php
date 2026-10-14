@@ -12,6 +12,7 @@
         .result-head { background: linear-gradient(135deg, #0d6efd, #438df4); color: #fff; }
         .score { width: 150px; height: 150px; border: 8px solid #ddebff; background: #fff; color: #0d6efd; }
     </style>
+    <link rel="stylesheet" href="assets/css/edutest.css">
 </head>
 <body>
 <div class="container py-5 d-flex justify-content-center">
