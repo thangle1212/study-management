@@ -25,7 +25,10 @@ class AuthController {
             if ($user && password_verify($password, $user['password'])) {
                 if ($user['status'] !== 'active') {
                     $error = 'Tài khoản của bạn đã bị khóa!';
+                }else if($user['role'] === 'admin') {
+                    $error = 'Vui lòng đăng nhập qua cổng quản trị Admin!';
                 } else {
+                    session_regenerate_id(true);
                     $_SESSION['user'] = [
                         'id' => $user['user_id'],
                         'full_name' => $user['full_name'],
