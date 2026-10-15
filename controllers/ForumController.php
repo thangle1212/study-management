@@ -32,9 +32,25 @@ class ForumController {
         
         $params = [];
         if ($search !== '') {
-            $query .= " AND (p.title LIKE ? OR p.content LIKE ?)";
-            $params[] = "%$search%";
-            $params[] = "%$search%";
+            if (strpos($search, '@') !== false) {
+                $parts = explode('@', $search);
+                $userSearch = trim(end($parts));
+                if ($userSearch !== '') {
+                    $query .= " AND u.full_name LIKE ?";
+                    $params[] = "%$userSearch%";
+                }
+            } elseif (strpos($search, '#') !== false) {
+                $parts = explode('#', $search);
+                $tagSearch = trim(end($parts));
+                if ($tagSearch !== '') {
+                    $query .= " AND p.hashtag LIKE ?";
+                    $params[] = "%$tagSearch%";
+                }
+            } else {
+                $query .= " AND (p.title LIKE ? OR p.content LIKE ?)";
+                $params[] = "%$search%";
+                $params[] = "%$search%";
+            }
         }
         if ($filterExam > 0) {
             $query .= " AND p.exam_id = ?";
@@ -85,7 +101,36 @@ class ForumController {
              ORDER BY c.created_at ASC"
         );
         $stmt->execute([$postId]);
-        $comments = $stmt->fetchAll();
+        $allComments = $stmt->fetchAll();
+
+        $commentUsers = [];
+        foreach ($allComments as $c) {
+            $commentUsers[$c['comment_id']] = $c['full_name'];
+        }
+
+        $commentMap = [];
+        foreach ($allComments as $c) {
+            $commentMap[$c['comment_id']] = $c;
+        }
+
+        $comments = [];
+        $repliesMap = [];
+        foreach ($allComments as $c) {
+            $targetName = $c['parent_id'] !== null ? ($commentUsers[$c['parent_id']] ?? '') : '';
+            $c['reply_target_name'] = $targetName;
+
+            if ($c['parent_id'] === null) {
+                $comments[] = $c;
+            } else {
+                $rootId = $c['parent_id'];
+                $curr = $c;
+                while ($curr['parent_id'] !== null && isset($commentMap[$curr['parent_id']])) {
+                    $curr = $commentMap[$curr['parent_id']];
+                    $rootId = $curr['comment_id'];
+                }
+                $repliesMap[$rootId][] = $c;
+            }
+        }
 
         require __DIR__ . '/../views/forum/detail.php';
     }
@@ -99,6 +144,7 @@ class ForumController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $title = trim($_POST['title'] ?? '');
             $content = trim($_POST['content'] ?? '');
+            $hashtag = trim($_POST['hashtag'] ?? '');
             $examId = $_POST['exam_id'] !== '' ? (int)$_POST['exam_id'] : null;
             $questionId = $_POST['question_id'] !== '' ? (int)$_POST['question_id'] : null;
             $userId = (int)$_SESSION['user']['id'];
@@ -107,10 +153,10 @@ class ForumController {
                 $error = 'Vui lòng nhập đầy đủ tiêu đề và nội dung bài viết.';
             } else {
                 $stmt = $this->pdo->prepare(
-                    "INSERT INTO forum_posts (user_id, exam_id, question_id, title, content) 
-                     VALUES (?, ?, ?, ?, ?)"
+                    "INSERT INTO forum_posts (user_id, exam_id, question_id, title, content, hashtag) 
+                     VALUES (?, ?, ?, ?, ?, ?)"
                 );
-                if ($stmt->execute([$userId, $examId, $questionId, $title, $content])) {
+                if ($stmt->execute([$userId, $examId, $questionId, $title, $content, $hashtag])) {
                     header('Location: index.php?action=forum');
                     exit;
                 } else {
@@ -156,6 +202,7 @@ class ForumController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $title = trim($_POST['title'] ?? '');
             $content = trim($_POST['content'] ?? '');
+            $hashtag = trim($_POST['hashtag'] ?? '');
             $examId = $_POST['exam_id'] !== '' ? (int)$_POST['exam_id'] : null;
             $questionId = $_POST['question_id'] !== '' ? (int)$_POST['question_id'] : null;
 
@@ -164,10 +211,10 @@ class ForumController {
             } else {
                 $stmt = $this->pdo->prepare(
                     "UPDATE forum_posts 
-                     SET title = ?, content = ?, exam_id = ?, question_id = ? 
+                     SET title = ?, content = ?, exam_id = ?, question_id = ?, hashtag = ? 
                      WHERE post_id = ?"
                 );
-                if ($stmt->execute([$title, $content, $examId, $questionId, $postId])) {
+                if ($stmt->execute([$title, $content, $examId, $questionId, $hashtag, $postId])) {
                     header("Location: index.php?action=forum_detail&post_id=$postId");
                     exit;
                 } else {
@@ -216,13 +263,23 @@ class ForumController {
             $postId = (int) ($_POST['post_id'] ?? 0);
             $content = trim($_POST['content'] ?? '');
             $userId = (int) $_SESSION['user']['id'];
+            $rawParentId = isset($_POST['parent_id']) && $_POST['parent_id'] !== '' ? (int)$_POST['parent_id'] : null;
+
+            $parentId = null;
+            if ($rawParentId > 0) {
+                $stmt = $this->pdo->prepare("SELECT comment_id FROM forum_comments WHERE comment_id = ? AND post_id = ? AND status = 'active'");
+                $stmt->execute([$rawParentId, $postId]);
+                if ($stmt->fetch()) {
+                    $parentId = $rawParentId;
+                }
+            }
 
             if ($content !== '' && $postId > 0) {
                 $stmt = $this->pdo->prepare(
-                    "INSERT INTO forum_comments (post_id, user_id, content) 
-                     VALUES (?, ?, ?)"
+                    "INSERT INTO forum_comments (post_id, user_id, parent_id, content) 
+                     VALUES (?, ?, ?, ?)"
                 );
-                $stmt->execute([$postId, $userId, $content]);
+                $stmt->execute([$postId, $userId, $parentId, $content]);
             }
             header("Location: index.php?action=forum_detail&post_id=$postId");
             exit;
