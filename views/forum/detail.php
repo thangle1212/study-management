@@ -39,7 +39,7 @@
     <!-- Bài viết -->
     <article class="card post-detail-card p-4 p-md-5 mb-4">
         <!-- Tác giả & metadata -->
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 pb-3 border-bottom">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
             <div class="d-flex align-items-center gap-3">
                 <?php 
                     $roleLabel = 'Học sinh';
@@ -77,11 +77,29 @@
         </div>
 
         <!-- Tiêu đề & Nội dung -->
-        <h1 class="h2 fw-bold text-dark mb-4"><?php echo htmlspecialchars($post['title']); ?></h1>
+        <h1 class="h2 fw-bold text-dark mb-3 pb-3 border-bottom"><?php echo htmlspecialchars($post['title']); ?></h1>
         
-        <div class="post-content text-dark fs-6 lh-lg mb-4" style="white-space: pre-line;">
+        
+
+        <div class="post-content text-dark fs-5 lh-lg mb-4" style="white-space: pre-line;">
             <?php echo htmlspecialchars($post['content']); ?>
         </div>
+
+        <!-- Hashtag (nếu có) -->
+        <?php if (!empty($post['hashtag'])): ?>
+            <div class="mb-3 d-flex flex-wrap gap-1">
+                <?php 
+                    $tags = explode(' ', $post['hashtag']);
+                    foreach ($tags as $tag) {
+                        $tag = trim($tag);
+                        if ($tag !== '') {
+                            $formattedTag = (strpos($tag, '#') === 0) ? $tag : '#' . $tag;
+                            echo '<span class="badge bg-light text-primary border border-light-subtle rounded-pill px-2 py-1 small">' . htmlspecialchars($formattedTag) . '</span>';
+                        }
+                    }
+                ?>
+            </div>
+        <?php endif; ?>
 
         <!-- Liên kết kèm theo -->
         <?php if ($post['exam_title'] || $post['question_content']): ?>
@@ -107,9 +125,11 @@
         <?php endif; ?>
     </article>
 
+    
+
     <!-- Phần bình luận -->
     <section class="mb-5">
-        <h3 class="h4 fw-bold text-dark mb-4"><i class="fa-regular fa-comment-dots me-2 text-primary"></i>Bình luận (<?php echo count($comments); ?>)</h3>
+        <h3 class="h4 fw-bold text-dark mb-4"><i class="fa-regular fa-comment-dots me-2 text-primary"></i>Bình luận (<?php echo count($allComments ?? $comments); ?>)</h3>
 
         <!-- Danh sách các bình luận -->
         <div class="d-flex flex-column gap-3 mb-4">
@@ -118,22 +138,24 @@
                     <p class="mb-0">Chưa có bình luận nào. Hãy chia sẻ suy nghĩ của bạn!</p>
                 </div>
             <?php else: ?>
-                <?php foreach ($comments as $comment): ?>
-                    <div class="card comment-card p-3 shadow-sm border-light">
+                <?php 
+                $currentUserId = (int)$_SESSION['user']['id'];
+                $currentUserRole = $_SESSION['user']['role'];
+                foreach ($comments as $comment):
+                    $commentRoleLabel = 'Học sinh';
+                    $commentRoleClass = 'role-student';
+                    if ($comment['role'] === 'teacher') {
+                        $commentRoleLabel = 'Giáo viên';
+                        $commentRoleClass = 'role-teacher';
+                    } elseif ($comment['role'] === 'admin') {
+                        $commentRoleLabel = 'Admin';
+                        $commentRoleClass = 'role-admin';
+                    }
+                    $commentAvatarUrl = !empty($comment['avatar']) && file_exists($comment['avatar']) ? $comment['avatar'] : 'https://api.dicebear.com/7.x/adventurer/svg?seed=' . urlencode($comment['full_name']);
+                ?>
+                    <div class="card comment-card p-3 shadow-sm border-light mb-3">
                         <div class="d-flex justify-content-between align-items-start">
                             <div class="d-flex align-items-center gap-2 mb-2">
-                                <?php 
-                                    $commentRoleLabel = 'Học sinh';
-                                    $commentRoleClass = 'role-student';
-                                    if ($comment['role'] === 'teacher') {
-                                        $commentRoleLabel = 'Giáo viên';
-                                        $commentRoleClass = 'role-teacher';
-                                    } elseif ($comment['role'] === 'admin') {
-                                        $commentRoleLabel = 'Admin';
-                                        $commentRoleClass = 'role-admin';
-                                    }
-                                    $commentAvatarUrl = !empty($comment['avatar']) && file_exists($comment['avatar']) ? $comment['avatar'] : 'https://api.dicebear.com/7.x/adventurer/svg?seed=' . urlencode($comment['full_name']);
-                                ?>
                                 <img src="<?php echo htmlspecialchars($commentAvatarUrl); ?>" class="comment-avatar-img" alt="Avatar">
                                 <div>
                                     <span class="fw-bold text-dark small"><?php echo htmlspecialchars($comment['full_name']); ?></span>
@@ -142,15 +164,124 @@
                                 </div>
                             </div>
 
-                            <!-- Nút xóa bình luận (cho chủ comment hoặc admin) -->
-                            <?php if ($comment['user_id'] === (int)$_SESSION['user']['id'] || $_SESSION['user']['role'] === 'admin'): ?>
+                            <!-- Nút xóa bình luận chính -->
+                            <?php if ($comment['user_id'] === $currentUserId || $currentUserRole === 'admin'): ?>
                                 <a href="index.php?action=forum_comment_delete&comment_id=<?php echo (int)$comment['comment_id']; ?>&post_id=<?php echo (int)$post['post_id']; ?>" class="btn btn-link text-danger p-0" onclick="return confirm('Bạn có chắc chắn muốn xóa bình luận này?')">
                                     <i class="fa-solid fa-trash-can small"></i>
                                 </a>
                             <?php endif; ?>
                         </div>
-                        <div class="comment-text text-dark ps-2 pt-1" style="white-space: pre-line; font-size: 0.95rem;">
+                        <div class="comment-text text-dark ps-2 pt-1 mb-2" style="white-space: pre-line; font-size: 0.95rem;">
                             <?php echo htmlspecialchars($comment['content']); ?>
+                        </div>
+
+                        <!-- Nút trả lời bình luận chính -->
+                        <div class="ps-2">
+                            <button class="btn btn-link btn-sm p-0 text-primary text-decoration-none small fw-semibold" type="button" onclick="toggleReplyForm(<?php echo (int)$comment['comment_id']; ?>)">
+                                <i class="fa-solid fa-reply me-1"></i> Trả lời
+                            </button>
+                        </div>
+
+                        <!-- Nút xem câu trả lời (TikTok style with pagination) -->
+                        <?php 
+                        $replies = $repliesMap[$comment['comment_id']] ?? [];
+                        $replyCount = count($replies);
+                        if ($replyCount > 0):
+                        ?>
+                            <div class="mt-2">
+                                <button class="btn btn-link btn-sm p-0 text-primary text-decoration-none small fw-semibold" type="button" onclick="toggleReplies(<?php echo (int)$comment['comment_id']; ?>, <?php echo $replyCount; ?>)">
+                                    <i class="fa-solid fa-comment-dots me-1"></i><span id="reply-toggle-text-<?php echo (int)$comment['comment_id']; ?>">Xem <?php echo $replyCount; ?> câu trả lời</span>
+                                </button>
+                            </div>
+
+                            <div id="replies-container-<?php echo (int)$comment['comment_id']; ?>" class="mt-2" style="display: none;">
+                                <div class="ms-3 mt-2 ps-3 border-start border-3 border-primary-subtle d-flex flex-column gap-2">
+                                    <?php foreach ($replies as $index => $reply): 
+                                        $replyRoleLabel = 'Học sinh';
+                                        $replyRoleClass = 'role-student';
+                                        if ($reply['role'] === 'teacher') {
+                                            $replyRoleLabel = 'Giáo viên';
+                                            $replyRoleClass = 'role-teacher';
+                                        } elseif ($reply['role'] === 'admin') {
+                                            $replyRoleLabel = 'Admin';
+                                            $replyRoleClass = 'role-admin';
+                                        }
+                                        $replyAvatarUrl = !empty($reply['avatar']) && file_exists($reply['avatar']) ? $reply['avatar'] : 'https://api.dicebear.com/7.x/adventurer/svg?seed=' . urlencode($reply['full_name']);
+                                        $isHidden = $index >= 5;
+                                    ?>
+                                        <div class="card p-2 bg-light border-0 shadow-none reply-item-<?php echo (int)$comment['comment_id']; ?>" style="<?php echo $isHidden ? 'display: none;' : ''; ?>">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div class="d-flex align-items-center gap-2 mb-1">
+                                                    <img src="<?php echo htmlspecialchars($replyAvatarUrl); ?>" class="comment-avatar-img" style="width: 30px; height: 30px;" alt="Avatar">
+                                                    <div>
+                                                        <span class="fw-bold text-dark small">
+                                                            <?php echo htmlspecialchars($reply['full_name']); ?>
+                                                            <?php if (!empty($reply['reply_target_name'])): ?>
+                                                                <span class="text-primary fw-bold mx-1">▷</span> <?php echo htmlspecialchars($reply['reply_target_name']); ?>
+                                                            <?php endif; ?>
+                                                        </span>
+                                                        <span class="role-badge <?php echo $replyRoleClass; ?> ms-1" style="font-size: 0.6rem;"><?php echo $replyRoleLabel; ?></span>
+                                                        <div class="text-muted" style="font-size: 0.7rem;"><?php echo date('H:i - d/m/Y', strtotime($reply['created_at'])); ?></div>
+                                                    </div>
+                                                </div>
+
+                                                <?php if ($reply['user_id'] === $currentUserId || $currentUserRole === 'admin'): ?>
+                                                    <a href="index.php?action=forum_comment_delete&comment_id=<?php echo (int)$reply['comment_id']; ?>&post_id=<?php echo (int)$post['post_id']; ?>" class="btn btn-link text-danger p-0" onclick="return confirm('Bạn có chắc chắn muốn xóa phản hồi này?')">
+                                                        <i class="fa-solid fa-trash-can small"></i>
+                                                    </a>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="comment-text text-dark ps-2 pt-1" style="white-space: pre-line; font-size: 0.9rem;">
+                                                <?php echo htmlspecialchars($reply['content']); ?>
+                                            </div>
+
+                                            <!-- Nút trả lời cho phản hồi này -->
+                                            <div class="ps-2 mt-1">
+                                                <button class="btn btn-link btn-sm p-0 text-primary text-decoration-none small fw-semibold" type="button" onclick="toggleReplyForm(<?php echo (int)$reply['comment_id']; ?>)">
+                                                    <i class="fa-solid fa-reply me-1"></i> Trả lời
+                                                </button>
+                                            </div>
+
+                                            <!-- Form trả lời ẩn/hiện cho phản hồi này -->
+                                            <div id="reply-form-<?php echo (int)$reply['comment_id']; ?>" class="mt-2 ps-2" style="display: none;">
+                                                <form method="post" action="index.php?action=forum_comment_create">
+                                                    <input type="hidden" name="post_id" value="<?php echo (int) $post['post_id']; ?>">
+                                                    <input type="hidden" name="parent_id" value="<?php echo (int) $reply['comment_id']; ?>">
+                                                    <div class="input-group">
+                                                        <input type="text" name="content" class="form-control form-control-sm rounded-start-3" placeholder="Viết phản hồi tới <?php echo htmlspecialchars($reply['full_name']); ?>..." required>
+                                                        <button class="btn btn-sm btn-primary rounded-end-3 px-3" type="submit"><i class="fa-solid fa-paper-plane me-1"></i>Gửi</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+
+                                <div class="ms-3 ps-3 mt-2 d-flex justify-content-between align-items-center">
+                                    <?php if ($replyCount > 5): ?>
+                                        <button class="btn btn-link btn-sm p-0 text-primary text-decoration-none small fw-semibold" type="button" id="load-more-btn-<?php echo (int)$comment['comment_id']; ?>" onclick="loadMoreReplies(<?php echo (int)$comment['comment_id']; ?>)">
+                                            Xem thêm phản hồi (<span id="load-more-count-<?php echo (int)$comment['comment_id']; ?>"><?php echo ($replyCount - 5); ?></span>)
+                                        </button>
+                                    <?php else: ?>
+                                        <div></div>
+                                    <?php endif; ?>
+                                    <button class="btn btn-link btn-sm p-0 text-muted text-decoration-none small fw-semibold" type="button" onclick="toggleReplies(<?php echo (int)$comment['comment_id']; ?>, <?php echo $replyCount; ?>)">
+                                        Ẩn ^
+                                    </button>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
+                        <!-- Form trả lời ẩn/hiện cho bình luận chính -->
+                        <div id="reply-form-<?php echo (int)$comment['comment_id']; ?>" class="mt-3 ps-2" style="display: none;">
+                            <form method="post" action="index.php?action=forum_comment_create">
+                                <input type="hidden" name="post_id" value="<?php echo (int) $post['post_id']; ?>">
+                                <input type="hidden" name="parent_id" value="<?php echo (int) $comment['comment_id']; ?>">
+                                <div class="input-group">
+                                    <input type="text" name="content" class="form-control form-control-sm rounded-start-3" placeholder="Viết phản hồi tới <?php echo htmlspecialchars($comment['full_name']); ?>..." required>
+                                    <button class="btn btn-sm btn-primary rounded-end-3 px-3" type="submit"><i class="fa-solid fa-paper-plane me-1"></i>Gửi</button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -172,5 +303,50 @@
         </div>
     </section>
 </div>
+<script>
+function toggleReplyForm(commentId) {
+    var formDiv = document.getElementById('reply-form-' + commentId);
+    if (formDiv.style.display === 'none' || formDiv.style.display === '') {
+        formDiv.style.display = 'block';
+        var input = formDiv.querySelector('input');
+        if (input) input.focus();
+    } else {
+        formDiv.style.display = 'none';
+    }
+}
+
+function toggleReplies(commentId, totalCount) {
+    var container = document.getElementById('replies-container-' + commentId);
+    var textSpan = document.getElementById('reply-toggle-text-' + commentId);
+    if (container.style.display === 'none' || container.style.display === '') {
+        container.style.display = 'block';
+    } else {
+        container.style.display = 'none';
+    }
+}
+
+function loadMoreReplies(commentId) {
+    var items = document.querySelectorAll('.reply-item-' + commentId);
+    var hiddenItems = Array.from(items).filter(function(item) {
+        return item.style.display === 'none';
+    });
+    
+    var toShow = hiddenItems.slice(0, 5);
+    toShow.forEach(function(item) {
+        item.style.display = 'block';
+    });
+
+    var remaining = hiddenItems.length - toShow.length;
+    var btn = document.getElementById('load-more-btn-' + commentId);
+    if (btn) {
+        if (remaining <= 0) {
+            btn.style.display = 'none';
+        } else {
+            var countSpan = document.getElementById('load-more-count-' + commentId);
+            if (countSpan) countSpan.innerText = remaining;
+        }
+    }
+}
+</script>
 </body>
 </html>

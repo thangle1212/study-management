@@ -12,64 +12,58 @@ $roleLabels = [
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f2f7fc">
     <title>Quản lý người dùng - EduTest</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <style>
-        :root { --brand: #0d6efd; --ink: #17233c; }
-        body { background: linear-gradient(135deg, #eaf4ff 0%, #f8fbff 48%, #fff 100%); color: var(--ink); min-height: 100vh; }
-        .topbar { background: rgba(255,255,255,.9); border-bottom: 1px solid #e5edf8; backdrop-filter: blur(12px); }
-        .brand { color: var(--brand); font-size: 1.35rem; }
-        .page-card { border: 1px solid #e5edf8; border-radius: 18px; box-shadow: 0 8px 24px rgba(31,74,125,.06); }
-        .user-avatar { width: 42px; height: 42px; display: inline-flex; flex: 0 0 42px; align-items: center; justify-content: center; border-radius: 13px; }
-        .table > :not(caption) > * > * { padding: .9rem .85rem; }
-        .table thead th { color: #64748b; font-size: .75rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
-        .table tbody tr:last-child > * { border-bottom: 0; }
-        .account-meta { color: #64748b; font-size: .8rem; }
-        .filter-control { min-width: 155px; }
-        @media (max-width: 575.98px) {
-            .table > :not(caption) > * > * { padding: .75rem .65rem; }
-            .page-heading { align-items: flex-start !important; }
-        }
-    </style>
+    <link rel="stylesheet" href="assets/css/admin.css">
 </head>
-<body>
-<nav class="navbar topbar sticky-top">
-    <div class="container py-2">
-        <a class="navbar-brand brand fw-bold" href="index.php?action=admin_dashboard">
-            <i class="fa-solid fa-graduation-cap me-2"></i>EduTest
+<body class="admin-app">
+<div class="admin-layout">
+    <aside class="admin-sidebar">
+        <a class="admin-brand" href="index.php?action=admin_dashboard">
+            <span class="admin-brand-mark" aria-hidden="true"><i class="fa-solid fa-graduation-cap"></i></span>
+            <span>EduTest</span>
         </a>
-        <div class="d-flex align-items-center gap-2 gap-md-3">
-            <a href="index.php?action=admin_dashboard" class="btn btn-sm btn-outline-primary">
-                <i class="fa-solid fa-gauge-high me-md-1"></i><span class="d-none d-md-inline">Tổng quan</span>
-            </a>
-            <span class="d-none d-md-inline text-muted small">
-                Xin chào, <strong><?= htmlspecialchars($_SESSION['user']['full_name'] ?? 'Admin', ENT_QUOTES, 'UTF-8') ?></strong>
-            </span>
-            <a href="index.php?action=logout" class="btn btn-sm btn-outline-danger">
-                <i class="fa-solid fa-right-from-bracket me-md-1"></i><span class="d-none d-md-inline">Đăng xuất</span>
-            </a>
-        </div>
-    </div>
-</nav>
-
-<main class="container py-4 py-md-5">
-    <div class="d-flex justify-content-between page-heading gap-3 mb-4">
-        <div>
-            <div class="small text-primary text-uppercase fw-semibold mb-2">
-                <i class="fa-solid fa-shield-halved me-1"></i> Quản trị hệ thống
+        <nav class="admin-nav" aria-label="Điều hướng quản trị">
+            <a class="admin-nav-link" href="index.php?action=admin_dashboard"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i><span>Tổng quan</span></a>
+            <a class="admin-nav-link active" href="index.php?action=admin_users" aria-current="page"><i class="fa-solid fa-users-gear" aria-hidden="true"></i><span>Tài khoản</span></a>
+            <a class="admin-nav-link" href="index.php?action=forum"><i class="fa-regular fa-comments" aria-hidden="true"></i><span>Diễn đàn</span></a>
+        </nav>
+        <div class="admin-sidebar-bottom">
+            <span class="admin-account-avatar" aria-hidden="true"><i class="fa-solid fa-user-shield"></i></span>
+            <div class="admin-account-copy">
+                <div class="admin-account-name"><?= htmlspecialchars($_SESSION['user']['full_name'] ?? 'Admin', ENT_QUOTES, 'UTF-8') ?></div>
+                <div class="admin-account-role">Quản trị viên</div>
             </div>
-            <h1 class="h2 fw-bold mb-1">Quản lý người dùng</h1>
-            <p class="text-muted mb-0">Quản lý vai trò và trạng thái tài khoản EduTest.</p>
+            <a class="admin-logout" href="index.php?action=logout" aria-label="Đăng xuất" title="Đăng xuất"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i></a>
         </div>
-        <a href="index.php?action=admin_dashboard" class="btn btn-outline-primary align-self-start rounded-3 text-nowrap">
-            <i class="fa-solid fa-arrow-left me-1"></i><span class="d-none d-sm-inline">Về tổng quan</span>
+    </aside>
+
+    <div class="admin-main">
+    <header class="admin-topbar">
+        <p class="admin-breadcrumb">EduTest <span aria-hidden="true">/</span> <strong>Tài khoản</strong></p>
+        <a href="index.php?action=forum" class="admin-topbar-link"><i class="fa-regular fa-comments me-1" aria-hidden="true"></i> Diễn đàn</a>
+    </header>
+
+    <main class="admin-content">
+    <div class="admin-page-heading">
+        <div>
+            <p class="admin-eyebrow">Quản trị hệ thống</p>
+            <h1>Quản lý tài khoản</h1>
+            <p>Tìm tài khoản, cập nhật quyền truy cập và trạng thái.</p>
+        </div>
+        <a href="index.php?action=admin_dashboard" class="btn-admin-outline">
+            <i class="fa-solid fa-chart-pie" aria-hidden="true"></i><span>Tổng quan</span>
         </a>
     </div>
 
     <?php if (isset($_GET['error'])): ?>
-        <div class="alert alert-danger border-0 rounded-3 shadow-sm" role="alert">
-            <i class="fa-solid fa-circle-exclamation me-2"></i>
+        <div class="alert alert-danger admin-alert" role="alert">
+            <i class="fa-solid fa-circle-exclamation me-2" aria-hidden="true"></i>
             <?php if ($_GET['error'] === 'self_action_forbidden'): ?>
                 Bạn không thể thay đổi trạng thái hoặc vai trò của chính tài khoản đang đăng nhập.
             <?php elseif ($_GET['error'] === 'email_exists'): ?>
@@ -84,17 +78,18 @@ $roleLabels = [
         </div>
     <?php endif; ?>
     <?php if (isset($_GET['success'])): ?>
-        <div class="alert alert-success border-0 rounded-3 shadow-sm" role="status">
-            <i class="fa-solid fa-circle-check me-2"></i>
+        <div class="alert alert-success admin-alert" role="status">
+            <i class="fa-solid fa-circle-check me-2" aria-hidden="true"></i>
             <?= $_GET['success'] === 'created' ? 'Tạo tài khoản thành công.' : 'Cập nhật tài khoản thành công.' ?>
         </div>
     <?php endif; ?>
 
-    <details class="card page-card mb-4">
-        <summary class="card-body p-3 p-md-4 fw-semibold text-primary">
-            <i class="fa-solid fa-user-plus me-2"></i>Tạo tài khoản mới
+    <details class="admin-panel admin-create-details">
+        <summary class="admin-create-summary">
+            <span class="admin-create-icon" aria-hidden="true"><i class="fa-solid fa-user-plus"></i></span>
+            <span>Tạo tài khoản mới</span>
         </summary>
-        <div class="card-body border-top p-3 p-md-4">
+        <div class="admin-create-form">
             <form action="index.php?action=admin_create_user" method="POST" class="row g-3">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                 <div class="col-md-6">
@@ -123,7 +118,7 @@ $roleLabels = [
                     <input id="new-school" name="school_name" type="text" class="form-control" maxlength="150">
                 </div>
                 <div class="col-12">
-                    <button type="submit" class="btn btn-primary rounded-3">
+                    <button type="submit" class="btn-admin-primary">
                         <i class="fa-solid fa-user-plus me-1"></i>Tạo tài khoản
                     </button>
                 </div>
@@ -131,40 +126,39 @@ $roleLabels = [
         </div>
     </details>
 
-    <section class="card page-card mb-4">
-        <div class="card-body p-3 p-md-4">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-                <div class="d-flex align-items-center gap-3">
-                    <span class="user-avatar bg-primary-subtle text-primary"><i class="fa-solid fa-users-gear"></i></span>
-                    <div>
-                        <h2 class="h5 fw-bold mb-1">Danh sách tài khoản</h2>
-                        <p class="text-muted small mb-0"><?= count($users) ?> người dùng<?= $selectedRole && isset($roleLabels[$selectedRole]) ? ' · ' . htmlspecialchars($roleLabels[$selectedRole], ENT_QUOTES, 'UTF-8') : '' ?></p>
-                    </div>
+    <section class="admin-panel admin-list-panel" aria-labelledby="accounts-heading">
+        <div class="admin-list-toolbar">
+            <div class="admin-list-title">
+                <span class="admin-create-icon" aria-hidden="true"><i class="fa-solid fa-users-gear"></i></span>
+                <div>
+                    <h2 id="accounts-heading">Danh sách tài khoản</h2>
+                    <p class="admin-list-count" id="users-count" aria-live="polite"><?= count($users) ?> tài khoản<?= $selectedRole && isset($roleLabels[$selectedRole]) ? ' · ' . htmlspecialchars($roleLabels[$selectedRole], ENT_QUOTES, 'UTF-8') : '' ?></p>
                 </div>
-                <div class="d-flex flex-column flex-sm-row gap-2">
-                    <label class="visually-hidden" for="user-search">Tìm theo tên hoặc email</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-white text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
-                        <input type="search" id="user-search" class="form-control" placeholder="Tìm tên hoặc email">
-                    </div>
-                    <form action="index.php" method="GET" class="d-flex">
-                        <input type="hidden" name="action" value="admin_users">
-                        <label class="visually-hidden" for="role-filter">Lọc theo vai trò</label>
-                        <select id="role-filter" name="role" class="form-select filter-control" onchange="this.form.submit()">
-                            <option value="">Tất cả vai trò</option>
-                            <?php foreach ($roleLabels as $role => $label): ?>
-                                <option value="<?= htmlspecialchars($role, ENT_QUOTES, 'UTF-8') ?>" <?= $selectedRole === $role ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </form>
+            </div>
+            <div class="admin-list-controls">
+                <label class="visually-hidden" for="user-search">Tìm theo tên hoặc email</label>
+                <div class="input-group admin-search">
+                    <span class="input-group-text bg-white text-muted"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></span>
+                    <input type="search" id="user-search" class="form-control" placeholder="Tìm tên hoặc email" autocomplete="off">
                 </div>
+                <form action="index.php" method="GET" class="m-0">
+                    <input type="hidden" name="action" value="admin_users">
+                    <label class="visually-hidden" for="role-filter">Lọc theo vai trò</label>
+                    <select id="role-filter" name="role" class="form-select admin-filter" onchange="this.form.submit()">
+                        <option value="">Tất cả vai trò</option>
+                        <?php foreach ($roleLabels as $role => $label): ?>
+                            <option value="<?= htmlspecialchars($role, ENT_QUOTES, 'UTF-8') ?>" <?= $selectedRole === $role ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </form>
             </div>
         </div>
 
-        <div class="table-responsive">
-            <table class="table align-middle mb-0">
+        <div class="admin-table-wrap" role="region" aria-label="Danh sách tài khoản, cuộn ngang để xem đầy đủ cột" tabindex="0">
+            <table class="table admin-table align-middle">
+                <caption class="visually-hidden">Tài khoản EduTest, vai trò, trạng thái và thao tác quản lý</caption>
                 <thead class="bg-light">
                     <tr>
                         <th scope="col" class="ps-3 ps-md-4">Người dùng</th>
@@ -187,7 +181,7 @@ $roleLabels = [
                         <tr class="user-row" data-search="<?= htmlspecialchars(($user['full_name'] ?? '') . ' ' . ($user['email'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                             <td class="ps-3 ps-md-4">
                                 <div class="d-flex align-items-center gap-3">
-                                    <span class="user-avatar bg-primary-subtle text-primary"><i class="fa-solid fa-user"></i></span>
+                                    <span class="account-avatar" aria-hidden="true"><i class="fa-solid fa-user"></i></span>
                                     <div>
                                         <div class="fw-semibold"><?= $userName ?></div>
                                         <div class="account-meta"><?= $userEmail ?></div>
@@ -211,21 +205,21 @@ $roleLabels = [
                             </td>
                             <td>
                                 <?php if ($userStatus === 'active'): ?>
-                                    <span class="badge bg-success-subtle text-success rounded-pill px-3 py-2"><i class="fa-solid fa-circle-check me-1"></i>Hoạt động</span>
+                                    <span class="admin-status active"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>Hoạt động</span>
                                 <?php else: ?>
-                                    <span class="badge bg-danger-subtle text-danger rounded-pill px-3 py-2"><i class="fa-solid fa-lock me-1"></i>Đã khóa</span>
+                                    <span class="admin-status locked"><i class="fa-solid fa-lock" aria-hidden="true"></i>Đã khóa</span>
                                 <?php endif; ?>
                             </td>
                             <td class="text-nowrap text-muted small">
                                 <?= !empty($user['created_at']) ? htmlspecialchars(date('d/m/Y', strtotime($user['created_at'])), ENT_QUOTES, 'UTF-8') : '—' ?>
                             </td>
-                            <td class="text-end pe-3 pe-md-4">
+                            <td class="text-end pe-3 pe-md-4 table-actions">
                                 <div class="d-flex flex-column align-items-end gap-2">
-                                    <details class="text-start">
-                                        <summary class="btn btn-sm btn-outline-primary text-nowrap">
+                                    <details class="admin-edit-details text-start">
+                                        <summary class="btn btn-sm btn-admin-outline text-nowrap">
                                             <i class="fa-solid fa-pen-to-square me-1"></i>Sửa email / mật khẩu
                                         </summary>
-                                        <form action="index.php?action=admin_update_user" method="POST" class="mt-2 p-3 border rounded-3 bg-white" style="min-width: 250px">
+                                        <form action="index.php?action=admin_update_user" method="POST" class="admin-edit-form mt-2">
                                             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                                             <input type="hidden" name="user_id" value="<?= $userId ?>">
                                             <input type="hidden" name="action_type" value="profile">
@@ -238,7 +232,7 @@ $roleLabels = [
                                                 <input id="password-user-<?= $userId ?>" name="new_password" type="password" class="form-control form-control-sm" minlength="6" autocomplete="new-password" placeholder="Để trống nếu không đổi">
                                                 <div class="form-text">Mật khẩu cũ không thể xem; để trống để giữ nguyên.</div>
                                             </div>
-                                            <button type="submit" class="btn btn-sm btn-primary">Lưu thay đổi</button>
+                                            <button type="submit" class="btn-admin-primary">Lưu thay đổi</button>
                                         </form>
                                     </details>
                                     <?php if (!$isCurrentUser): ?>
@@ -266,8 +260,8 @@ $roleLabels = [
                         </tr>
                     <?php endforeach; ?>
                     <tr id="no-users-row" <?= $users ? 'class="d-none"' : '' ?>>
-                        <td colspan="5" class="text-center py-5">
-                            <span class="user-avatar bg-primary-subtle text-primary mx-auto mb-3"><i class="fa-regular fa-folder-open"></i></span>
+                        <td colspan="5" class="admin-empty-state">
+                            <span class="account-avatar"><i class="fa-regular fa-folder-open" aria-hidden="true"></i></span>
                             <p class="fw-semibold mb-1"><?= $users ? 'Không tìm thấy người dùng phù hợp.' : 'Chưa có tài khoản nào.' ?></p>
                             <p class="text-muted small mb-0"><?= $users ? 'Thử từ khóa khác hoặc đổi bộ lọc vai trò.' : 'Tài khoản sẽ xuất hiện ở đây sau khi được tạo.' ?></p>
                         </td>
@@ -277,11 +271,15 @@ $roleLabels = [
         </div>
     </section>
 </main>
+    </div>
+</div>
 
 <script>
     const searchInput = document.getElementById('user-search');
     const userRows = Array.from(document.querySelectorAll('.user-row'));
     const noUsersRow = document.getElementById('no-users-row');
+    const usersCount = document.getElementById('users-count');
+    const totalUsers = userRows.length;
 
     searchInput.addEventListener('input', () => {
         const query = searchInput.value.trim().toLocaleLowerCase('vi');
@@ -294,6 +292,7 @@ $roleLabels = [
         });
 
         noUsersRow.classList.toggle('d-none', visibleCount > 0);
+        usersCount.textContent = `${visibleCount} / ${totalUsers} tài khoản`;
     });
 </script>
 </body>
