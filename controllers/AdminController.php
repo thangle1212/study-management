@@ -190,9 +190,9 @@ class AdminController extends BaseController {
                     $error = 'Tài khoản quản trị của bạn đã bị khóa!';
                 } elseif ($user['role'] !== 'admin') {
                     // CHẶN NGAY: Học sinh hoặc giáo viên không được đăng nhập qua cổng này
-                    $error = 'Vui lòng đăng nhập qua cổng quản trị Admin!';
+                    $error = 'Tài khoản này không có quyền truy cập hệ thống quản trị!';
                 } else {
-                    session_regenerate_id(true);
+                    session_regenerate_id(true); // Tạo session ID hoàn toàn mới, hủy ID cũ
                     $_SESSION['user'] = [
                         'id' => $user['user_id'],
                         'full_name' => $user['full_name'],

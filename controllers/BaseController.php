@@ -67,6 +67,9 @@ class BaseController {
             die('<h3>403 Forbidden</h3><p>Bạn không có quyền truy cập trang quản trị hệ thống!</p>');
         }
 
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
     }
 
     // 3. Cho phép Giáo viên hoặc Admin truy cập
