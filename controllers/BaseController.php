@@ -51,14 +51,14 @@ class BaseController {
             exit;
         }
         // Kiểm tra trạng thái active từ DB
-        $stmt = $this->pdo->prepare("SELECT status FROM users WHERE user_id = ?");
+        $stmt = $this->pdo->prepare("SELECT role,status FROM users WHERE user_id = ?");
         $stmt->execute([$_SESSION['user']['id']]);
-        $userStatus = $stmt->fetchColumn();
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$userStatus || $userStatus !== 'active') {
+        if (!$user || $user['status'] !== 'active' || $user['role'] !== 'admin') {
             unset($_SESSION['user']);
             session_destroy();
-            header('Location: index.php?action=admin_login&error=account_locked');
+            header('Location: index.php?action=admin_login&error=unauthorized');
             exit;
         }
 
@@ -66,6 +66,7 @@ class BaseController {
             http_response_code(403);
             die('<h3>403 Forbidden</h3><p>Bạn không có quyền truy cập trang quản trị hệ thống!</p>');
         }
+
     }
 
     // 3. Cho phép Giáo viên hoặc Admin truy cập

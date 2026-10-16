@@ -25,6 +25,8 @@ class AuthController {
             if ($user && password_verify($password, $user['password'])) {
                 if ($user['status'] !== 'active') {
                     $error = 'Tài khoản của bạn đã bị khóa!';
+                }elseif($user['role'] === 'admin') {
+                    $error = 'Vui lòng sử dụng trang đăng nhập quản trị để truy cập!';
                 } else {
                     $_SESSION['user'] = [
                         'id' => $user['user_id'],
@@ -35,7 +37,8 @@ class AuthController {
                     ];
                     header('Location: index.php?action=dashboard');
                     exit;
-                }
+
+                } 
             } else {
                 $error = 'Email hoặc mật khẩu không chính xác!';
             }
