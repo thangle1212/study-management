@@ -7,6 +7,10 @@ require_once __DIR__ . '/config/env.php';
 require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/controllers/AuthController.php';
 require_once __DIR__ . '/controllers/ExamController.php';
+require_once __DIR__ . '/controllers/AutomaticGradingController.php';
+require_once __DIR__ . '/controllers/StudentStatisticsController.php';
+require_once __DIR__ . '/controllers/TeacherExamReportController.php';
+require_once __DIR__ . '/controllers/ExamHistoryController.php';
 require_once __DIR__ . '/controllers/QuestionBankController.php';
 require_once __DIR__ . '/controllers/ForumController.php';
 require_once __DIR__ . '/controllers/AdminController.php';
@@ -14,6 +18,10 @@ require_once __DIR__ . '/controllers/AdminController.php';
 $action = $_GET['action'] ?? 'home';
 $authController = new AuthController($pdo);
 $examController = new ExamController($pdo);
+$automaticGradingController = new AutomaticGradingController($pdo);
+$studentStatisticsController = new StudentStatisticsController($pdo);
+$teacherExamReportController = new TeacherExamReportController($pdo);
+$examHistoryController = new ExamHistoryController($pdo);
 $questionBankController = new QuestionBankController($pdo);
 $forumController = new ForumController($pdo);
 $adminController = new AdminController($pdo);
@@ -133,47 +141,47 @@ switch ($action) {
         break;
 
     case 'autosave_answers':
-        $examController->autosave();
+        $automaticGradingController->autosave();
         break;
 
     case 'update_exam_settings':
-        $examController->updateSettings();
+        $teacherExamReportController->updateSettings();
         break;
 
     case 'submit_exam':
-        $examController->submit();
+        $automaticGradingController->submit();
         break;
 
     case 'log_violation':
-        $examController->logViolation();
+        $automaticGradingController->logViolation();
         break;
 
     case 'exam_result':
-        $examController->result();
+        $examHistoryController->resultPage();
         break;
 
     case 'exam_statistics':
-        $examController->statistics();
+        $teacherExamReportController->index();
         break;
 
     case 'exam_monitoring':
-        $examController->monitoring();
+        $teacherExamReportController->monitor();
         break;
 
     case 'exam_monitoring_data':
-        $examController->monitoringData();
+        $teacherExamReportController->monitorData();
         break;
 
     case 'review_attempt':
-        $examController->reviewAttempt();
+        $teacherExamReportController->reviewAttempt();
         break;
 
     case 'attempt_detail':
-        $examController->attemptDetail();
+        $examHistoryController->detail();
         break;
 
     case 'student_statistics':
-        $examController->studentStatistics();
+        $studentStatisticsController->index();
         break;
 
     case 'forum':
