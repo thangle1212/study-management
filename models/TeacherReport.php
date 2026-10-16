@@ -20,7 +20,7 @@ final class TeacherReport
         return $stmt->fetch();
     }
 
-    public function getStatistics($examId, $teacherId, $distributionMode)
+    public function getStatistics($examId, $teacherId, $distributionMode, $page = 1, $perPage = 10)
     {
         $exam = $this->findExam($examId, $teacherId);
         if (!$exam) {
@@ -53,6 +53,10 @@ final class TeacherReport
         $scores = array_values(array_filter($scoreRows, function ($score) {
             return $score['status'] === 'completed';
         }));
+        $totalScoreRows = count($scoreRows);
+        $totalPages = max(1, (int) ceil($totalScoreRows / $perPage));
+        $page = min(max(1, (int) $page), $totalPages);
+        $scoreRows = array_slice($scoreRows, ($page - 1) * $perPage, $perPage);
 
         $questionCountStmt = $this->pdo->prepare(
             "SELECT COUNT(DISTINCT question_id) FROM exam_questions WHERE exam_id = ?"
@@ -159,6 +163,10 @@ final class TeacherReport
         return [
             'exam' => $exam,
             'scoreRows' => $scoreRows,
+            'currentPage' => $page,
+            'perPage' => $perPage,
+            'totalScoreRows' => $totalScoreRows,
+            'totalPages' => $totalPages,
             'scores' => $scores,
             'questionCount' => $questionCount,
             'participantCount' => $participantCount,

@@ -25,10 +25,16 @@ final class TeacherExamReportController extends BaseController
         $distributionMode = is_string($_GET['distribution_mode'] ?? null)
             ? $_GET['distribution_mode']
             : 'highest';
+        $page = filter_var($_GET['page'] ?? 1, FILTER_VALIDATE_INT);
+        $perPage = filter_var($_GET['per_page'] ?? 10, FILTER_VALIDATE_INT);
+        $page = $page && $page > 0 ? min($page, 1000000) : 1;
+        $perPage = $perPage && $perPage > 0 ? min($perPage, 50) : 10;
         $data = $this->report->getStatistics(
             $examId,
             (int) $_SESSION['user']['id'],
-            $distributionMode
+            $distributionMode,
+            $page,
+            $perPage
         );
         if ($data === null) {
             http_response_code(403);
