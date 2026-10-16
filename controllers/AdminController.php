@@ -167,4 +167,46 @@ class AdminController extends BaseController {
 
         require __DIR__ . '/../views/admin/dashboard.php';
     }
+    // Hiển thị form đăng nhập riêng cho Admin
+    public function login() {
+        if (isset($_SESSION['user']) && $_SESSION['user']['role'] === 'admin') {
+            header('Location: index.php?action=dashboard');
+            exit;
+        }
+        $error = '';
+        require __DIR__ . '/../views/admin/login.php';
+    }
+
+    // Xử lý xác thực đăng nhập Admin (Bắt buộc kiểm tra role === 'admin')
+    public function handleLogin() {
+        $error = '';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $email = trim($_POST['email'] ?? '');
+            $password = $_POST['password'] ?? '';
+
+            $user = $this->userModel->findByEmail($email);
+            if ($user && password_verify($password, $user['password'])) {
+                if ($user['status'] !== 'active') {
+                    $error = 'Tài khoản quản trị của bạn đã bị khóa!';
+                } elseif ($user['role'] !== 'admin') {
+                    // CHẶN NGAY: Học sinh hoặc giáo viên không được đăng nhập qua cổng này
+                    $error = 'Vui lòng đăng nhập qua cổng quản trị Admin!';
+                } else {
+                    session_regenerate_id(true);
+                    $_SESSION['user'] = [
+                        'id' => $user['user_id'],
+                        'full_name' => $user['full_name'],
+                        'email' => $user['email'],
+                        'role' => $user['role'],
+                        'avatar' => $user['avatar'] ?? 'assets/images/default-avatar.png'
+                    ];
+                    header('Location: index.php?action=dashboard');
+                    exit;
+                }
+            } else {
+                $error = 'Email hoặc mật khẩu quản trị không chính xác!';
+            }
+        }
+        require __DIR__ . '/../views/admin/login.php';
+    }
 }
