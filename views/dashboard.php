@@ -41,6 +41,9 @@ $visibleExams = $userRole === 'student' ? $publishedExams : $teacherExams;
             <a class="admin-nav-link active" href="index.php?action=dashboard" aria-current="page">
                 <i class="fa-solid fa-house" aria-hidden="true"></i><span>Tổng quan</span>
             </a>
+            <a class="admin-nav-link" href="index.php?action=profile">
+                <i class="fa-regular fa-id-card" aria-hidden="true"></i><span>Hồ sơ của tôi</span>
+            </a>
             <?php if ($userRole === 'student'): ?>
                 <a class="admin-nav-link" href="index.php?action=student_statistics">
                     <i class="fa-solid fa-chart-line" aria-hidden="true"></i><span>Thống kê của tôi</span>
