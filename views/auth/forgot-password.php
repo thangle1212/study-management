@@ -2,50 +2,63 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f2f7fc">
     <title>Quên mật khẩu - EduTest</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <style>
-        body { background: linear-gradient(135deg, #e3f2fd 0%, #f8f9fa 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-        .auth-card { border-radius: 20px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08); background-color: #ffffff; width: 100%; max-width: 450px; }
-    </style>
-    <link rel="stylesheet" href="assets/css/edutest.css">
+    <link rel="stylesheet" href="assets/css/admin.css">
 </head>
-<body>
-<div class="auth-card p-4">
-    <div class="text-center mb-4">
-        <a href="index.php?action=home" class="text-decoration-none text-primary fw-bold fs-3">
-            <i class="fa-solid fa-graduation-cap me-2"></i>EduTest
+<body class="admin-login-page">
+<main class="admin-login-shell" aria-label="Khôi phục mật khẩu EduTest">
+    <section class="admin-login-brand" aria-labelledby="auth-brand-heading">
+        <a href="index.php?action=home" class="admin-brand">
+            <span class="admin-brand-mark" aria-hidden="true"><i class="fa-solid fa-graduation-cap"></i></span>
+            <span>EduTest</span>
         </a>
-        <h5 class="fw-bold mt-3 mb-1">Đặt lại mật khẩu</h5>
-        <p class="small text-muted">Nhập email đăng ký của bạn để nhận liên kết khôi phục.</p>
-    </div>
-
-    <?php if (!empty($error)): ?>
-        <div class="alert alert-danger py-2 small"><?php echo $error; ?></div>
-    <?php endif; ?>
-
-    <?php if (!empty($message)): ?>
-        <div class="alert alert-info py-2 small"><?php echo $message; ?></div>
-    <?php endif; ?>
-
-    <form action="index.php?action=forgot_password" method="POST">
-        <div class="mb-3">
-            <label class="form-label fw-semibold">Email đăng ký</label>
-            <input type="email" name="email" class="form-control" placeholder="name@example.com" value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>" required>
+        <div class="admin-login-copy">
+            <p class="admin-eyebrow">Hỗ trợ tài khoản</p>
+            <h1 id="auth-brand-heading">Lấy lại quyền truy cập an toàn.</h1>
+            <p>Chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu đến email đăng ký của bạn.</p>
         </div>
+        <div class="admin-login-stamp">EduTest · Học tập trực tuyến</div>
+    </section>
 
-        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold rounded-3 mb-3">
-            Gửi liên kết khôi phục <i class="fa-solid fa-paper-plane ms-1"></i>
-        </button>
-    </form>
+    <section class="admin-login-content" aria-labelledby="forgot-heading">
+        <div class="admin-login-form auth-form">
+            <h2 id="forgot-heading">Quên mật khẩu?</h2>
+            <p class="admin-login-intro">Nhập email đã dùng để đăng ký tài khoản.</p>
 
-    <div class="text-center pt-2 border-top">
-        <a href="index.php?action=login" class="small text-decoration-none text-secondary">
-            <i class="fa-solid fa-arrow-left me-1"></i> Quay lại Đăng nhập
-        </a>
-    </div>
-</div>
+            <?php if (!empty($error)): ?>
+                <div class="alert alert-danger py-2" role="alert" tabindex="-1">
+                    <?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?>
+                </div>
+            <?php endif; ?>
+            <?php if (!empty($message)): ?>
+                <div class="alert alert-info py-2" role="status">
+                    <?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?>
+                </div>
+            <?php endif; ?>
+
+            <form action="index.php?action=forgot_password" method="POST">
+                <div class="mb-4">
+                    <label for="forgotEmail" class="form-label">Email đăng ký</label>
+                    <div class="input-group">
+                        <span class="input-group-text" aria-hidden="true"><i class="fa-regular fa-envelope"></i></span>
+                        <input type="email" id="forgotEmail" name="email" class="form-control" autocomplete="email" inputmode="email" placeholder="name@example.com" value="<?= htmlspecialchars($_POST['email'] ?? '', ENT_QUOTES, 'UTF-8') ?>" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-admin-primary auth-submit">
+                    <i class="fa-regular fa-paper-plane" aria-hidden="true"></i>
+                    Gửi liên kết khôi phục
+                </button>
+            </form>
+            <a href="index.php?action=login" class="admin-login-back"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Quay lại đăng nhập</a>
+        </div>
+    </section>
+</main>
 </body>
 </html>

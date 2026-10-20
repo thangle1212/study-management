@@ -14,6 +14,7 @@ require_once __DIR__ . '/controllers/ExamHistoryController.php';
 require_once __DIR__ . '/controllers/QuestionBankController.php';
 require_once __DIR__ . '/controllers/ForumController.php';
 require_once __DIR__ . '/controllers/AdminController.php';
+require_once __DIR__ . '/controllers/ProfileController.php';
 
 $action = $_GET['action'] ?? 'home';
 $authController = new AuthController($pdo);
@@ -25,6 +26,7 @@ $examHistoryController = new ExamHistoryController($pdo);
 $questionBankController = new QuestionBankController($pdo);
 $forumController = new ForumController($pdo);
 $adminController = new AdminController($pdo);
+$profileController = new ProfileController($pdo);
 
 switch ($action) {
     case 'home':
@@ -62,6 +64,11 @@ switch ($action) {
             require_once __DIR__ . '/views/dashboard.php';
         }
         break;
+
+    case 'profile':
+        $profileController->index();
+        break;
+
     // --- ROUTE ĐĂNG NHẬP ADMIN ---
     case 'admin':
     case 'admin_login':
