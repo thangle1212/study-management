@@ -14,6 +14,7 @@ require_once __DIR__ . '/controllers/ExamHistoryController.php';
 require_once __DIR__ . '/controllers/QuestionBankController.php';
 require_once __DIR__ . '/controllers/ForumController.php';
 require_once __DIR__ . '/controllers/AdminController.php';
+require_once __DIR__ . '/controllers/AdminClassController.php';
 require_once __DIR__ . '/controllers/ProfileController.php';
 
 $action = $_GET['action'] ?? 'home';
@@ -26,6 +27,7 @@ $examHistoryController = new ExamHistoryController($pdo);
 $questionBankController = new QuestionBankController($pdo);
 $forumController = new ForumController($pdo);
 $adminController = new AdminController($pdo);
+$adminClassController = new AdminClassController($pdo);
 $profileController = new ProfileController($pdo);
 
 switch ($action) {
@@ -85,6 +87,10 @@ switch ($action) {
 
     case 'admin_users':
         $adminController->manageUsers();
+        break;
+
+    case 'admin_classes':
+        $adminClassController->index();
         break;
 
     case 'admin_update_user':
