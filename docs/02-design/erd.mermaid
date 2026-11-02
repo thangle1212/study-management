@@ -1,0 +1,171 @@
+%% EduTest - ERD khớp db.sql thực tế (15 bảng)
+erDiagram
+    users ||--o{ classes : "giáo viên phụ trách"
+    classes ||--o{ class_students : "có học sinh"
+    users ||--o{ class_students : "tham gia lớp"
+    users ||--o{ question_banks : "sở hữu"
+    question_banks ||--o{ questions : "chứa"
+    questions ||--o{ answers : "có đáp án"
+    users ||--o{ exams : "tạo đề"
+    classes |o--o{ exams : "giao cho lớp"
+    exams ||--o{ exam_questions : "gồm"
+    questions ||--o{ exam_questions : "được dùng"
+    exams ||--o{ exam_attempts : "có lượt thi"
+    users ||--o{ exam_attempts : "học sinh làm bài"
+    users |o--o{ exam_attempts : "người rà soát"
+    exam_attempts ||--o{ attempt_answers : "câu trả lời"
+    questions ||--o{ attempt_answers : "thuộc câu hỏi"
+    answers |o--o{ attempt_answers : "đáp án chọn"
+    exam_attempts ||--o{ attempt_correct_answers : "đáp án đúng đóng băng"
+    questions ||--o{ attempt_correct_answers : "thuộc câu hỏi"
+    exam_attempts ||--o{ violation_logs : "ghi vi phạm"
+    users ||--o{ forum_posts : "đăng bài"
+    exams |o--o{ forum_posts : "liên quan đề"
+    questions |o--o{ forum_posts : "liên quan câu hỏi"
+    forum_posts ||--o{ forum_comments : "có bình luận"
+    users ||--o{ forum_comments : "bình luận"
+    forum_comments |o--o{ forum_comments : "trả lời"
+    classes ||--o{ lessons : "có bài học"
+
+    users {
+        int user_id PK
+        varchar full_name
+        varchar email UK
+        varchar password "hash bcrypt"
+        varchar phone
+        varchar role "admin, teacher, student"
+        varchar school_name
+        varchar avatar
+        varchar status "active, locked"
+        datetime created_at
+        varchar reset_token
+        datetime reset_token_expires
+    }
+    classes {
+        int class_id PK
+        varchar class_name
+        varchar class_code UK
+        int teacher_id FK
+        datetime created_at
+    }
+    class_students {
+        int id PK
+        int class_id FK
+        int student_id FK
+        datetime joined_at
+    }
+    question_banks {
+        int bank_id PK
+        int teacher_id FK
+        varchar bank_name
+        varchar subject
+        datetime created_at
+    }
+    questions {
+        int question_id PK
+        int bank_id FK
+        text content
+        varchar image_url
+        varchar question_type "single_choice, multiple_choice"
+        varchar difficulty_level
+        datetime created_at
+    }
+    answers {
+        int answer_id PK
+        int question_id FK
+        text content
+        tinyint is_correct
+        int order_index
+    }
+    exams {
+        int exam_id PK
+        int teacher_id FK
+        int class_id FK
+        varchar title
+        int duration_minutes
+        tinyint anti_cheat_enabled
+        int violation_limit
+        varchar violation_action
+        tinyint shuffle_questions
+        tinyint shuffle_answers
+        datetime start_time
+        datetime end_time
+        varchar status "draft, published"
+        datetime created_at
+    }
+    exam_questions {
+        int id PK
+        int exam_id FK
+        int question_id FK
+        decimal score_weight
+        int order_index
+    }
+    exam_attempts {
+        int attempt_id PK
+        int exam_id FK
+        int student_id FK
+        datetime start_time
+        datetime end_time
+        varchar status "in_progress, completed"
+        decimal total_score
+        int duration_minutes_snapshot
+        tinyint anti_cheat_enabled_snapshot
+        int violation_limit_snapshot
+        varchar violation_action_snapshot
+        tinyint shuffle_questions_snapshot
+        tinyint shuffle_answers_snapshot
+        char shuffle_seed
+        varchar submit_reason "manual, timeout, violation"
+        varchar review_status
+        varchar review_note
+        int reviewed_by FK
+        datetime reviewed_at
+    }
+    attempt_answers {
+        int id PK
+        int attempt_id FK
+        int question_id FK
+        int answer_id FK
+        text answer_text
+        tinyint is_correct
+    }
+    attempt_correct_answers {
+        int attempt_id PK, FK
+        int question_id PK, FK
+        int answer_id PK
+    }
+    violation_logs {
+        int violation_id PK
+        int attempt_id FK
+        varchar violation_type
+        varchar details
+        datetime occurred_at
+    }
+    forum_posts {
+        int post_id PK
+        int user_id FK
+        int exam_id FK
+        int question_id FK
+        varchar title
+        text content
+        varchar hashtag
+        varchar status
+        datetime created_at
+    }
+    forum_comments {
+        int comment_id PK
+        int post_id FK
+        int user_id FK
+        int parent_id FK
+        text content
+        varchar status
+        datetime created_at
+    }
+    lessons {
+        int lesson_id PK
+        int class_id FK
+        varchar title
+        text content
+        varchar file_url
+        datetime created_at
+    }
