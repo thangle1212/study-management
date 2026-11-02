@@ -31,6 +31,7 @@ $roleLabels = [
         <nav class="admin-nav" aria-label="Điều hướng quản trị">
             <a class="admin-nav-link" href="index.php?action=admin_dashboard"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i><span>Tổng quan</span></a>
             <a class="admin-nav-link active" href="index.php?action=admin_users" aria-current="page"><i class="fa-solid fa-users-gear" aria-hidden="true"></i><span>Tài khoản</span></a>
+            <a class="admin-nav-link" href="index.php?action=admin_classes"><i class="fa-solid fa-school" aria-hidden="true"></i><span>Lớp học</span></a>
             <a class="admin-nav-link" href="index.php?action=forum"><i class="fa-regular fa-comments" aria-hidden="true"></i><span>Diễn đàn</span></a>
         </nav>
         <div class="admin-sidebar-bottom">

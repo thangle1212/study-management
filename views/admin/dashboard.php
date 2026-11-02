@@ -37,6 +37,7 @@ $roleBreakdown = [
         <nav class="admin-nav" aria-label="Điều hướng quản trị">
             <a class="admin-nav-link active" href="index.php?action=admin_dashboard" aria-current="page"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i><span>Tổng quan</span></a>
             <a class="admin-nav-link" href="index.php?action=admin_users"><i class="fa-solid fa-users-gear" aria-hidden="true"></i><span>Tài khoản</span></a>
+            <a class="admin-nav-link" href="index.php?action=admin_classes"><i class="fa-solid fa-school" aria-hidden="true"></i><span>Lớp học</span></a>
             <a class="admin-nav-link" href="index.php?action=forum"><i class="fa-regular fa-comments" aria-hidden="true"></i><span>Diễn đàn</span></a>
         </nav>
         <div class="admin-sidebar-bottom">
@@ -108,6 +109,11 @@ $roleBreakdown = [
                         </div>
                     </div>
                     <div class="admin-panel-body admin-shortcuts">
+                        <a href="index.php?action=admin_classes" class="admin-shortcut">
+                            <span class="admin-shortcut-icon" aria-hidden="true"><i class="fa-solid fa-school"></i></span>
+                            <span class="admin-shortcut-copy"><span class="admin-shortcut-title d-block">Lớp học</span><span class="admin-shortcut-note d-block">Tạo lớp, phân công giáo viên và học sinh</span></span>
+                            <i class="fa-solid fa-arrow-right text-muted" aria-hidden="true"></i>
+                        </a>
                         <a href="index.php?action=admin_users" class="admin-shortcut">
                             <span class="admin-shortcut-icon" aria-hidden="true"><i class="fa-solid fa-user-gear"></i></span>
                             <span class="admin-shortcut-copy"><span class="admin-shortcut-title d-block">Tài khoản</span><span class="admin-shortcut-note d-block">Tạo, tìm và cập nhật người dùng</span></span>
