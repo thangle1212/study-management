@@ -2,11 +2,13 @@
 class Exam {
     private $pdo;
 
+    /** Khởi tạo model quản lý đề thi bằng kết nối cơ sở dữ liệu. */
     public function __construct($pdo) {
         $this->pdo = $pdo;
     }
 
     // Lưu đề thi, câu hỏi, đáp án và thứ tự câu; rollback toàn bộ nếu bất kỳ bước nào lỗi.
+    /** Tạo đề, câu hỏi, đáp án và liên kết câu hỏi vào đề thi. */
     public function createExamAndQuestions($examData, $questions) {
         $this->pdo->beginTransaction();
         try {
@@ -73,6 +75,7 @@ class Exam {
         }
     }
 
+    /** Lấy một đề đang công khai để phục vụ luồng làm bài. */
     public function findPublishedExam($examId) {
         $stmt = $this->pdo->prepare(
             "SELECT * FROM exams
@@ -84,6 +87,7 @@ class Exam {
         return $stmt->fetch();
     }
 
+    /** Lấy câu hỏi và đáp án thuộc một đề thi. */
     public function getQuestions($examId) {
         $stmt = $this->pdo->prepare(
             "SELECT q.question_id, q.content, q.image_url, q.question_type,
@@ -119,6 +123,7 @@ class Exam {
         return array_values($questions);
     }
 
+    /** Tìm lượt thi đang làm dở của học sinh cho một đề. */
     public function findActiveAttempt($examId, $studentId) {
         $stmt = $this->pdo->prepare(
             "SELECT * FROM exam_attempts
@@ -129,6 +134,7 @@ class Exam {
         return $stmt->fetch();
     }
 
+    /** Tạo lượt thi mới cho học sinh. */
     public function createAttempt($examId, $studentId) {
         $stmt = $this->pdo->prepare(
             "INSERT INTO exam_attempts (exam_id, student_id) VALUES (?, ?)"
@@ -137,6 +143,7 @@ class Exam {
         return $this->pdo->lastInsertId();
     }
 
+    /** Hoàn tất lượt thi theo cách chấm cũ của model đề thi. */
     public function completeAttempt($attemptId, $studentId, $answers) {
         $this->pdo->beginTransaction();
         try {
@@ -175,6 +182,7 @@ class Exam {
         }
     }
 
+    /** Ghi lại một hành vi vi phạm của học sinh trong lượt thi. */
     public function logViolation($attemptId, $studentId, $type, $details = null) {
         $stmt = $this->pdo->prepare(
             "INSERT INTO violation_logs (attempt_id, violation_type, details)

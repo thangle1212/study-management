@@ -2,6 +2,7 @@
 class QuestionBank {
     private $pdo;
 
+    /** Khởi tạo model ngân hàng câu hỏi bằng kết nối cơ sở dữ liệu. */
     public function __construct($pdo) {
         $this->pdo = $pdo;
     }
@@ -46,6 +47,7 @@ class QuestionBank {
         return $stmt->rowCount() > 0 || $this->getBank($bankId, $teacherId) !== false;
     }
 
+    /** Lấy câu hỏi và đáp án, bao gồm cờ xác định đáp án đúng. */
     public function getQuestionsForBank($bankId, $teacherId) {
         $stmt = $this->pdo->prepare(
             "SELECT q.question_id, q.content, q.image_url, q.question_type,
@@ -82,6 +84,7 @@ class QuestionBank {
         return array_values($questions);
     }
 
+    /** Lấy một câu hỏi cùng các đáp án để chỉnh sửa hoặc đưa vào đề. */
     public function getQuestion($questionId, $teacherId) {
         $stmt = $this->pdo->prepare(
             "SELECT q.question_id, q.bank_id, q.content, q.image_url, q.question_type,
@@ -117,6 +120,7 @@ class QuestionBank {
         return $question;
     }
 
+    /** Tạo câu hỏi và lưu các đáp án đúng/sai tương ứng. */
     public function createQuestion($teacherId, $questionData) {
         // Save the question and its answers atomically so banks never contain partial questions.
         $this->pdo->beginTransaction();
@@ -145,6 +149,7 @@ class QuestionBank {
         }
     }
 
+    /** Cập nhật nội dung, loại câu và danh sách đáp án của câu hỏi. */
     public function updateQuestion($questionId, $teacherId, $questionData) {
         // Protect exam history before replacing question text or answer IDs.
         $this->pdo->beginTransaction();
@@ -215,6 +220,7 @@ class QuestionBank {
         return $stmt->rowCount() > 0;
     }
 
+    /** Thay thế toàn bộ đáp án của câu hỏi và cờ is_correct. */
     private function replaceAnswers($questionId, $answers) {
         $delete = $this->pdo->prepare("DELETE FROM answers WHERE question_id = ?");
         $delete->execute([$questionId]);
@@ -245,6 +251,7 @@ class QuestionBank {
         }
     }
 
+    /** Kiểm tra câu hỏi đã được sử dụng trong đề thi hay chưa. */
     private function isQuestionUsed($questionId) {
         $stmt = $this->pdo->prepare(
             "SELECT
@@ -256,6 +263,7 @@ class QuestionBank {
         return (bool) $stmt->fetchColumn();
     }
 
+    /** Kiểm tra câu hỏi có bị khóa chỉnh sửa vì đã phát sinh lượt thi không. */
     private function isQuestionLockedForEdit($questionId) {
         $stmt = $this->pdo->prepare(
             "SELECT

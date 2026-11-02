@@ -4,11 +4,13 @@ final class TeacherReport
 {
     private $pdo;
 
+    /** Khởi tạo model báo cáo giáo viên bằng kết nối cơ sở dữ liệu. */
     public function __construct($pdo)
     {
         $this->pdo = $pdo;
     }
 
+    /** Tìm đề và xác nhận đề thuộc quyền sở hữu của giáo viên. */
     public function findExam($examId, $teacherId)
     {
         $stmt = $this->pdo->prepare(
@@ -20,6 +22,7 @@ final class TeacherReport
         return $stmt->fetch();
     }
 
+    /** Tính KPI, phân phối điểm và phân tích câu hỏi của một đề thi. */
     public function getStatistics($examId, $teacherId, $distributionMode, $page = 1, $perPage = 10)
     {
         $exam = $this->findExam($examId, $teacherId);
@@ -193,6 +196,7 @@ final class TeacherReport
         ];
     }
 
+    /** Lấy trạng thái, thời gian và số vi phạm của các lượt thi trong đề. */
     public function getMonitoring($examId, $teacherId)
     {
         $exam = $this->findExam($examId, $teacherId);
@@ -215,6 +219,7 @@ final class TeacherReport
         return ['exam' => $exam, 'attempts' => $stmt->fetchAll()];
     }
 
+    /** Cập nhật các cấu hình ảnh hưởng đến những lượt thi mới. */
     public function updateSettings($examId, $teacherId, array $settings)
     {
         $stmt = $this->pdo->prepare(
@@ -232,6 +237,7 @@ final class TeacherReport
         return $stmt->rowCount() > 0;
     }
 
+    /** Hủy kết quả hoặc cho phép làm lại một lượt thi cần giáo viên xem xét. */
     public function reviewAttempt($attemptId, $teacherId, $decision, $note)
     {
         $reviewStatus = $decision === 'void' ? 'voided' : 'retake_allowed';

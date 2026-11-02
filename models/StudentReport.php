@@ -4,11 +4,13 @@ final class StudentReport
 {
     private $pdo;
 
+    /** Khởi tạo model báo cáo bằng kết nối cơ sở dữ liệu dùng chung. */
     public function __construct($pdo)
     {
         $this->pdo = $pdo;
     }
 
+    /** Tổng hợp điểm, độ chính xác, thời lượng và lịch sử của một học sinh. */
     public function getDashboard($studentId, $selectedExamId)
     {
         $sql = "SELECT ea.attempt_id, ea.exam_id, e.title, ea.total_score, ea.start_time, ea.end_time,

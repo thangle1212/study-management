@@ -7,12 +7,14 @@ final class StudentStatisticsController extends BaseController
 {
     private $statistics;
 
+    /** Khởi tạo controller tổng hợp tiến độ học tập cá nhân. */
     public function __construct($pdo)
     {
         parent::__construct($pdo);
         $this->statistics = new StudentReport($pdo);
     }
 
+    /** Lấy bộ lọc của học sinh, gọi model và render trang thống kê cá nhân. */
     public function index()
     {
         $this->requireLogin();

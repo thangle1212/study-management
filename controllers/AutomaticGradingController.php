@@ -7,12 +7,14 @@ final class AutomaticGradingController extends BaseController
 {
     private $grading;
 
+    /** Khởi tạo controller xử lý autosave, nộp bài và vi phạm. */
     public function __construct($pdo)
     {
         parent::__construct($pdo);
         $this->grading = new AutomaticGrading($pdo);
     }
 
+    /** Nhận đáp án tạm thời từ trang làm bài và trả kết quả JSON. */
     public function autosave()
     {
         $this->requireStudent();
@@ -35,6 +37,7 @@ final class AutomaticGradingController extends BaseController
         $this->sendJson($result);
     }
 
+    /** Xác thực yêu cầu nộp thủ công và chuyển sang quy trình chấm điểm. */
     public function submit()
     {
         $this->requireStudent();
@@ -62,6 +65,7 @@ final class AutomaticGradingController extends BaseController
         exit;
     }
 
+    /** Nhận sự kiện vi phạm từ trình duyệt và xử lý theo cấu hình đề thi. */
     public function logViolation()
     {
         $this->requireStudent();
@@ -90,6 +94,7 @@ final class AutomaticGradingController extends BaseController
         $this->sendJson($result);
     }
 
+    /** Bắt buộc request chấm/nộp bài phải do tài khoản học sinh thực hiện. */
     private function requireStudent()
     {
         $this->requireLogin();
@@ -99,6 +104,7 @@ final class AutomaticGradingController extends BaseController
         }
     }
 
+    /** Gửi phản hồi JSON thống nhất cho các request bất đồng bộ. */
     private function sendJson($payload, $statusCode = 200)
     {
         http_response_code($statusCode);
