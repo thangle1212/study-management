@@ -49,6 +49,9 @@ $visibleExams = $userRole === 'student' ? $publishedExams : $teacherExams;
                     <i class="fa-solid fa-chart-line" aria-hidden="true"></i><span>Thống kê của tôi</span>
                 </a>
             <?php elseif ($userRole === 'teacher'): ?>
+                <a class="admin-nav-link" href="index.php?action=teacher_classes">
+                    <i class="fa-solid fa-school" aria-hidden="true"></i><span>Lớp học của tôi</span>
+                </a>
                 <a class="admin-nav-link" href="index.php?action=qe_banks">
                     <i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Ngân hàng câu hỏi</span>
                 </a>

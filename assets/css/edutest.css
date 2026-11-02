@@ -1,15 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@400;500;600;700&display=swap');
 
 :root {
-    --edu-ink: #102a43;
-    --edu-ink-soft: #486581;
-    --edu-teal: #176b87;
-    --edu-teal-dark: #0f5268;
-    --edu-teal-soft: #e7f4f4;
-    --edu-saffron: #e7a93b;
-    --edu-paper: #f5f8f6;
-    --edu-line: #dce7e5;
-    --edu-shadow: 0 18px 48px rgba(16, 42, 67, .09);
+    --edu-ink: #172f4d;
+    --edu-ink-soft: #62758b;
+    --edu-teal: #1769aa;
+    --edu-teal-dark: #0b3d73;
+    --edu-teal-soft: #e6f2fc;
+    --edu-saffron: #c47721;
+    --edu-paper: #f2f7fc;
+    --edu-line: #d9e5f0;
+    --edu-shadow: 0 4px 16px rgba(21, 65, 108, .035);
 }
 
 html {
@@ -17,9 +17,9 @@ html {
 }
 
 body {
-    font-family: 'Be Vietnam Pro', 'Segoe UI', sans-serif !important;
-    color: var(--edu-ink) !important;
-    background: var(--edu-paper) !important;
+    font-family: 'Fira Sans', sans-serif;
+    color: var(--edu-ink);
+    background: var(--edu-paper);
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -28,10 +28,9 @@ h1, h2, h3, h4, h5, h6 {
 
 .navbar,
 .topbar {
-    background: rgba(255, 255, 255, .92) !important;
+    background: #fff !important;
     border-bottom: 1px solid var(--edu-line) !important;
-    box-shadow: 0 4px 18px rgba(16, 42, 67, .04) !important;
-    backdrop-filter: blur(14px);
+    box-shadow: 0 1px 0 rgba(23, 47, 77, .02) !important;
 }
 
 .navbar-brand,
@@ -66,7 +65,7 @@ h1, h2, h3, h4, h5, h6 {
 .btn,
 .form-control,
 .form-select {
-    border-radius: 10px !important;
+    border-radius: 5px !important;
 }
 
 .btn:focus-visible,
@@ -74,30 +73,32 @@ h1, h2, h3, h4, h5, h6 {
 .form-select:focus,
 .navbar-toggler:focus-visible,
 a:focus-visible {
-    box-shadow: 0 0 0 4px rgba(231, 169, 59, .3) !important;
-    outline: none;
+    box-shadow: 0 0 0 3px rgba(196, 119, 33, .24) !important;
+    outline: 2px solid #c47721;
+    outline-offset: 2px;
 }
 
 .welcome,
 .forum-header,
 .page-heading {
-    background: linear-gradient(120deg, var(--edu-ink) 0%, #176b87 70%, #3c98a0 100%) !important;
-    border-radius: 14px !important;
-    box-shadow: var(--edu-shadow) !important;
+    background: #fff !important;
+    border: 1px solid var(--edu-line) !important;
+    border-left: 4px solid var(--edu-teal) !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
     position: relative;
     overflow: hidden;
+    color: var(--edu-ink) !important;
 }
 
 .hero-section {
-    background:
-        radial-gradient(circle at 78% 18%, rgba(231, 169, 59, .16), transparent 28%),
-        linear-gradient(135deg, #edf7f5 0%, #f5f8f6 60%, #e6f1f1 100%) !important;
+    background: #e6f2fc !important;
 }
 
 .hero-section h1 {
     max-width: 680px;
-    font-size: clamp(2.5rem, 5vw, 4.2rem);
-    line-height: 1.08;
+    font-size: clamp(2.25rem, 5vw, 3.5rem);
+    line-height: 1.12;
 }
 
 .hero-section h1 .text-primary {
@@ -109,45 +110,38 @@ a:focus-visible {
 }
 
 .hero-section img {
-    border: 10px solid rgba(255, 255, 255, .72);
-    box-shadow: var(--edu-shadow) !important;
+    border: 1px solid var(--edu-line);
+    border-radius: 6px;
+    box-shadow: none !important;
 }
 
 .cta-section {
-    background: linear-gradient(120deg, var(--edu-ink), var(--edu-teal)) !important;
+    background: var(--edu-teal-dark) !important;
 }
 
 .welcome::after,
 .forum-header::after,
 .page-heading::after {
-    content: '';
-    width: 220px;
-    height: 220px;
-    border: 1px solid rgba(255, 255, 255, .16);
-    border-radius: 50%;
-    position: absolute;
-    right: -70px;
-    top: -110px;
+    content: none;
 }
 
 .exam-card,
 .post-card,
 .question-card {
     border: 1px solid var(--edu-line) !important;
-    border-radius: 12px !important;
-    box-shadow: 0 8px 26px rgba(16, 42, 67, .05) !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
 }
 
 .exam-card:hover,
 .post-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 14px 32px rgba(16, 42, 67, .1) !important;
+    border-color: #b7cadd !important;
 }
 
 .card-feature {
     border: 1px solid var(--edu-line) !important;
-    border-radius: 12px !important;
-    box-shadow: 0 8px 26px rgba(16, 42, 67, .05) !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
 }
 
 .feature-icon,
@@ -158,7 +152,8 @@ a:focus-visible {
 
 .auth-card {
     border: 1px solid var(--edu-line);
-    box-shadow: var(--edu-shadow) !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
 }
 
 .auth-card .text-primary {
@@ -167,9 +162,10 @@ a:focus-visible {
 
 .table thead th {
     color: var(--edu-ink-soft);
-    font-size: .72rem;
-    letter-spacing: .045em;
+    font-size: 11px;
+    font-weight: 700;
     text-transform: uppercase;
+    background: #f4f8fc;
 }
 
 @media (max-width: 575.98px) {
@@ -180,7 +176,7 @@ a:focus-visible {
     .welcome,
     .forum-header,
     .page-heading {
-        border-radius: 10px !important;
+        border-radius: 6px !important;
     }
 
     .welcome .display-3 {
