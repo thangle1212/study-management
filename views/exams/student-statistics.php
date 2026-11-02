@@ -43,13 +43,6 @@
         <form method="get" class="card stat-card mb-4">
             <div class="card-body d-flex flex-wrap align-items-center gap-3">
                 <input type="hidden" name="action" value="student_statistics">
-                <label for="exam-type-filter" class="fw-semibold mb-0">Nhóm bài kiểm tra:</label>
-                <select id="exam-type-filter" name="exam_type" class="form-select w-auto" onchange="this.form.submit()">
-                    <option value="" <?php echo $selectedExamType === '' ? 'selected' : ''; ?>>Tất cả</option>
-                    <option value="auto" <?php echo $selectedExamType === 'auto' ? 'selected' : ''; ?>>Đề tự động</option>
-                    <option value="sample" <?php echo $selectedExamType === 'sample' ? 'selected' : ''; ?>>Đề kiểm tra mẫu</option>
-                    <option value="hop" <?php echo $selectedExamType === 'hop' ? 'selected' : ''; ?>>Kiểm tra hợp</option>
-                </select>
                 <label for="exam-filter" class="fw-semibold mb-0">Đề thi cụ thể:</label>
                 <select id="exam-filter" name="exam_id" class="form-select w-auto" onchange="this.form.submit()">
                     <option value="0">Tất cả đề thi</option>
@@ -66,8 +59,7 @@
             <div class="text-muted"><i class="fa-regular fa-chart-bar fs-1 mb-3"></i><h2 class="h5 text-dark">Chưa có dữ liệu thống kê</h2><p class="mb-3">Hãy hoàn thành một bài thi để xem tiến độ của bạn.</p><a href="index.php?action=dashboard" class="btn btn-primary rounded-3">Xem đề thi</a></div>
         </section>
     <?php else: ?>
-        <div class="row row-cols-2 row-cols-lg-5 g-3 mb-4">
-            <div class="col"><div class="metric p-3"><div class="text-muted small">Số người đã tham gia</div><div class="h3 fw-bold text-primary mb-0"><?php echo $examCount; ?></div></div></div>
+        <div class="row row-cols-2 row-cols-lg-4 g-3 mb-4">
             <div class="col"><div class="metric p-3"><div class="text-muted small">Tổng lượt làm</div><div class="h3 fw-bold text-primary mb-0"><?php echo $attemptCount; ?></div></div></div>
             <div class="col"><div class="metric p-3"><div class="text-muted small">Điểm trung bình</div><div class="h3 fw-bold text-info mb-0"><?php echo number_format($averageScore, 2); ?></div></div></div>
             <div class="col"><div class="metric p-3"><div class="text-muted small">Tỷ lệ chính xác</div><div class="h3 fw-bold text-success mb-0"><?php echo number_format($accuracy, 1); ?>%</div><div class="small text-muted"><?php echo $totalCorrect; ?> đúng / <?php echo $totalWrong; ?> sai</div></div></div>
