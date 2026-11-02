@@ -7,16 +7,28 @@ require_once __DIR__ . '/config/env.php';
 require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/controllers/AuthController.php';
 require_once __DIR__ . '/controllers/ExamController.php';
+require_once __DIR__ . '/controllers/AutomaticGradingController.php';
+require_once __DIR__ . '/controllers/StudentStatisticsController.php';
+require_once __DIR__ . '/controllers/TeacherExamReportController.php';
+require_once __DIR__ . '/controllers/ExamHistoryController.php';
 require_once __DIR__ . '/controllers/QuestionBankController.php';
 require_once __DIR__ . '/controllers/ForumController.php';
 require_once __DIR__ . '/controllers/AdminController.php';
+require_once __DIR__ . '/controllers/AdminClassController.php';
+require_once __DIR__ . '/controllers/ProfileController.php';
 
 $action = $_GET['action'] ?? 'home';
 $authController = new AuthController($pdo);
 $examController = new ExamController($pdo);
+$automaticGradingController = new AutomaticGradingController($pdo);
+$studentStatisticsController = new StudentStatisticsController($pdo);
+$teacherExamReportController = new TeacherExamReportController($pdo);
+$examHistoryController = new ExamHistoryController($pdo);
 $questionBankController = new QuestionBankController($pdo);
 $forumController = new ForumController($pdo);
 $adminController = new AdminController($pdo);
+$adminClassController = new AdminClassController($pdo);
+$profileController = new ProfileController($pdo);
 
 switch ($action) {
     case 'home':
@@ -55,12 +67,30 @@ switch ($action) {
         }
         break;
 
+    case 'profile':
+        $profileController->index();
+        break;
+
+    // --- ROUTE ĐĂNG NHẬP ADMIN ---
+    case 'admin':
+    case 'admin_login':
+        $adminController->login();
+        break;
+
+    case 'admin_login_process':
+        $adminController->handleLogin();
+        break;
+
     case 'admin_dashboard':
         $adminController->dashboard();
         break;
 
     case 'admin_users':
         $adminController->manageUsers();
+        break;
+
+    case 'admin_classes':
+        $adminClassController->index();
         break;
 
     case 'admin_update_user':
@@ -124,47 +154,47 @@ switch ($action) {
         break;
 
     case 'autosave_answers':
-        $examController->autosave();
+        $automaticGradingController->autosave();
         break;
 
     case 'update_exam_settings':
-        $examController->updateSettings();
+        $teacherExamReportController->updateSettings();
         break;
 
     case 'submit_exam':
-        $examController->submit();
+        $automaticGradingController->submit();
         break;
 
     case 'log_violation':
-        $examController->logViolation();
+        $automaticGradingController->logViolation();
         break;
 
     case 'exam_result':
-        $examController->result();
+        $examHistoryController->resultPage();
         break;
 
     case 'exam_statistics':
-        $examController->statistics();
+        $teacherExamReportController->index();
         break;
 
     case 'exam_monitoring':
-        $examController->monitoring();
+        $teacherExamReportController->monitor();
         break;
 
     case 'exam_monitoring_data':
-        $examController->monitoringData();
+        $teacherExamReportController->monitorData();
         break;
 
     case 'review_attempt':
-        $examController->reviewAttempt();
+        $teacherExamReportController->reviewAttempt();
         break;
 
     case 'attempt_detail':
-        $examController->attemptDetail();
+        $examHistoryController->detail();
         break;
 
     case 'student_statistics':
-        $examController->studentStatistics();
+        $studentStatisticsController->index();
         break;
 
     case 'forum':

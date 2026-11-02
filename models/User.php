@@ -69,6 +69,40 @@ class User {
         return (bool) $stmt->fetchColumn();
     }
 
+    public function getProfileById($userId) {
+        $stmt = $this->pdo->prepare(
+            "SELECT user_id, full_name, email, role, school_name
+             FROM users
+             WHERE user_id = ?"
+        );
+        $stmt->execute([$userId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function getPasswordHashById($userId) {
+        $stmt = $this->pdo->prepare("SELECT password FROM users WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        return $stmt->fetchColumn();
+    }
+
+    public function updateProfile($userId, $fullName, $schoolName, $newPassword = null) {
+        if ($newPassword === null) {
+            $stmt = $this->pdo->prepare(
+                "UPDATE users SET full_name = ?, school_name = ? WHERE user_id = ?"
+            );
+            return $stmt->execute([$fullName, $schoolName, $userId]);
+        }
+
+        $passwordHash = password_hash($newPassword, PASSWORD_DEFAULT);
+        $stmt = $this->pdo->prepare(
+            "UPDATE users
+             SET full_name = ?, school_name = ?, password = ?,
+                 reset_token = NULL, reset_token_expires = NULL
+             WHERE user_id = ?"
+        );
+        return $stmt->execute([$fullName, $schoolName, $passwordHash, $userId]);
+    }
+
     public function updateStatus($userId, $status) {
         if (!in_array($status, ['active', 'locked'], true)) {
             throw new InvalidArgumentException('Trạng thái tài khoản không hợp lệ.');

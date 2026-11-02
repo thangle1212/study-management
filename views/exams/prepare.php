@@ -7,32 +7,44 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
-        body { min-height: 100vh; background: linear-gradient(135deg, #eaf4ff, #f8fbff 52%, #fff); color: #17233c; }
-        .prepare-shell { max-width: 760px; }
-        .prepare-header { border: 0; border-radius: 18px; background: linear-gradient(135deg, #0d6efd, #438df4); color: #fff; }
-        .policy-row { border-bottom: 1px solid #e5edf8; }
+        body { min-height: 100vh; background: radial-gradient(circle at 75% 0%, #e8f4f2 0, #f5f8f6 38%, #eef3f1 100%); }
+        .prepare-shell { max-width: 820px; }
+        .prepare-header { border: 0; border-radius: 14px; background: linear-gradient(120deg, #102a43 0%, #176b87 72%, #3c98a0 100%); color: #fff; box-shadow: var(--edu-shadow); position: relative; overflow: hidden; }
+        .prepare-header::after { content: ''; position: absolute; width: 230px; height: 230px; border: 1px solid rgba(255,255,255,.16); border-radius: 50%; right: -72px; top: -118px; }
+        .prepare-header-content { position: relative; z-index: 1; }
+        .prepare-header .eyebrow { letter-spacing: .04em; }
+        .info-card, .history-card { border: 1px solid var(--edu-line) !important; border-radius: 12px; box-shadow: 0 8px 26px rgba(16,42,67,.05); }
+        .policy-row { border-bottom: 1px solid var(--edu-line); }
         .policy-row:last-child { border-bottom: 0; }
-        .history-card { border: 1px solid #e5edf8; border-radius: 14px; }
         .history-score { min-width: 86px; }
         .history-card.history-extra { display: none; }
+        .prepare-note { background: #fff8df; border: 1px solid #f0d47a; color: #604d13; }
+        .prepare-start { min-width: 220px; }
+        @media (max-width: 575.98px) {
+            .prepare-start { width: 100%; }
+            .history-score { min-width: auto; }
+        }
     </style>
     <link rel="stylesheet" href="assets/css/edutest.css">
 </head>
 <body>
-<nav class="navbar bg-white border-bottom">
+<nav class="navbar topbar sticky-top">
     <div class="container prepare-shell">
-        <a class="navbar-brand fw-bold text-primary" href="index.php?action=dashboard"><i class="fa-solid fa-graduation-cap me-2"></i>EduTest</a>
-        <a href="index.php?action=dashboard" class="btn btn-sm btn-outline-primary">Quay lại</a>
+        <a class="navbar-brand brand fw-bold" href="index.php?action=dashboard"><i class="fa-solid fa-graduation-cap me-2"></i>EduTest</a>
+        <a href="index.php?action=dashboard" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-arrow-left me-1"></i>Trang tổng quan</a>
     </div>
 </nav>
 <main class="container prepare-shell py-4 py-md-5">
     <section class="prepare-header p-4 p-md-5 mb-4">
-        <div class="small opacity-75 mb-2">CHUẨN BỊ BÀI KIỂM TRA</div>
-        <h1 class="h2 fw-bold mb-0"><?php echo htmlspecialchars($exam['title']); ?></h1>
+        <div class="prepare-header-content">
+            <div class="eyebrow small opacity-75 mb-2"><i class="fa-solid fa-clipboard-check me-1"></i>Chuẩn bị bài kiểm tra</div>
+            <h1 class="h2 fw-bold mb-2"><?php echo htmlspecialchars($exam['title']); ?></h1>
+            <p class="mb-0 opacity-75">Kiểm tra thông tin trước khi bắt đầu để bạn có một lượt làm bài trọn vẹn.</p>
+        </div>
     </section>
-    <section class="card border-0 shadow-sm mb-4">
+    <section class="card info-card mb-4">
         <div class="card-body p-4">
-            <h2 class="h5 fw-bold mb-3">Thông tin bài thi</h2>
+            <h2 class="h5 fw-bold mb-3"><i class="fa-solid fa-sliders text-primary me-2"></i>Thông tin bài thi</h2>
             <div class="policy-row d-flex justify-content-between py-3 gap-3"><span>Số câu hỏi</span><strong><?php echo (int) $exam['question_count']; ?></strong></div>
             <div class="policy-row d-flex justify-content-between py-3 gap-3"><span>Thời gian làm bài</span><strong><?php echo (int) $exam['duration_minutes']; ?> phút</strong></div>
             <div class="policy-row d-flex justify-content-between py-3 gap-3"><span>Tráo thứ tự câu hỏi</span><strong><?php echo (int) $exam['shuffle_questions'] ? 'Có' : 'Không'; ?></strong></div>
@@ -44,13 +56,13 @@
             <?php endif; ?>
         </div>
     </section>
-    <div class="alert alert-warning" role="note">
+    <div class="alert prepare-note mb-4" role="note">
         <i class="fa-solid fa-triangle-exclamation me-2"></i>Rời tab, thu nhỏ cửa sổ hoặc thao tác bị cấm có thể được ghi nhận theo quy chế bài thi.
     </div>
-    <form id="start-exam-form" method="post" action="index.php?action=start_exam" class="text-end mb-4">
+    <form id="start-exam-form" method="post" action="index.php?action=start_exam" class="text-end mb-5">
         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>">
         <input type="hidden" name="exam_id" value="<?php echo (int) $exam['exam_id']; ?>">
-        <button type="submit" class="btn btn-primary btn-lg"><i class="fa-solid fa-play me-2"></i><?php echo $activeAttemptId ? 'Tiếp tục làm bài' : 'Bắt đầu làm bài'; ?></button>
+        <button type="submit" class="btn btn-primary btn-lg prepare-start"><i class="fa-solid fa-play me-2"></i><?php echo $activeAttemptId ? 'Tiếp tục làm bài' : 'Bắt đầu làm bài'; ?></button>
     </form>
 
     <section aria-labelledby="attempt-history-title">

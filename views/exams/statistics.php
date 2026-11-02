@@ -20,6 +20,12 @@
         .kpi-icon { width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; border-radius: 11px; }
         .kpi-value { font-size: 1.45rem; line-height: 1.2; }
         .table-filter { background: #f7faff; border: 1px solid #e5edf8; border-radius: 12px; }
+        .scores-table-wrap { max-height: 440px; overflow: auto; }
+        .scores-table-wrap thead th { position: sticky; top: 0; z-index: 1; background: #fff; }
+        .chart-wrap { position: relative; width: 100%; height: 280px; overflow: hidden; }
+        .chart-wrap.chart-wrap-sm { height: 230px; }
+        .question-analysis-wrap { max-height: 460px; overflow: auto; }
+        .question-analysis-wrap thead th { position: sticky; top: 0; z-index: 1; background: #fff; }
     </style>
     <link rel="stylesheet" href="assets/css/edutest.css">
 </head>
@@ -157,7 +163,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="table-responsive">
+                        <div class="scores-table-wrap table-responsive">
                             <table id="scores-table" class="table align-middle">
                                 <thead><tr><th>Học sinh</th><th>Lần nộp</th>                                <th>Điểm /10</th><th>Vi phạm</th><th>Trạng thái</th><th>Thời gian</th></tr></thead>
                                 <tbody>
@@ -187,6 +193,35 @@
                             </table>
                             <p id="scores-empty" class="text-muted d-none mb-0">Không có lượt nộp phù hợp với bộ lọc.</p>
                         </div>
+                        <?php if ($totalPages > 1): ?>
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+                                <small class="text-muted">Hiển thị <?php echo (($currentPage - 1) * $perPage) + 1; ?>-<?php echo min($currentPage * $perPage, $totalScoreRows); ?> trên <?php echo $totalScoreRows; ?> lượt</small>
+                                <nav aria-label="Phân trang lượt thi">
+                                    <ul class="pagination pagination-sm mb-0">
+                                        <?php
+                                        $pageNumbers = [1, $totalPages];
+                                        for ($pageNumber = max(1, $currentPage - 2); $pageNumber <= min($totalPages, $currentPage + 2); $pageNumber++) {
+                                            $pageNumbers[] = $pageNumber;
+                                        }
+                                        $pageNumbers = array_values(array_unique($pageNumbers));
+                                        sort($pageNumbers);
+                                        $previousPage = 0;
+                                        foreach ($pageNumbers as $pageNumber):
+                                            if ($previousPage && $pageNumber > $previousPage + 1):
+                                        ?>
+                                            <li class="page-item disabled"><span class="page-link">…</span></li>
+                                        <?php endif; ?>
+                                            <li class="page-item <?php echo $pageNumber === $currentPage ? 'active' : ''; ?>">
+                                                <a class="page-link" href="index.php?action=exam_statistics&exam_id=<?php echo (int) $exam['exam_id']; ?>&distribution_mode=<?php echo urlencode($distributionMode); ?>&page=<?php echo $pageNumber; ?>&per_page=<?php echo $perPage; ?>"><?php echo $pageNumber; ?></a>
+                                            </li>
+                                        <?php
+                                            $previousPage = $pageNumber;
+                                        endforeach;
+                                        ?>
+                                    </ul>
+                                </nav>
+                            </div>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </div>
             </div>
@@ -203,7 +238,7 @@
                             <div class="col-6"><div class="bg-success-subtle rounded-3 p-2"><div class="small text-success">Đúng</div><strong><?php echo $totalCorrectAnswers; ?></strong> <span class="small text-success">(<?php echo number_format($correctPercentage, 1); ?>%)</span></div></div>
                             <div class="col-6"><div class="bg-danger-subtle rounded-3 p-2"><div class="small text-danger">Sai</div><strong><?php echo $totalWrongAnswers; ?></strong> <span class="small text-danger">(<?php echo number_format($wrongPercentage, 1); ?>%)</span></div></div>
                         </div>
-                        <div style="height: 230px;"><canvas id="correctWrongChart"></canvas></div>
+                        <div class="chart-wrap chart-wrap-sm"><canvas id="correctWrongChart"></canvas></div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -216,7 +251,33 @@
             <?php if (!$topDifficultQuestions || !$scores): ?>
                 <p class="text-muted mb-0">Chưa có dữ liệu để phân tích độ khó câu hỏi.</p>
             <?php else: ?>
-                <div style="height: <?php echo max(220, count($topDifficultQuestions) * 58); ?>px;"><canvas id="questionDifficultyChart"></canvas></div>
+                <div class="chart-wrap"><canvas id="questionDifficultyChart"></canvas></div>
+            <?php endif; ?>
+        </div>
+    </div>
+    <div class="card stat-card mt-4">
+        <div class="card-body">
+            <h5 class="fw-bold mb-1"><i class="fa-solid fa-list-check text-primary me-2"></i>Phân tích toàn bộ câu hỏi</h5>
+            <p class="text-muted small mb-3">Danh sách đầy đủ, không giới hạn ở 5 câu có tỷ lệ sai cao nhất.</p>
+            <?php if (!$questionStats || !$scores): ?>
+                <p class="text-muted mb-0">Chưa có dữ liệu để phân tích câu hỏi.</p>
+            <?php else: ?>
+                <div class="question-analysis-wrap table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead><tr><th>Câu</th><th>Nội dung</th><th>Lượt trả lời</th><th>Số câu sai</th><th>Tỷ lệ sai</th></tr></thead>
+                        <tbody>
+                        <?php foreach ($questionStats as $question): ?>
+                            <tr>
+                                <td class="fw-semibold text-nowrap">Câu <?php echo (int) $question['order_index']; ?></td>
+                                <td><?php echo htmlspecialchars($question['content']); ?></td>
+                                <td><?php echo (int) $question['attempt_count']; ?></td>
+                                <td><?php echo (int) $question['wrong_count']; ?></td>
+                                <td class="text-nowrap"><?php echo number_format((float) $question['wrong_rate'], 1); ?>%</td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
             <?php endif; ?>
         </div>
     </div>
@@ -239,7 +300,7 @@
             <?php if (!$scores): ?>
                 <p class="text-muted mb-0">Chưa có dữ liệu để thống kê.</p>
             <?php else: ?>
-                <div style="height: 280px;"><canvas id="scoreDistributionChart"></canvas></div>
+                <div class="chart-wrap"><canvas id="scoreDistributionChart"></canvas></div>
             <?php endif; ?>
         </div>
     </div>
