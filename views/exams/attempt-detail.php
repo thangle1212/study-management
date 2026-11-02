@@ -25,13 +25,16 @@
     <div class="container">
         <a class="navbar-brand brand fw-bold" href="index.php?action=dashboard"><i class="fa-solid fa-graduation-cap me-2"></i>EduTest</a>
         <?php
+        $fromResult = ($_GET['from'] ?? '') === 'result';
         $backAction = $_SESSION['user']['role'] === 'student'
-            ? (($_GET['from'] ?? '') === 'exam'
-                ? 'prepare_exam&exam_id=' . (int) $attempt['exam_id']
-                : 'student_statistics')
+            ? ($fromResult
+                ? 'exam_result&attempt_id=' . (int) $attempt['attempt_id']
+                : (($_GET['from'] ?? '') === 'exam'
+                    ? 'prepare_exam&exam_id=' . (int) $attempt['exam_id']
+                    : 'student_statistics'))
             : 'exam_statistics&exam_id=' . (int) $attempt['exam_id'];
         ?>
-        <a href="index.php?action=<?php echo $backAction; ?>" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-arrow-left me-1"></i><?php echo $_SESSION['user']['role'] === 'student' ? 'Quay lại thống kê cá nhân' : 'Quay lại bảng điểm'; ?></a>
+        <a href="index.php?action=<?php echo $backAction; ?>" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-arrow-left me-1"></i><?php echo $fromResult ? 'Quay lại kết quả' : ($_SESSION['user']['role'] === 'student' ? 'Quay lại thống kê cá nhân' : 'Quay lại bảng điểm'); ?></a>
     </div>
 </nav>
 
