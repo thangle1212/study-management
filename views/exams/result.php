@@ -27,6 +27,7 @@
     <link rel="stylesheet" href="assets/css/admin.css">
 </head>
 <body class="admin-app">
+<?php $appPageTitle = 'Kết quả bài thi'; $appActiveAction = 'exam'; require __DIR__ . '/../partials/app-shell-start.php'; ?>
 <div class="container py-5 d-flex justify-content-center">
     <div class="card result-card text-center w-100">
         <div class="result-head p-4 p-md-5">
@@ -68,5 +69,6 @@
         </div>
     </div>
 </div>
+<?php require __DIR__ . '/../partials/app-shell-end.php'; ?>
 </body>
 </html>

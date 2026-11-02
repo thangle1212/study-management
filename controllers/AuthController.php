@@ -17,16 +17,17 @@ class AuthController {
     // --- 1. ĐĂNG NHẬP ---
     public function login() {
         $error = '';
+        $notice = '';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $email = trim($_POST['email'] ?? '');
             $password = $_POST['password'] ?? '';
 
             $user = $this->userModel->findByEmail($email);
             if ($user && password_verify($password, $user['password'])) {
-                if ($user['status'] !== 'active') {
+                if ($user['role'] === 'admin') {
+                    $notice = 'Tài khoản quản trị không thể đăng nhập tại cổng học tập. Vui lòng sử dụng cổng đăng nhập quản trị.';
+                } elseif ($user['status'] !== 'active') {
                     $error = 'Tài khoản của bạn đã bị khóa!';
-                } elseif ($user['role'] === 'admin') {
-                    $error = 'Vui lòng sử dụng trang đăng nhập quản trị để truy cập!';
                 } else {
                     session_regenerate_id(true); // Tạo session ID hoàn toàn mới, hủy ID cũ
                     $_SESSION['user'] = [

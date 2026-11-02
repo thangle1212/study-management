@@ -24,27 +24,21 @@ unset($answer);
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= $isEditing ? 'Sửa' : 'Tạo' ?> câu hỏi - EduTest</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="views/qe/qe.css">
     <link rel="stylesheet" href="assets/css/edutest.css">
     <link rel="stylesheet" href="assets/css/admin.css">
 </head>
 <body class="admin-app">
-<nav class="navbar admin-module-navbar">
-    <div class="container">
-        <a class="navbar-brand" href="index.php?action=dashboard"><i class="fa-solid fa-graduation-cap me-2" aria-hidden="true"></i>EduTest</a>
-        <div class="d-flex gap-2">
-            <a class="btn btn-sm btn-outline-secondary" href="index.php?action=dashboard">Bảng điều khiển</a>
-            <a class="btn btn-sm btn-outline-primary" href="index.php?action=qe_banks">Ngân hàng câu hỏi</a>
-        </div>
-    </div>
-</nav>
+<?php $appPageTitle = $isEditing ? 'Chỉnh sửa câu hỏi' : 'Tạo câu hỏi'; $appActiveAction = 'qe_banks'; require __DIR__ . '/../../partials/app-shell-start.php'; ?>
 <main class="container py-4" style="max-width: 1000px">
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div class="admin-page-heading">
         <div>
-            <h1 class="h3 mb-1"><?= $isEditing ? 'Chỉnh sửa câu hỏi' : 'Tạo câu hỏi' ?></h1>
-            <p class="text-muted mb-0">Chỉnh sửa nội dung, đáp án đúng, loại câu hỏi và độ khó.</p>
+            <p class="admin-eyebrow"><i class="fa-solid fa-circle-question me-1" aria-hidden="true"></i>Ngân hàng câu hỏi</p>
+            <h1><?= $isEditing ? 'Chỉnh sửa câu hỏi' : 'Tạo câu hỏi' ?></h1>
+            <p>Chỉnh sửa nội dung, đáp án đúng, loại câu hỏi và độ khó.</p>
         </div>
-        <a class="btn btn-outline-secondary" href="<?= !empty($question['bank_id']) ? 'index.php?action=qe_bank_show&id=' . (int) $question['bank_id'] : 'index.php?action=qe_banks' ?>">Quay lại</a>
+        <a class="btn-admin-outline" href="<?= !empty($question['bank_id']) ? 'index.php?action=qe_bank_show&id=' . (int) $question['bank_id'] : 'index.php?action=qe_banks' ?>"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>Quay lại</a>
     </div>
     <?php foreach ($errors as $error): ?>
         <div class="alert alert-danger" role="alert"><?= $escape($error) ?></div>
@@ -55,7 +49,7 @@ unset($answer);
             <a class="alert-link" href="index.php?action=qe_bank_create">Tạo ngân hàng câu hỏi</a>
         </div>
     <?php else: ?>
-        <form method="post" action="index.php?action=<?= $isEditing ? 'qe_question_edit&id=' . (int) $questionId : 'qe_question_create' ?>" class="card card-body shadow-sm" id="question-form">
+        <form method="post" action="index.php?action=<?= $isEditing ? 'qe_question_edit&id=' . (int) $questionId : 'qe_question_create' ?>" class="card card-body admin-form-card" id="question-form">
             <input type="hidden" name="csrf_token" value="<?= $escape($csrfToken) ?>">
             <div class="row g-3">
                 <div class="col-md-6">
@@ -101,7 +95,7 @@ unset($answer);
                     <h2 class="h5 mb-1">Đáp án</h2>
                     <p class="text-muted small mb-0">Chọn đáp án đúng; câu nhiều đáp án cho phép chọn nhiều.</p>
                 </div>
-                <button class="btn btn-sm btn-outline-primary" type="button" id="add-answer">Thêm đáp án</button>
+                <button class="btn-admin-outline btn-admin-compact" type="button" id="add-answer"><i class="fa-solid fa-plus" aria-hidden="true"></i>Thêm đáp án</button>
             </div>
             <div id="answers">
                 <?php foreach ($answers as $index => $answer): ?>
@@ -109,13 +103,13 @@ unset($answer);
                         <span class="input-group-text answer-label"><?= chr(65 + $index) ?></span>
                         <input type="checkbox" class="form-check-input mt-0 align-self-center mx-3 correct-choice" name="correct_answers[]" value="<?= (int) $index ?>" aria-label="Đánh dấu đáp án đúng" <?= !empty($answer['is_correct']) ? 'checked' : '' ?>>
                         <textarea class="form-control" name="answers[]" rows="2" maxlength="2000" required aria-label="Nội dung đáp án"><?= $escape($answer['content'] ?? '') ?></textarea>
-                        <button class="btn btn-outline-danger remove-answer" type="button" aria-label="Xóa đáp án">Xóa</button>
+                        <button class="btn-admin-danger btn-admin-compact remove-answer" type="button" aria-label="Xóa đáp án"><i class="fa-solid fa-trash-can" aria-hidden="true"></i>Xóa</button>
                     </div>
                 <?php endforeach; ?>
             </div>
             <div class="d-flex justify-content-end gap-2 mt-3">
                 <a class="btn btn-outline-secondary" href="<?= !empty($question['bank_id']) ? 'index.php?action=qe_bank_show&id=' . (int) $question['bank_id'] : 'index.php?action=qe_banks' ?>">Hủy</a>
-                <button class="btn btn-primary" type="submit"><?= $isEditing ? 'Lưu câu hỏi' : 'Tạo câu hỏi' ?></button>
+                <button class="btn-admin-primary" type="submit"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i><?= $isEditing ? 'Lưu câu hỏi' : 'Tạo câu hỏi' ?></button>
             </div>
         </form>
     <?php endif; ?>
@@ -149,10 +143,10 @@ unset($answer);
         if (index >= 10) return;
         const row = document.createElement('div');
         row.className = 'input-group mb-2 answer-row';
-        row.innerHTML = `<span class="input-group-text answer-label"></span>
+        row.innerHTML = `<span class="input-group-text answer-label" aria-label="Đáp án"></span>
             <input type="checkbox" class="form-check-input mt-0 align-self-center mx-3 correct-choice" name="correct_answers[]" aria-label="Đánh dấu đáp án đúng">
             <textarea class="form-control" name="answers[]" rows="2" maxlength="2000" required aria-label="Nội dung đáp án"></textarea>
-            <button class="btn btn-outline-danger remove-answer" type="button" aria-label="Xóa đáp án">Xóa</button>`;
+            <button class="btn-admin-danger btn-admin-compact remove-answer" type="button" aria-label="Xóa đáp án"><i class="fa-solid fa-trash-can" aria-hidden="true"></i>Xóa</button>`;
         answerList.appendChild(row);
         row.querySelector('.correct-choice').value = index;
         updateAnswerControls();
@@ -166,5 +160,6 @@ unset($answer);
     questionType?.addEventListener('change', updateAnswerControls);
     updateAnswerControls();
 </script>
+<?php require __DIR__ . '/../../partials/app-shell-end.php'; ?>
 </body>
 </html>

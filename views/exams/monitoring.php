@@ -18,12 +18,12 @@
     <link rel="stylesheet" href="assets/css/admin.css">
 </head>
 <body class="admin-app">
-<nav class="navbar bg-white border-bottom">
-    <div class="container monitor-shell">
-        <a class="navbar-brand fw-bold text-primary" href="index.php?action=dashboard"><i class="fa-solid fa-graduation-cap me-2"></i>EduTest</a>
-        <a href="index.php?action=exam_statistics&exam_id=<?php echo (int) $exam['exam_id']; ?>" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-chart-column me-1"></i>Thống kê</a>
-    </div>
-</nav>
+<?php
+$appPageTitle = 'Giám sát bài thi';
+$appActiveAction = 'exam';
+$appTopbarHtml = '<a href="index.php?action=exam_statistics&exam_id=' . (int) $exam['exam_id'] . '" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-chart-column me-1"></i>Thống kê</a>';
+require __DIR__ . '/../partials/app-shell-start.php';
+?>
 <main class="container monitor-shell py-4 py-md-5">
     <section class="monitor-heading p-4 p-md-5 mb-4">
         <div class="small opacity-75 mb-2"><i class="fa-solid fa-tower-broadcast me-1"></i>GIÁM SÁT BÀI THI</div>
@@ -113,5 +113,6 @@
     refresh();
 }());
 </script>
+<?php require __DIR__ . '/../partials/app-shell-end.php'; ?>
 </body>
 </html>

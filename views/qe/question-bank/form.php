@@ -16,27 +16,20 @@ $escape = static function ($value) {
     <link rel="stylesheet" href="assets/css/admin.css">
 </head>
 <body class="admin-app">
-<nav class="navbar admin-module-navbar">
-    <div class="container">
-        <a class="navbar-brand" href="index.php?action=dashboard"><i class="fa-solid fa-graduation-cap me-2" aria-hidden="true"></i>EduTest</a>
-        <div class="d-flex gap-2">
-            <a class="btn btn-sm btn-outline-secondary" href="index.php?action=dashboard">Bảng điều khiển</a>
-            <a class="btn btn-sm btn-outline-primary" href="index.php?action=qe_banks">Ngân hàng câu hỏi</a>
-        </div>
-    </div>
-</nav>
+<?php $appPageTitle = $isEditing ? 'Chỉnh sửa ngân hàng' : 'Tạo ngân hàng'; $appActiveAction = 'qe_banks'; require __DIR__ . '/../../partials/app-shell-start.php'; ?>
 <main class="container py-4" style="max-width: 900px">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="admin-page-heading">
         <div>
-            <h1 class="h3 mb-1"><?= $isEditing ? 'Chỉnh sửa ngân hàng' : 'Tạo ngân hàng câu hỏi' ?></h1>
-            <p class="text-muted mb-0">Ngân hàng là nơi lưu và quản lý các câu hỏi dùng cho đề thi.</p>
+            <p class="admin-eyebrow"><i class="fa-solid fa-layer-group me-1" aria-hidden="true"></i>Ngân hàng câu hỏi</p>
+            <h1><?= $isEditing ? 'Chỉnh sửa ngân hàng' : 'Tạo ngân hàng câu hỏi' ?></h1>
+            <p>Ngân hàng là nơi lưu và quản lý các câu hỏi dùng cho đề thi.</p>
         </div>
-        <a class="btn btn-outline-secondary" href="index.php?action=qe_banks">Quay lại</a>
+        <a class="btn-admin-outline" href="index.php?action=qe_banks"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>Quay lại</a>
     </div>
     <?php foreach ($errors as $error): ?>
         <div class="alert alert-danger" role="alert"><?= $escape($error) ?></div>
     <?php endforeach; ?>
-    <form method="post" action="index.php?action=<?= $isEditing ? 'qe_bank_edit&id=' . (int) $bankId : 'qe_bank_create' ?>" class="card card-body shadow-sm">
+    <form method="post" action="index.php?action=<?= $isEditing ? 'qe_bank_edit&id=' . (int) $bankId : 'qe_bank_create' ?>" class="card card-body admin-form-card">
         <input type="hidden" name="csrf_token" value="<?= $escape($csrfToken) ?>">
         <div class="mb-3">
             <label for="bank-name" class="form-label">Tên ngân hàng <span class="text-danger">*</span></label>
@@ -49,9 +42,10 @@ $escape = static function ($value) {
         </div>
         <div class="d-flex justify-content-end gap-2">
             <a class="btn btn-outline-secondary" href="index.php?action=qe_banks">Hủy</a>
-            <button class="btn btn-primary" type="submit"><?= $isEditing ? 'Lưu thay đổi' : 'Tạo ngân hàng' ?></button>
+            <button class="btn-admin-primary" type="submit"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i><?= $isEditing ? 'Lưu thay đổi' : 'Tạo ngân hàng' ?></button>
         </div>
     </form>
 </main>
+<?php require __DIR__ . '/../../partials/app-shell-end.php'; ?>
 </body>
 </html>

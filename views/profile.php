@@ -3,9 +3,15 @@ $userRole = $_SESSION['user']['role'] ?? '';
 $roleLabels = [
     'student' => 'Học sinh',
     'teacher' => 'Giáo viên',
+    'admin' => 'Quản trị viên',
 ];
 $roleLabel = $roleLabels[$userRole] ?? 'Thành viên';
-$userIcon = $userRole === 'teacher' ? 'fa-chalkboard-user' : 'fa-user-graduate';
+$userIcons = [
+    'student' => 'fa-user-graduate',
+    'teacher' => 'fa-chalkboard-user',
+    'admin' => 'fa-user-shield',
+];
+$userIcon = $userIcons[$userRole] ?? 'fa-user';
 $profileErrors = [
     'full_name' => 'Họ và tên: ' . ($errors['full_name'] ?? ''),
     'school_name' => 'Trường học: ' . ($errors['school_name'] ?? ''),
@@ -29,57 +35,13 @@ $profileErrors = [
     <link rel="stylesheet" href="assets/css/admin.css">
 </head>
 <body class="admin-app">
-<div class="admin-layout">
-    <aside class="admin-sidebar">
-        <a class="admin-brand" href="index.php?action=dashboard">
-            <span class="admin-brand-mark" aria-hidden="true"><i class="fa-solid fa-graduation-cap"></i></span>
-            <span>EduTest</span>
-        </a>
-        <nav class="admin-nav" aria-label="Điều hướng chính">
-            <a class="admin-nav-link" href="index.php?action=dashboard">
-                <i class="fa-solid fa-house" aria-hidden="true"></i><span>Tổng quan</span>
-            </a>
-            <a class="admin-nav-link active" href="index.php?action=profile" aria-current="page">
-                <i class="fa-regular fa-id-card" aria-hidden="true"></i><span>Hồ sơ của tôi</span>
-            </a>
-            <?php if ($userRole === 'student'): ?>
-                <a class="admin-nav-link" href="index.php?action=student_statistics">
-                    <i class="fa-solid fa-chart-line" aria-hidden="true"></i><span>Thống kê của tôi</span>
-                </a>
-            <?php elseif ($userRole === 'teacher'): ?>
-                <a class="admin-nav-link" href="index.php?action=teacher_classes">
-                    <i class="fa-solid fa-school" aria-hidden="true"></i><span>Lớp học của tôi</span>
-                </a>
-                <a class="admin-nav-link" href="index.php?action=qe_banks">
-                    <i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Ngân hàng câu hỏi</span>
-                </a>
-                <a class="admin-nav-link" href="index.php?action=qe_exam_create">
-                    <i class="fa-solid fa-file-circle-plus" aria-hidden="true"></i><span>Tạo đề thi</span>
-                </a>
-            <?php endif; ?>
-            <a class="admin-nav-link" href="index.php?action=forum">
-                <i class="fa-regular fa-comments" aria-hidden="true"></i><span>Diễn đàn</span>
-            </a>
-        </nav>
-        <div class="admin-sidebar-bottom">
-            <span class="admin-account-avatar" aria-hidden="true"><i class="fa-solid <?= htmlspecialchars($userIcon, ENT_QUOTES, 'UTF-8') ?>"></i></span>
-            <div class="admin-account-copy">
-                <div class="admin-account-name"><?= htmlspecialchars($profile['full_name'], ENT_QUOTES, 'UTF-8') ?></div>
-                <div class="admin-account-role"><?= htmlspecialchars($roleLabel, ENT_QUOTES, 'UTF-8') ?></div>
-            </div>
-            <a class="admin-logout" href="index.php?action=logout" aria-label="Đăng xuất" title="Đăng xuất">
-                <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
-            </a>
-        </div>
-    </aside>
-
-    <div class="admin-main">
-        <header class="admin-topbar">
-            <p class="admin-breadcrumb">EduTest <span aria-hidden="true">/</span> <strong>Hồ sơ của tôi</strong></p>
-            <a href="index.php?action=dashboard" class="admin-topbar-link"><i class="fa-solid fa-arrow-left me-1" aria-hidden="true"></i> Không gian học tập</a>
-        </header>
-
-        <main class="admin-content">
+<?php
+$appPageTitle = 'Hồ sơ của tôi';
+$appActiveAction = 'profile';
+$appTopbarHtml = '<a href="index.php?action=dashboard" class="admin-topbar-link"><i class="fa-solid fa-arrow-left me-1" aria-hidden="true"></i> Không gian học tập</a>';
+require __DIR__ . '/partials/app-shell-start.php';
+?>
+<main>
             <div class="admin-page-heading">
                 <div>
                     <p class="admin-eyebrow">Tài khoản cá nhân</p>
@@ -208,9 +170,7 @@ $profileErrors = [
                     </div>
                 </form>
             </div>
-        </main>
-    </div>
-</div>
+<?php require __DIR__ . '/partials/app-shell-end.php'; ?>
 <script>
     const errorSummary = document.getElementById('profileErrorSummary');
     if (errorSummary) errorSummary.focus();

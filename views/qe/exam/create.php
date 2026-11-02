@@ -32,83 +32,47 @@ $escape = function ($value) {
     <link rel="stylesheet" href="views/qe/qe.css">
     <link rel="stylesheet" href="assets/css/admin.css">
     <style>
-        .exam-create-wrap { max-width: 1100px; }
-        .exam-create-card { border: 1px solid #d9e5f0; border-radius: 6px; background: #fff; padding: 24px; margin-bottom: 20px; }
+        .exam-create-card { border: 1px solid #d9e5f0; border-radius: 6px; background: #fff; padding: 20px; margin-bottom: 16px; }
         .paste-editor { min-height: 320px; max-height: 65vh; overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; border: 1px solid #c9d8e7; border-radius: 5px; padding: 16px; background: #fff; }
-        .paste-editor:focus { outline: 2px solid #c47721; outline-offset: 2px; border-color: #1769aa; box-shadow: 0 0 0 3px rgba(23,105,170,.15); }
+        .paste-editor:focus { outline: 3px solid #e0a443; outline-offset: 3px; border-color: #1769aa; box-shadow: 0 0 0 3px rgba(23,105,170,.15); }
         .paste-editor:empty:before { content: attr(data-placeholder); color: #6c757d; pointer-events: none; }
         .parsed-question { border: 1px solid #d9e5f0; border-radius: 6px; padding: 18px; margin-top: 14px; background: #f4f8fc; }
         .parsed-answer { border: 1px solid #d9e5f0; border-radius: 5px; padding: 10px 12px; background: #fff; }
         .parsed-answer.correct { border-color: #75b798; background: #f1faf5; }
         .parse-guide { background: #e6f2fc; border-radius: 5px; padding: 14px 16px; }
+        @media (max-width: 620px) {
+            .exam-create-card { padding: 14px; }
+            .paste-editor { min-height: 240px; padding: 12px; }
+        }
     </style>
 </head>
 <body class="exam-create-page admin-app">
-    <div class="member2-app">
-        <aside class="member2-sidebar" id="sidebar">
-            <div class="sidebar-brand">
-                <div class="sidebar-brand-icon"><i class="fa-solid fa-graduation-cap"></i></div>
-                <div>
-                    <div class="sidebar-brand-title">EduTest</div>
-                    <div class="sidebar-brand-subtitle">Quản lý học tập</div>
-                </div>
-            </div>
-            <div class="sidebar-section-label">Không gian làm việc</div>
-            <nav class="sidebar-menu">
-                <a href="index.php?action=dashboard"><i class="fa-solid fa-gauge-high"></i><span>Bảng điều khiển</span></a>
-                <a href="index.php?action=qe_banks"><i class="fa-solid fa-layer-group"></i><span>Ngân hàng câu hỏi</span></a>
-                <a class="active" href="index.php?action=qe_exam_create"><i class="fa-solid fa-file-signature"></i><span>Bài thi</span></a>
-            </nav>
-            <div class="sidebar-user">
-                <div class="sidebar-user-card">
-                    <div class="sidebar-user-avatar"><i class="fa-solid fa-user"></i></div>
-                    <div>
-                        <div class="sidebar-user-name"><?= $escape($_SESSION['user']['full_name'] ?? '') ?></div>
-                        <div class="sidebar-user-role"><?= $escape($_SESSION['user']['role'] ?? '') ?></div>
-                    </div>
-                </div>
-            </div>
-        </aside>
+<?php $appPageTitle = 'Tạo đề thi'; $appActiveAction = 'qe_exam_create'; require __DIR__ . '/../../partials/app-shell-start.php'; ?>
+<main>
+    <div class="admin-page-heading">
+        <div>
+            <p class="admin-eyebrow"><i class="fa-solid fa-file-circle-plus me-1" aria-hidden="true"></i>Tạo bài thi</p>
+            <h1>Tạo đề thi</h1>
+            <p>Dán nội dung để quét câu hỏi và đáp án, sau đó kiểm tra trước khi lưu.</p>
+        </div>
+        <a href="index.php?action=qe_banks" class="btn-admin-outline"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>Quay lại ngân hàng</a>
+    </div>
 
-        <main class="member2-main">
-            <nav class="member2-topbar">
-                <div class="d-flex align-items-center">
-                    <button type="button" class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('show')" aria-label="Mở menu">
-                        <i class="fa-solid fa-bars"></i>
-                    </button>
-                    <div class="topbar-title">Tạo đề thi</div>
-                </div>
-                <div class="topbar-actions">
-                    <div class="user-chip"><i class="fa-solid fa-user"></i><span><?= $escape($_SESSION['user']['full_name'] ?? '') ?></span></div>
-                </div>
-            </nav>
+    <?php if ($created): ?>
+        <div class="alert alert-success" role="status">
+            <i class="fa-solid fa-circle-check me-2"></i>Đã tạo đề thi cùng câu hỏi và đáp án.
+            <a href="index.php?action=dashboard" class="alert-link ms-1">Về bảng điều khiển</a>
+        </div>
+    <?php endif; ?>
+    <?php foreach ($formErrors as $error): ?>
+        <div class="alert alert-danger" role="alert"><?= $escape($error) ?></div>
+    <?php endforeach; ?>
 
-            <section class="member2-page exam-create-wrap">
-                <div class="page-header">
-                    <div class="page-title-wrap">
-                        <h1>Tạo đề thi</h1>
-                        <div class="text-muted">Dán toàn bộ nội dung, hệ thống sẽ quét câu hỏi và đáp án một lượt.</div>
-                    </div>
-                    <div class="page-actions">
-                        <a href="index.php?action=qe_banks" class="btn btn-secondary"><i class="fa-solid fa-arrow-left me-2"></i>Quay lại ngân hàng</a>
-                    </div>
-                </div>
-
-                <?php if ($created): ?>
-                    <div class="alert alert-success" role="status">
-                        <i class="fa-solid fa-circle-check me-2"></i>Đã tạo đề thi cùng câu hỏi và đáp án.
-                        <a href="index.php?action=dashboard" class="alert-link ms-1">Về bảng điều khiển</a>
-                    </div>
-                <?php endif; ?>
-                <?php foreach ($formErrors as $error): ?>
-                    <div class="alert alert-danger" role="alert"><?= $escape($error) ?></div>
-                <?php endforeach; ?>
-
-                <!-- BEGIN BULK EXAM CREATION: one rich-text paste is parsed into the existing question/answer model. -->
-                <form method="post" action="index.php?action=qe_exam_create" id="exam-create-form">
-                    <input type="hidden" name="csrf_token" value="<?= $escape($csrfToken) ?>">
-                    <textarea class="d-none" name="pasted_exam_html" id="pasted-exam-html"></textarea>
-                    <section class="exam-create-card">
+    <!-- BEGIN BULK EXAM CREATION: one rich-text paste is parsed into the existing question/answer model. -->
+    <form method="post" action="index.php?action=qe_exam_create" id="exam-create-form">
+        <input type="hidden" name="csrf_token" value="<?= $escape($csrfToken) ?>">
+        <textarea class="d-none" name="pasted_exam_html" id="pasted-exam-html"></textarea>
+        <section class="exam-create-card">
                         <h2 class="h5 fw-bold mb-4">Thông tin đề thi</h2>
                         <div class="row g-3">
                             <div class="col-md-6">
@@ -165,7 +129,7 @@ $escape = function ($value) {
                                 <h2 class="h5 fw-bold mb-1">Dán nội dung đề</h2>
                                 <p class="small text-muted mb-0">Câu hỏi đánh số 1., 2.; đáp án mỗi dòng A), B), C), D). Giữ nguyên định dạng khi dán.</p>
                             </div>
-                            <button type="button" class="btn btn-outline-secondary" id="clear-paste"><i class="fa-regular fa-trash-can me-2"></i>Xóa nội dung</button>
+                            <button type="button" class="btn-admin-outline" id="clear-paste"><i class="fa-regular fa-trash-can" aria-hidden="true"></i>Xóa nội dung</button>
                         </div>
 
                         <div class="parse-guide small mb-3">
@@ -195,14 +159,12 @@ $escape = function ($value) {
                     </section>
 
                     <div class="d-flex justify-content-end gap-2 mb-5">
-                        <a href="index.php?action=qe_banks" class="btn btn-secondary"><i class="fa-solid fa-xmark me-2"></i>Hủy</a>
-                        <button type="submit" class="btn btn-primary" id="create-exam-button" <?= !$questionBanks ? 'disabled' : '' ?>><i class="fa-solid fa-plus me-2"></i>Tạo đề thi</button>
+                        <a href="index.php?action=qe_banks" class="btn-admin-outline"><i class="fa-solid fa-xmark" aria-hidden="true"></i>Hủy</a>
+                        <button type="submit" class="btn-admin-primary" id="create-exam-button" <?= !$questionBanks ? 'disabled' : '' ?>><i class="fa-solid fa-plus" aria-hidden="true"></i>Tạo đề thi</button>
                     </div>
-                </form>
-                <!-- END BULK EXAM CREATION -->
-            </section>
-        </main>
-    </div>
+    </form>
+    <!-- END BULK EXAM CREATION -->
+</main>
     <script>
         (function () {
             const form = document.getElementById('exam-create-form');
@@ -669,5 +631,6 @@ $escape = function ($value) {
             renderPreview();
         })();
     </script>
+<?php require __DIR__ . '/../../partials/app-shell-end.php'; ?>
 </body>
 </html>

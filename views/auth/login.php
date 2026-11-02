@@ -32,6 +32,12 @@
             <h2 id="login-heading">Chào mừng trở lại</h2>
             <p class="admin-login-intro">Nhập thông tin tài khoản để tiếp tục.</p>
 
+            <?php if (!empty($notice)): ?>
+                <div class="alert alert-info py-2 mb-4" id="loginNotice" role="status" tabindex="-1">
+                    <?= htmlspecialchars($notice, ENT_QUOTES, 'UTF-8') ?>
+                </div>
+            <?php endif; ?>
+
             <?php if (!empty($error)): ?>
                 <div class="alert alert-danger py-2 mb-4" id="loginError" role="alert" tabindex="-1">
                     <?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?>
@@ -84,7 +90,9 @@
     });
 
     const loginError = document.getElementById('loginError');
+    const loginNotice = document.getElementById('loginNotice');
     if (loginError) loginError.focus();
+    else if (loginNotice) loginNotice.focus();
 
     document.getElementById('loginForm').addEventListener('submit', () => {
         const submitButton = document.getElementById('loginSubmit');

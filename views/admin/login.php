@@ -28,19 +28,23 @@
     </section>
 
     <section class="admin-login-content" aria-labelledby="admin-login-heading">
-        <div class="admin-login-form">
+        <div class="admin-login-form auth-form">
             <h2 id="admin-login-heading">Đăng nhập quản trị</h2>
             <p class="admin-login-intro">Sử dụng tài khoản quản trị để tiếp tục.</p>
 
+            <?php if (!empty($notice)): ?>
+                <div class="alert alert-info py-2 mb-4" role="status"><?= htmlspecialchars($notice, ENT_QUOTES, 'UTF-8') ?></div>
+            <?php endif; ?>
+
             <?php if (!empty($error)): ?>
-                <div class="alert alert-danger py-2" id="adminLoginError" role="alert" tabindex="-1">
+                <div class="alert alert-danger py-2 mb-4" id="adminLoginError" role="alert" tabindex="-1">
                     <?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?>
                 </div>
             <?php endif; ?>
 
             <form id="adminLoginForm" action="index.php?action=admin_login_process" method="POST">
                 <div class="mb-3">
-                    <label for="adminEmail" class="form-label">Email quản trị</label>
+                    <label for="adminEmail" class="form-label">Email</label>
                     <div class="input-group">
                         <span class="input-group-text" aria-hidden="true"><i class="fa-regular fa-envelope"></i></span>
                         <input type="email" id="adminEmail" name="email" class="form-control" autocomplete="username" inputmode="email" value="<?= htmlspecialchars($_POST['email'] ?? '', ENT_QUOTES, 'UTF-8') ?>" required autofocus>
@@ -58,10 +62,10 @@
                 </div>
                 <button type="submit" class="btn btn-admin-primary admin-submit" id="adminLoginSubmit">
                     <i class="fa-solid fa-arrow-right-to-bracket" aria-hidden="true"></i>
-                    <span data-submit-label>Vào trang quản trị</span>
+                    <span data-submit-label>Đăng nhập</span>
                 </button>
             </form>
-            <a href="index.php?action=home" class="admin-login-back"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Về trang học tập</a>
+            <p class="auth-footer">Bạn không phải quản trị viên? <a href="index.php?action=home" class="auth-inline-link">Về trang học tập</a></p>
         </div>
     </section>
 </main>

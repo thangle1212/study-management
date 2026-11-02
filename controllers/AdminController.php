@@ -174,12 +174,16 @@ class AdminController extends BaseController {
             exit;
         }
         $error = '';
+        $notice = ($_GET['notice'] ?? '') === 'admin_portal'
+            ? 'Tài khoản quản trị cần đăng nhập tại cổng này.'
+            : '';
         require __DIR__ . '/../views/admin/login.php';
     }
 
     // Xử lý xác thực đăng nhập Admin (Bắt buộc kiểm tra role === 'admin')
     public function handleLogin() {
         $error = '';
+        $notice = '';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $email = trim($_POST['email'] ?? '');
             $password = $_POST['password'] ?? '';

@@ -27,7 +27,8 @@
     <link rel="stylesheet" href="assets/css/admin.css">
 </head>
 <body class="admin-app">
-<nav class="navbar topbar sticky-top">
+<?php $appPageTitle = 'Chuẩn bị bài thi'; $appActiveAction = 'exam'; require __DIR__ . '/../partials/app-shell-start.php'; ?>
+<nav class="navbar topbar sticky-top legacy-page-navbar">
     <div class="container prepare-shell">
         <a class="navbar-brand brand fw-bold" href="index.php?action=dashboard"><i class="fa-solid fa-graduation-cap me-2"></i>EduTest</a>
         <a href="index.php?action=dashboard" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-arrow-left me-1"></i>Trang tổng quan</a>
@@ -141,5 +142,6 @@ if (toggleHistory) {
     });
 }
 </script>
+<?php require __DIR__ . '/../partials/app-shell-end.php'; ?>
 </body>
 </html>

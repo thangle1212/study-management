@@ -13,37 +13,8 @@
     <link rel="stylesheet" href="assets/css/admin.css">
 </head>
 <body class="admin-app">
-<div class="admin-layout">
-    <aside class="admin-sidebar">
-        <a class="admin-brand" href="index.php?action=dashboard">
-            <span class="admin-brand-mark" aria-hidden="true"><i class="fa-solid fa-graduation-cap"></i></span>
-            <span>EduTest</span>
-        </a>
-        <nav class="admin-nav" aria-label="Điều hướng chính">
-            <a class="admin-nav-link" href="index.php?action=dashboard"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Tổng quan</span></a>
-            <a class="admin-nav-link active" href="index.php?action=teacher_classes" aria-current="page"><i class="fa-solid fa-school" aria-hidden="true"></i><span>Lớp học của tôi</span></a>
-            <a class="admin-nav-link" href="index.php?action=profile"><i class="fa-regular fa-id-card" aria-hidden="true"></i><span>Hồ sơ của tôi</span></a>
-            <a class="admin-nav-link" href="index.php?action=qe_banks"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Ngân hàng câu hỏi</span></a>
-            <a class="admin-nav-link" href="index.php?action=qe_exam_create"><i class="fa-solid fa-file-circle-plus" aria-hidden="true"></i><span>Tạo đề thi</span></a>
-            <a class="admin-nav-link" href="index.php?action=forum"><i class="fa-regular fa-comments" aria-hidden="true"></i><span>Diễn đàn</span></a>
-        </nav>
-        <div class="admin-sidebar-bottom">
-            <span class="admin-account-avatar" aria-hidden="true"><i class="fa-solid fa-chalkboard-user"></i></span>
-            <div class="admin-account-copy">
-                <div class="admin-account-name"><?= htmlspecialchars($_SESSION['user']['full_name'] ?? 'Giáo viên', ENT_QUOTES, 'UTF-8') ?></div>
-                <div class="admin-account-role">Giáo viên</div>
-            </div>
-            <a class="admin-logout" href="index.php?action=logout" aria-label="Đăng xuất" title="Đăng xuất"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i></a>
-        </div>
-    </aside>
-
-    <div class="admin-main">
-        <header class="admin-topbar">
-            <p class="admin-breadcrumb">EduTest <span aria-hidden="true">/</span> <strong>Lớp học của tôi</strong></p>
-            <a href="index.php?action=forum" class="admin-topbar-link"><i class="fa-regular fa-comments me-1" aria-hidden="true"></i> Diễn đàn</a>
-        </header>
-
-        <main class="admin-content">
+<?php $appPageTitle = 'Lớp học của tôi'; $appActiveAction = 'teacher_classes'; require __DIR__ . '/../../partials/app-shell-start.php'; ?>
+<main>
             <div class="admin-page-heading">
                 <div>
                     <p class="admin-eyebrow">Không gian giảng dạy</p>
@@ -63,7 +34,7 @@
             <section class="admin-panel p-0 overflow-hidden" aria-label="Danh sách lớp học">
                 <?php if (!$classes): ?>
                     <div class="admin-empty-state p-5 text-center">
-                        <span class="user-empty-icon" aria-hidden="true"><i class="fa-regular fa-folder-open"></i></span>
+                        <span class="user-empty-icon" aria-hidden="true"><i class="fa-solid fa-folder-open"></i></span>
                         <h2>Bạn chưa được phân công lớp</h2>
                         <p class="mb-0">Liên hệ quản trị viên để được phân công lớp học.</p>
                     </div>
@@ -107,8 +78,6 @@
                     </div>
                 <?php endif; ?>
             </section>
-        </main>
-    </div>
-</div>
+<?php require __DIR__ . '/../../partials/app-shell-end.php'; ?>
 </body>
 </html>

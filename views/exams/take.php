@@ -33,21 +33,14 @@ $deadline = strtotime($exam['start_time']) + ((int) $exam['duration_minutes'] * 
     <link rel="stylesheet" href="assets/css/admin.css">
 </head>
 <body class="admin-app">
-<nav class="navbar topbar sticky-top">
-    <div class="container exam-shell d-flex flex-wrap align-items-center justify-content-between gap-2">
-        <a class="navbar-brand brand fw-bold" href="index.php?action=dashboard"><i class="fa-solid fa-graduation-cap me-2"></i>EduTest</a>
-        <div class="exam-status-group d-flex align-items-center gap-3">
-        <span id="exam-timer" class="exam-status fw-semibold text-nowrap" aria-live="polite">
-            <i class="fa-regular fa-clock me-1"></i>Còn lại <span id="exam-countdown">--:--</span>
-        </span>
-        <span id="autosave-status" class="small text-muted text-nowrap" aria-live="polite">Đang kết nối lưu bài</span>
-        <span id="violation-count" class="badge bg-warning-subtle text-warning-emphasis text-nowrap">
-            <?php echo (int) $exam['anti_cheat_enabled'] ? 'Vi phạm ' . $violationCount . '/' . (int) $exam['violation_limit'] : 'Giám sát tắt'; ?>
-        </span>
-        </div>
-        <a href="index.php?action=dashboard" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-arrow-left me-1"></i>Trang tổng quan</a>
-    </div>
-</nav>
+<?php
+$appPageTitle = 'Đang làm bài';
+$appActiveAction = 'exam';
+$appTopbarHtml = '<div class="exam-status-group d-flex align-items-center"><span id="exam-timer" class="exam-status fw-semibold text-nowrap" aria-live="polite"><i class="fa-regular fa-clock me-1"></i>Còn lại <span id="exam-countdown">--:--</span></span><span id="autosave-status" class="small text-muted text-nowrap" aria-live="polite">Đang kết nối lưu bài</span><span id="violation-count" class="badge bg-warning-subtle text-warning-emphasis text-nowrap">' .
+    ((int) $exam['anti_cheat_enabled'] ? 'Vi phạm ' . (int) $violationCount . '/' . (int) $exam['violation_limit'] : 'Giám sát tắt') .
+    '</span></div>';
+require __DIR__ . '/../partials/app-shell-start.php';
+?>
 <div class="container exam-shell py-4 py-md-5">
     <div class="exam-header p-4 p-md-5 mb-4">
     <div class="exam-header-content">
@@ -235,5 +228,6 @@ $deadline = strtotime($exam['start_time']) + ((int) $exam['duration_minutes'] * 
     updateCountdown();
 }());
 </script>
+<?php require __DIR__ . '/../partials/app-shell-end.php'; ?>
 </body>
 </html>
