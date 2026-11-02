@@ -2,144 +2,113 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f2f7fc">
     <title>Đăng ký - EduTest</title>
-    <!-- Bootstrap 5 CSS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- FontAwesome Icon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <style>
-        body {
-            background: linear-gradient(135deg, #e3f2fd 0%, #f8f9fa 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding: 20px 0;
-        }
-        .auth-card {
-            border: none;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
-            overflow: hidden;
-            background-color: #ffffff;
-            width: 100%;
-            max-width: 480px;
-        }
-        .input-group-text { background-color: #f8f9fa; border-right: none; }
-        .form-control-with-icon { border-left: none; }
-        .form-control-with-icon:focus { box-shadow: none; border-color: #dee2e6; }
-        .input-group:focus-within {
-            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
-            border-radius: 0.375rem;
-        }
-        .input-group:focus-within .input-group-text,
-        .input-group:focus-within .form-control { border-color: #86b7fe; }
-    </style>
+    <link rel="stylesheet" href="assets/css/admin.css">
 </head>
-<body>
-
-<div class="container d-flex justify-content-center">
-    <div class="auth-card p-4">
-        
-        <div class="text-center mb-4">
-            <a href="index.php" class="text-decoration-none text-primary fw-bold fs-3">
-                <i class="fa-solid fa-graduation-cap me-2"></i>EduTest
-            </a>
-            <h5 class="fw-bold mt-3 mb-1">Tạo tài khoản mới</h5>
-            <p class="text-muted small">Điền thông tin bên dưới để bắt đầu sử dụng hệ thống</p>
+<body class="admin-login-page">
+<main class="admin-login-shell" aria-label="Tạo tài khoản EduTest">
+    <section class="admin-login-brand" aria-labelledby="auth-brand-heading">
+        <a href="index.php?action=home" class="admin-brand">
+            <span class="admin-brand-mark" aria-hidden="true"><i class="fa-solid fa-graduation-cap"></i></span>
+            <span>EduTest</span>
+        </a>
+        <div class="admin-login-copy">
+            <p class="admin-eyebrow">Bắt đầu học tập</p>
+            <h1 id="auth-brand-heading">Một tài khoản, nhiều cơ hội tiến bộ.</h1>
+            <p>Tạo hồ sơ cá nhân để tham gia kỳ thi, theo dõi kết quả và trao đổi cùng cộng đồng.</p>
         </div>
+        <div class="admin-login-stamp">EduTest · Học tập trực tuyến</div>
+    </section>
 
-        <!-- Thông báo lỗi từ Controller -->
-        <?php if (!empty($error)): ?>
-            <div class="alert alert-danger py-2 small" role="alert">
-                <?php echo $error; ?>
-            </div>
-        <?php endif; ?>
+    <section class="admin-login-content" aria-labelledby="register-heading">
+        <div class="admin-login-form auth-form">
+            <h2 id="register-heading">Tạo tài khoản</h2>
+            <p class="admin-login-intro">Điền thông tin để bắt đầu sử dụng EduTest.</p>
 
-        <!-- Thông báo thành công từ Controller -->
-        <?php if (!empty($success)): ?>
-            <div class="alert alert-success py-2 small" role="alert">
-                <?php echo $success; ?>
-            </div>
-        <?php endif; ?>
-
-        <form action="index.php?action=register" method="POST">
-            <div class="alert alert-primary py-2 small">
-                <i class="fa-solid fa-circle-info me-1"></i>
-                Tài khoản mới mặc định là học sinh. Quản trị viên có thể cấp quyền giáo viên sau khi đăng ký.
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label fw-semibold">Họ và tên</label>
-                <div class="input-group">
-                    <span class="input-group-text text-muted"><i class="fa-regular fa-user"></i></span>
-                    <input type="text" name="full_name" class="form-control form-control-with-icon" placeholder="Nguyễn Văn A" value="<?php echo htmlspecialchars($_POST['full_name'] ?? ''); ?>" required>
+            <?php if (!empty($error)): ?>
+                <div class="alert alert-danger py-2" role="alert" tabindex="-1">
+                    <?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?>
                 </div>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label fw-semibold">Địa chỉ Email</label>
-                <div class="input-group">
-                    <span class="input-group-text text-muted"><i class="fa-regular fa-envelope"></i></span>
-                    <input type="email" name="email" class="form-control form-control-with-icon" placeholder="name@example.com" value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>" required>
+            <?php endif; ?>
+            <?php if (!empty($success)): ?>
+                <div class="alert alert-success py-2" role="status">
+                    <?= htmlspecialchars(strip_tags($success), ENT_QUOTES, 'UTF-8') ?>
                 </div>
-            </div>
+            <?php endif; ?>
 
-            <div class="mb-3">
-                <label class="form-label fw-semibold">Trường học (Không bắt buộc)</label>
-                <div class="input-group">
-                    <span class="input-group-text text-muted"><i class="fa-solid fa-school"></i></span>
-                    <input type="text" name="school_name" class="form-control form-control-with-icon" placeholder="THPT Chuyên / Đại học..." value="<?php echo htmlspecialchars($_POST['school_name'] ?? ''); ?>">
+            <form action="index.php?action=register" method="POST">
+                <div class="alert alert-primary py-2 small" role="note">
+                    <i class="fa-solid fa-circle-info me-1" aria-hidden="true"></i>
+                    Tài khoản mới mặc định là học sinh. Quản trị viên có thể cấp quyền giáo viên sau khi đăng ký.
                 </div>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label fw-semibold">Mật khẩu</label>
-                <div class="input-group">
-                    <span class="input-group-text text-muted"><i class="fa-solid fa-lock"></i></span>
-                    <input type="password" id="regPassword" name="password" class="form-control form-control-with-icon" placeholder="Ít nhất 6 ký tự" minlength="6" required>
-                    <button class="btn btn-outline-secondary border-start-0" type="button" aria-label="Hiện mật khẩu" aria-pressed="false" onclick="togglePassword('regPassword', this)">
-                        <i class="fa-regular fa-eye"></i>
-                    </button>
+                <div class="mb-3">
+                    <label for="registerName" class="form-label">Họ và tên</label>
+                    <div class="input-group">
+                        <span class="input-group-text" aria-hidden="true"><i class="fa-regular fa-user"></i></span>
+                        <input type="text" id="registerName" name="full_name" class="form-control" autocomplete="name" maxlength="100" placeholder="Nguyễn Văn A" value="<?= htmlspecialchars($_POST['full_name'] ?? '', ENT_QUOTES, 'UTF-8') ?>" required>
+                    </div>
                 </div>
-            </div>
-
-            <div class="form-check mb-3">
-                <input class="form-check-input" type="checkbox" id="terms" required>
-                <label class="form-check-label small text-muted" for="terms">
-                    Tôi đồng ý với <a href="#" class="text-primary text-decoration-none">Điều khoản dịch vụ</a> và <a href="#" class="text-primary text-decoration-none">Chính sách bảo mật</a>.
-                </label>
-            </div>
-
-            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold rounded-3 mb-3">
-                Tạo tài khoản <i class="fa-solid fa-user-plus ms-1"></i>
-            </button>
-        </form>
-
-        <div class="text-center pt-2 border-top">
-            <p class="small text-muted mb-0">Đã có tài khoản? <a href="index.php?action=login" class="text-primary fw-semibold text-decoration-none">Đăng nhập</a></p>
+                <div class="mb-3">
+                    <label for="registerEmail" class="form-label">Địa chỉ email</label>
+                    <div class="input-group">
+                        <span class="input-group-text" aria-hidden="true"><i class="fa-regular fa-envelope"></i></span>
+                        <input type="email" id="registerEmail" name="email" class="form-control" autocomplete="email" inputmode="email" maxlength="100" placeholder="name@example.com" value="<?= htmlspecialchars($_POST['email'] ?? '', ENT_QUOTES, 'UTF-8') ?>" required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="registerSchool" class="form-label">Trường học <span class="text-muted fw-normal">(không bắt buộc)</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text" aria-hidden="true"><i class="fa-solid fa-school"></i></span>
+                        <input type="text" id="registerSchool" name="school_name" class="form-control" autocomplete="organization" maxlength="150" placeholder="Trường học của bạn" value="<?= htmlspecialchars($_POST['school_name'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="regPassword" class="form-label">Mật khẩu</label>
+                    <div class="input-group">
+                        <span class="input-group-text" aria-hidden="true"><i class="fa-solid fa-lock"></i></span>
+                        <input type="password" id="regPassword" name="password" class="form-control" autocomplete="new-password" placeholder="Ít nhất 6 ký tự" minlength="6" required>
+                        <button class="btn btn-outline-secondary" type="button" data-auth-password-toggle aria-label="Hiện mật khẩu" aria-controls="regPassword" aria-pressed="false" title="Hiện mật khẩu">
+                            <i class="fa-regular fa-eye" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <div class="form-text">Sử dụng ít nhất 6 ký tự.</div>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="terms" required>
+                    <label class="form-check-label small text-muted" for="terms">
+                        Tôi đồng ý với <a href="#" class="auth-inline-link">Điều khoản dịch vụ</a> và <a href="#" class="auth-inline-link">Chính sách bảo mật</a>.
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-admin-primary auth-submit">
+                    <i class="fa-solid fa-user-plus" aria-hidden="true"></i>
+                    Tạo tài khoản
+                </button>
+            </form>
+            <p class="auth-footer">Đã có tài khoản? <a href="index.php?action=login" class="auth-inline-link">Đăng nhập</a></p>
         </div>
-
-    </div>
-</div>
-
+    </section>
+</main>
 <script>
-    function togglePassword(inputId, btn) {
-        const input = document.getElementById(inputId);
-        const icon = btn.querySelector('i');
-        const isHidden = input.type === 'password';
-        input.type = isHidden ? 'text' : 'password';
-        btn.setAttribute('aria-pressed', String(isHidden));
-        btn.setAttribute('aria-label', isHidden ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
-        if (isHidden) {
-            icon.classList.replace('fa-eye', 'fa-eye-slash');
-        } else {
-            icon.classList.replace('fa-eye-slash', 'fa-eye');
-        }
-    }
+    document.querySelectorAll('[data-auth-password-toggle]').forEach((passwordToggle) => {
+        passwordToggle.addEventListener('click', () => {
+            const input = document.getElementById(passwordToggle.getAttribute('aria-controls'));
+            const icon = passwordToggle.querySelector('i');
+            const isHidden = input.type === 'password';
+            input.type = isHidden ? 'text' : 'password';
+            passwordToggle.setAttribute('aria-pressed', String(isHidden));
+            passwordToggle.setAttribute('aria-label', isHidden ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
+            passwordToggle.title = isHidden ? 'Ẩn mật khẩu' : 'Hiện mật khẩu';
+            icon.classList.toggle('fa-eye', !isHidden);
+            icon.classList.toggle('fa-eye-slash', isHidden);
+        });
+    });
 </script>
-
 </body>
 </html>

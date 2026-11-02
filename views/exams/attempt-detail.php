@@ -7,32 +7,38 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
-        :root { --brand: #0d6efd; --ink: #17233c; }
-        body { background: linear-gradient(135deg, #eaf4ff 0%, #f8fbff 48%, #fff 100%); color: var(--ink); }
-        .topbar { background: rgba(255,255,255,.9); border-bottom: 1px solid #e5edf8; backdrop-filter: blur(12px); }
+        :root { --brand: #1769aa; --ink: #172f4d; }
+        body { background: #f2f7fc; color: var(--ink); }
+        .topbar { background: #fff; border-bottom: 1px solid #d9e5f0; }
         .brand { color: var(--brand); font-size: 1.35rem; }
-        .page-heading { border: 0; border-radius: 22px; background: linear-gradient(135deg, #0d6efd, #438df4); color: #fff; box-shadow: 0 16px 36px rgba(13,110,253,.18); }
-        .question-card { border: 1px solid #e5edf8; border-radius: 18px; box-shadow: 0 10px 28px rgba(31,74,125,.07); }
-        .answer-row { border: 1px solid #e5edf8; border-radius: 10px; }
-        .answer-selected { background: #eef6ff; border-color: #86b7fe; }
+        .page-heading { border: 1px solid #d9e5f0; border-left: 4px solid #1769aa; border-radius: 6px; background: #fff; color: #172f4d; box-shadow: none; }
+        .question-card { border: 1px solid #d9e5f0; border-radius: 6px; box-shadow: none; }
+        .answer-row { border: 1px solid #d9e5f0; border-radius: 5px; }
+        .answer-selected { background: #e6f2fc; border-color: #8db9dc; }
         .answer-correct { background: #eefaf3; border-color: #8bd3a8; }
         .answer-wrong { background: #fff2f2; border-color: #f1aeb5; }
     </style>
+    <link rel="stylesheet" href="assets/css/edutest.css">
+    <link rel="stylesheet" href="assets/css/admin.css">
 </head>
-<body>
-<nav class="navbar topbar sticky-top">
-    <div class="container">
-        <a class="navbar-brand brand fw-bold" href="index.php?action=dashboard"><i class="fa-solid fa-graduation-cap me-2"></i>EduTest</a>
-        <?php
-        $backAction = $_SESSION['user']['role'] === 'student'
-            ? (($_GET['from'] ?? '') === 'exam'
-                ? 'prepare_exam&exam_id=' . (int) $attempt['exam_id']
-                : 'student_statistics')
-            : 'exam_statistics&exam_id=' . (int) $attempt['exam_id'];
-        ?>
-        <a href="index.php?action=<?php echo $backAction; ?>" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-arrow-left me-1"></i><?php echo $_SESSION['user']['role'] === 'student' ? 'Quay lại thống kê cá nhân' : 'Quay lại bảng điểm'; ?></a>
-    </div>
-</nav>
+<body class="admin-app">
+<?php
+$fromResult = ($_GET['from'] ?? '') === 'result';
+$backAction = $_SESSION['user']['role'] === 'student'
+    ? ($fromResult
+        ? 'exam_result&attempt_id=' . (int) $attempt['attempt_id']
+        : (($_GET['from'] ?? '') === 'exam'
+            ? 'prepare_exam&exam_id=' . (int) $attempt['exam_id']
+            : 'student_statistics'))
+    : 'exam_statistics&exam_id=' . (int) $attempt['exam_id'];
+$backLabel = $fromResult
+    ? 'Quay lại kết quả'
+    : ($_SESSION['user']['role'] === 'student' ? 'Quay lại thống kê cá nhân' : 'Quay lại bảng điểm');
+$appPageTitle = 'Chi tiết lượt thi';
+$appActiveAction = 'exam';
+$appTopbarHtml = '<a href="index.php?action=' . htmlspecialchars($backAction, ENT_QUOTES, 'UTF-8') . '" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-arrow-left me-1"></i>' . htmlspecialchars($backLabel, ENT_QUOTES, 'UTF-8') . '</a>';
+require __DIR__ . '/../partials/app-shell-start.php';
+?>
 
 <main class="container py-4 py-md-5">
     <?php
@@ -108,7 +114,7 @@
                         <div class="col-12">
                             <div class="answer-row p-3 <?php echo $selected ? ($answer['is_correct'] ? 'answer-correct' : 'answer-wrong') : ($answer['is_correct'] ? 'answer-correct' : ''); ?>">
                                 <i class="fa-solid <?php echo $selected ? ($answer['is_correct'] ? 'fa-circle-check text-success' : 'fa-circle-xmark text-danger') : ($answer['is_correct'] ? 'fa-check text-success' : 'fa-circle text-muted'); ?> me-2"></i>
-                                <?php echo htmlspecialchars($answer['content']); ?>
+                                <?php echo htmlspecialchars(trim(html_entity_decode(strip_tags((string) $answer['content']), ENT_QUOTES | ENT_HTML5, 'UTF-8'))); ?>
                                 <?php if ($selected): ?><span class="badge bg-primary-subtle text-primary ms-2">Sinh viên chọn</span><?php endif; ?>
                                 <?php if ($answer['is_correct']): ?><span class="badge bg-success-subtle text-success ms-2">Đáp án đúng</span><?php endif; ?>
                             </div>
@@ -122,5 +128,6 @@
         </section>
     <?php endforeach; ?>
 </main>
+<?php require __DIR__ . '/../partials/app-shell-end.php'; ?>
 </body>
 </html>

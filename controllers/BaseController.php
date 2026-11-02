@@ -7,6 +7,7 @@ class BaseController {
     }
 
     // 1. Kiểm tra xem người dùng đã đăng nhập chưa và tài khoản có còn active không
+    /** Kiểm tra session, trạng thái tài khoản và khởi tạo CSRF token. */
     protected function requireLogin() {
         if (!isset($_SESSION['user'])) {
             header('Location: index.php?action=login');
@@ -31,6 +32,7 @@ class BaseController {
         }
     }
 
+    /** Chỉ cho phép POST có CSRF token hợp lệ thực hiện thao tác ghi dữ liệu. */
     protected function requirePostWithCsrf() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
@@ -45,15 +47,36 @@ class BaseController {
     }
 
     // 2. Chỉ cho phép Admin truy cập
+    /** Kiểm tra quyền quản trị viên trước khi truy cập chức năng admin. */
     protected function requireAdmin() {
-        $this->requireLogin();
+        if (!isset($_SESSION['user'])) {
+            header('Location: index.php?action=admin_login');
+            exit;
+        }
+        // Kiểm tra trạng thái active từ DB
+        $stmt = $this->pdo->prepare("SELECT role,status FROM users WHERE user_id = ?");
+        $stmt->execute([$_SESSION['user']['id']]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user || $user['status'] !== 'active' || $user['role'] !== 'admin') {
+            unset($_SESSION['user']);
+            session_destroy();
+            header('Location: index.php?action=admin_login&error=unauthorized');
+            exit;
+        }
+
         if ($_SESSION['user']['role'] !== 'admin') {
             http_response_code(403);
             die('<h3>403 Forbidden</h3><p>Bạn không có quyền truy cập trang quản trị hệ thống!</p>');
         }
+
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
     }
 
     // 3. Cho phép Giáo viên hoặc Admin truy cập
+    /** Kiểm tra người dùng là giáo viên hoặc quản trị viên. */
     protected function requireTeacher() {
         $this->requireLogin();
         if (!in_array($_SESSION['user']['role'], ['admin', 'teacher'])) {

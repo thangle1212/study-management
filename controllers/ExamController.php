@@ -1,11 +1,15 @@
 <?php
 require_once __DIR__ . '/../models/Exam.php';
+require_once __DIR__ . '/../models/AutomaticGrading.php';
 
 class ExamController {
     private $pdo;
+    private $grading;
 
+    /** Khởi tạo controller đề thi và model chấm điểm dùng trong luồng làm bài. */
     public function __construct($pdo) {
         $this->pdo = $pdo;
+        $this->grading = new AutomaticGrading($pdo);
     }
 
     private function requireLogin() {
@@ -38,6 +42,7 @@ class ExamController {
         }
     }
 
+    /** Kiểm tra request hiện tại thuộc về một học sinh đang đăng nhập. */
     private function requireStudent() {
         $this->requireLogin();
         if (($_SESSION['user']['role'] ?? '') !== 'student') {
@@ -227,9 +232,10 @@ class ExamController {
         $bankStmt->execute([$userId]);
         $questionBanks = $bankStmt->fetchAll(PDO::FETCH_ASSOC);
 
+        $initialBankId = filter_var($_GET['bank_id'] ?? null, FILTER_VALIDATE_INT);
         $formData = $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : [
             'title' => '',
-            'bank_id' => '',
+            'bank_id' => $initialBankId && $initialBankId > 0 ? (string) $initialBankId : '',
             'duration_minutes' => '60',
             'status' => 'draft',
             'start_time' => '',
@@ -418,6 +424,7 @@ class ExamController {
         exit;
     }
 
+    /** Kiểm tra đề có thể được xử lý bằng cơ chế chấm tự động. */
     private function ensureAutomaticallyGradableExam($examId) {
         $stmt = $this->pdo->prepare(
             "SELECT q.question_id, q.question_type,
@@ -450,6 +457,7 @@ class ExamController {
         return null;
     }
 
+    /** Lưu đáp án của lượt thi theo danh sách câu hỏi thuộc đề. */
     private function saveAttemptAnswers($attemptId, $examId, $answers) {
         $answers = is_array($answers) ? $answers : [];
         $stmt = $this->pdo->prepare(
@@ -489,6 +497,7 @@ class ExamController {
         }
     }
 
+    /** Trộn câu hỏi và đáp án của lượt thi theo seed đã lưu. */
     private function orderAttemptQuestions(array $questions, $seed, $shuffleQuestions, $shuffleAnswers) {
         foreach ($questions as &$question) {
             if (!$shuffleAnswers) {
@@ -519,6 +528,7 @@ class ExamController {
         return $questions;
     }
 
+    /** Bổ sung bản ghi cho các câu hỏi chưa có đáp án trong lượt thi. */
     private function ensureUnansweredQuestions($attemptId, $examId) {
         $stmt = $this->pdo->prepare(
             "INSERT INTO attempt_answers (attempt_id, question_id, answer_id, is_correct)
@@ -537,6 +547,7 @@ class ExamController {
         $stmt->execute([$attemptId, $examId, $attemptId]);
     }
 
+    /** Lưu bản sao đáp án đúng để bảo toàn kết quả của lượt thi. */
     private function snapshotCorrectAnswers($attemptId, $examId) {
         $stmt = $this->pdo->prepare(
             "INSERT IGNORE INTO attempt_correct_answers (attempt_id, question_id, answer_id)
@@ -548,6 +559,7 @@ class ExamController {
         $stmt->execute([$attemptId, $examId]);
     }
 
+    /** Hoàn tất và chấm điểm một lượt thi trong transaction. */
     private function finalizeAttempt($attemptId, $studentId, $answers, $reason) {
         $stmt = $this->pdo->prepare(
                 "SELECT ea.attempt_id, ea.exam_id, ea.start_time,
@@ -583,7 +595,7 @@ class ExamController {
         if (!$examQuestions) {
             throw new RuntimeException('Đề thi chưa có câu hỏi.');
         }
-        $gradingError = $this->ensureAutomaticallyGradableExam((int) $attempt['exam_id']);
+        $gradingError = $this->grading->validateExam((int) $attempt['exam_id']);
         if ($gradingError !== null) {
             throw new RuntimeException($gradingError);
         }
@@ -629,6 +641,7 @@ class ExamController {
         return true;
     }
 
+    /** Hiển thị trang chuẩn bị, kiểm tra đề và nạp lịch sử làm bài của học sinh. */
     public function prepare() {
         $this->requireStudent();
         $examId = (int) ($_GET['exam_id'] ?? 0);
@@ -645,7 +658,7 @@ class ExamController {
         if (!$exam) {
             die('Đề thi không tồn tại hoặc chưa được công khai.');
         }
-        $gradingError = $this->ensureAutomaticallyGradableExam($examId);
+        $gradingError = $this->grading->validateExam($examId);
         if ($gradingError !== null) {
             die($gradingError);
         }
@@ -681,6 +694,7 @@ class ExamController {
         require __DIR__ . '/../views/exams/prepare.php';
     }
 
+    /** Tạo hoặc khôi phục lượt thi, snapshot cấu hình và chuyển sang trang làm bài. */
     public function start() {
         $this->requireStudent();
         $this->requirePostWithCsrf();
@@ -697,7 +711,7 @@ class ExamController {
             http_response_code(404);
             exit('Đề thi không tồn tại hoặc chưa được công khai.');
         }
-        $gradingError = $this->ensureAutomaticallyGradableExam($examId);
+        $gradingError = $this->grading->validateExam($examId);
         if ($gradingError !== null) {
             http_response_code(422);
             exit($gradingError);
@@ -751,11 +765,12 @@ class ExamController {
                 ]);
             }
         }
-        $this->snapshotCorrectAnswers((int) $attemptId, $examId);
+        $this->grading->snapshotCorrectAnswers((int) $attemptId, $examId);
         header('Location: index.php?action=take_exam&attempt_id=' . (int) $attemptId);
         exit;
     }
 
+    /** Tải câu hỏi, đáp án, trạng thái autosave và kiểm tra thời gian lượt thi. */
     public function take() {
         $this->requireStudent();
         $attemptId = (int) ($_GET['attempt_id'] ?? 0);
@@ -801,21 +816,14 @@ class ExamController {
             ]);
             $exam['shuffle_seed'] = $shuffleSeed;
         }
-        $gradingError = $this->ensureAutomaticallyGradableExam((int) $exam['exam_id']);
+        $gradingError = $this->grading->validateExam((int) $exam['exam_id']);
         if ($gradingError !== null) {
             http_response_code(422);
             exit($gradingError);
         }
 
         if (time() >= strtotime($exam['start_time']) + ((int) $exam['duration_minutes'] * 60)) {
-            $this->pdo->beginTransaction();
-            try {
-                $this->finalizeAttempt($attemptId, $studentId, null, 'time_expired');
-                $this->pdo->commit();
-            } catch (Throwable $exception) {
-                $this->pdo->rollBack();
-                throw $exception;
-            }
+            $this->grading->finalize($attemptId, $studentId, null, 'time_expired');
             header('Location: index.php?action=exam_result&attempt_id=' . $attemptId);
             exit;
         }
@@ -848,7 +856,7 @@ class ExamController {
                 )
             ];
         }
-        $questions = $this->orderAttemptQuestions(
+        $questions = $this->grading->orderQuestions(
             $questions,
             $exam['shuffle_seed'],
             (bool) $exam['shuffle_questions'],
@@ -872,127 +880,6 @@ class ExamController {
         $csrfToken = $_SESSION['csrf_token'];
 
         require __DIR__ . '/../views/exams/take.php';
-    }
-
-    public function autosave() {
-        $this->requireStudent();
-        $this->requirePostWithCsrf();
-        $attemptId = (int) ($_POST['attempt_id'] ?? 0);
-        $studentId = (int) $_SESSION['user']['id'];
-        $this->pdo->beginTransaction();
-        try {
-            $stmt = $this->pdo->prepare(
-                "SELECT ea.exam_id, ea.start_time,
-                    COALESCE(ea.duration_minutes_snapshot, e.duration_minutes) AS duration_minutes
-                 FROM exam_attempts ea JOIN exams e ON e.exam_id = ea.exam_id
-                 WHERE ea.attempt_id = ? AND ea.student_id = ?
-                   AND ea.status = 'in_progress' FOR UPDATE"
-            );
-            $stmt->execute([$attemptId, $studentId]);
-            $attempt = $stmt->fetch();
-            if (!$attempt) {
-                $this->pdo->rollBack();
-                $this->sendJson(['error' => 'Lượt thi không hợp lệ hoặc đã nộp.'], 403);
-            }
-            if (time() >= strtotime($attempt['start_time']) + ((int) $attempt['duration_minutes'] * 60)) {
-                $this->finalizeAttempt($attemptId, $studentId, $_POST['answers'] ?? [], 'time_expired');
-                $this->pdo->commit();
-                $this->sendJson(['saved' => false, 'forced_submit' => true, 'reason' => 'time_expired']);
-            }
-            $this->saveAttemptAnswers($attemptId, (int) $attempt['exam_id'], $_POST['answers'] ?? []);
-            $this->pdo->commit();
-            $this->sendJson(['saved' => true]);
-        } catch (Throwable $exception) {
-            if ($this->pdo->inTransaction()) {
-                $this->pdo->rollBack();
-            }
-            throw $exception;
-        }
-    }
-
-    public function submit() {
-        $this->requireStudent();
-        $this->requirePostWithCsrf();
-        $attemptId = (int) ($_POST['attempt_id'] ?? 0);
-        $studentId = (int) $_SESSION['user']['id'];
-        $answers = array_key_exists('answers', $_POST) ? $_POST['answers'] : null;
-        $this->pdo->beginTransaction();
-        try {
-            $completed = $this->finalizeAttempt($attemptId, $studentId, $answers, 'manual');
-            if (!$completed) {
-                $this->pdo->rollBack();
-                http_response_code(403);
-                die('Lượt thi không hợp lệ hoặc đã được nộp.');
-            }
-            $this->pdo->commit();
-            header('Location: index.php?action=exam_result&attempt_id=' . $attemptId);
-            exit;
-        } catch (Throwable $exception) {
-            $this->pdo->rollBack();
-            throw $exception;
-        }
-    }
-
-    public function logViolation() {
-        $this->requireStudent();
-        $this->requirePostWithCsrf();
-
-        $attemptId = (int) ($_POST['attempt_id'] ?? 0);
-        $violationType = $_POST['violation_type'] ?? '';
-        $allowedTypes = ['tab_hidden', 'window_blur', 'context_menu', 'copy', 'cut', 'paste', 'shortcut'];
-        if (!$attemptId || !in_array($violationType, $allowedTypes, true)) {
-            $this->sendJson(['error' => 'Loại vi phạm không hợp lệ.'], 400);
-        }
-
-        $details = substr(trim((string) ($_POST['details'] ?? '')), 0, 255);
-        $studentId = (int) $_SESSION['user']['id'];
-        $this->pdo->beginTransaction();
-        try {
-            $stmt = $this->pdo->prepare(
-                "SELECT ea.exam_id, ea.status,
-                    COALESCE(ea.anti_cheat_enabled_snapshot, e.anti_cheat_enabled) AS anti_cheat_enabled,
-                    COALESCE(ea.violation_limit_snapshot, e.violation_limit) AS violation_limit,
-                    COALESCE(ea.violation_action_snapshot, e.violation_action) AS violation_action
-                 FROM exam_attempts ea JOIN exams e ON e.exam_id = ea.exam_id
-                 WHERE ea.attempt_id = ? AND ea.student_id = ? FOR UPDATE"
-            );
-            $stmt->execute([$attemptId, $studentId]);
-            $attempt = $stmt->fetch();
-            if (!$attempt || $attempt['status'] !== 'in_progress') {
-                $this->pdo->rollBack();
-                $this->sendJson(['error' => 'Lượt thi không còn hoạt động.'], 403);
-            }
-            if (!(int) $attempt['anti_cheat_enabled']) {
-                $this->pdo->commit();
-                $this->sendJson(['count' => 0, 'forced_submit' => false]);
-            }
-
-            $stmt = $this->pdo->prepare(
-                "INSERT INTO violation_logs (attempt_id, violation_type, details)
-                 VALUES (?, ?, ?)"
-            );
-            $stmt->execute([$attemptId, $violationType, $details]);
-            $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM violation_logs WHERE attempt_id = ?");
-            $stmt->execute([$attemptId]);
-            $violationCount = (int) $stmt->fetchColumn();
-            $limit = max(1, (int) $attempt['violation_limit']);
-            $forcedSubmit = $violationCount >= $limit && $attempt['violation_action'] === 'auto_submit';
-            if ($forcedSubmit) {
-                $this->finalizeAttempt($attemptId, $studentId, null, 'violation_limit');
-            }
-            $this->pdo->commit();
-            $this->sendJson([
-                'count' => $violationCount,
-                'limit' => $limit,
-                'forced_submit' => $forcedSubmit,
-                'attempt_id' => $attemptId
-            ]);
-        } catch (Throwable $exception) {
-            if ($this->pdo->inTransaction()) {
-                $this->pdo->rollBack();
-            }
-            throw $exception;
-        }
     }
 
     public function updateSettings() {
@@ -1051,6 +938,7 @@ class ExamController {
         return $stmt->fetchAll();
     }
 
+    /** Hiển thị trang giám sát lượt thi của giáo viên cho một đề. */
     public function monitoring() {
         $this->requireLogin();
         $examId = (int) ($_GET['exam_id'] ?? 0);
@@ -1069,6 +957,7 @@ class ExamController {
         require __DIR__ . '/../views/exams/monitoring.php';
     }
 
+    /** Trả dữ liệu giám sát lượt thi dạng JSON. */
     public function monitoringData() {
         $this->requireLogin();
         $examId = (int) ($_GET['exam_id'] ?? 0);
@@ -1087,6 +976,7 @@ class ExamController {
         $this->sendJson(['attempts' => $attempts]);
     }
 
+    /** Xử lý yêu cầu giáo viên hủy kết quả hoặc cho phép làm lại. */
     public function reviewAttempt() {
         $this->requireLogin();
         $this->requirePostWithCsrf();
@@ -1120,6 +1010,7 @@ class ExamController {
         exit;
     }
 
+    /** Hiển thị kết quả tổng quan của một lượt thi đã hoàn tất. */
     public function result() {
         $this->requireLogin();
         $attemptId = (int) ($_GET['attempt_id'] ?? 0);
@@ -1139,6 +1030,7 @@ class ExamController {
         require __DIR__ . '/../views/exams/result.php';
     }
 
+    /** Tổng hợp điểm và phân tích câu hỏi cho báo cáo đề thi. */
     public function statistics() {
         $this->requireLogin();
         $examId = (int) ($_GET['exam_id'] ?? 0);
@@ -1300,6 +1192,7 @@ class ExamController {
         require __DIR__ . '/../views/exams/statistics.php';
     }
 
+    /** Hiển thị chi tiết đáp án, điểm và vi phạm của một lượt thi. */
     public function attemptDetail() {
         $this->requireLogin();
         $attemptId = (int) ($_GET['attempt_id'] ?? 0);
@@ -1396,10 +1289,20 @@ class ExamController {
         require __DIR__ . '/../views/exams/attempt-detail.php';
     }
 
+    /** Tổng hợp thống kê cá nhân và lịch sử làm bài của học sinh. */
     public function studentStatistics() {
         $this->requireLogin();
         $studentId = (int) $_SESSION['user']['id'];
         $selectedExamId = (int) ($_GET['exam_id'] ?? 0);
+        $selectedExamType = is_string($_GET['exam_type'] ?? null) ? $_GET['exam_type'] : '';
+        $examTypeConditions = [
+            'auto' => "(LOWER(e.title) LIKE '%tự động%' OR LOWER(e.title) LIKE '%tu dong%' OR LOWER(e.title) LIKE '%auto%')",
+            'sample' => "(LOWER(e.title) LIKE '%đề kiểm tra mẫu%' OR LOWER(e.title) LIKE '%đề mẫu%' OR LOWER(e.title) LIKE '%de kiem tra mau%' OR LOWER(e.title) LIKE '%de mau%')",
+            'hop' => "(LOWER(e.title) LIKE '%kiểm tra hợp%' OR LOWER(e.title) LIKE '%kiem tra hop%')"
+        ];
+        if (!isset($examTypeConditions[$selectedExamType])) {
+            $selectedExamType = '';
+        }
 
         $stmt = $this->pdo->prepare(
             "SELECT ea.attempt_id, ea.exam_id, e.title, ea.total_score, ea.start_time, ea.end_time,
@@ -1413,7 +1316,8 @@ class ExamController {
              LEFT JOIN exam_questions eq ON eq.exam_id = ea.exam_id
              LEFT JOIN attempt_answers aa ON aa.attempt_id = ea.attempt_id
              WHERE ea.student_id = ? AND ea.status = 'completed'"
-            . ($selectedExamId ? " AND ea.exam_id = ?" : "") . "
+            . ($selectedExamId ? " AND ea.exam_id = ?" : "")
+            . ($selectedExamType !== '' ? " AND " . $examTypeConditions[$selectedExamType] : "") . "
              GROUP BY ea.attempt_id, ea.exam_id, e.title, ea.total_score, ea.start_time,
                       ea.end_time, ea.submit_reason, ea.review_status
              ORDER BY ea.end_time ASC"

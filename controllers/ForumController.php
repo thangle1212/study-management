@@ -121,15 +121,31 @@ class ForumController {
 
             if ($c['parent_id'] === null) {
                 $comments[] = $c;
-            } else {
-                $rootId = $c['parent_id'];
-                $curr = $c;
-                while ($curr['parent_id'] !== null && isset($commentMap[$curr['parent_id']])) {
-                    $curr = $commentMap[$curr['parent_id']];
-                    $rootId = $curr['comment_id'];
-                }
-                $repliesMap[$rootId][] = $c;
+                continue;
             }
+
+            // Bình luận cha đã bị xóa: hiển thị phản hồi này như bình luận gốc
+            // để không bị thất lạc và số lượng bình luận khớp với nội dung hiển thị.
+            if (!isset($commentMap[$c['parent_id']])) {
+                $comments[] = $c;
+                continue;
+            }
+
+            // Tìm bình luận gốc còn hiển thị cao nhất để gom phản hồi vào đúng luồng
+            $rootId = $c['parent_id'];
+            while (
+                $commentMap[$rootId]['parent_id'] !== null &&
+                isset($commentMap[$commentMap[$rootId]['parent_id']])
+            ) {
+                $rootId = $commentMap[$rootId]['parent_id'];
+            }
+            $repliesMap[$rootId][] = $c;
+        }
+
+        // Đếm đúng số bình luận thực sự được hiển thị (gốc + phản hồi)
+        $commentCount = count($comments);
+        foreach ($repliesMap as $threadReplies) {
+            $commentCount += count($threadReplies);
         }
 
         require __DIR__ . '/../views/forum/detail.php';
@@ -288,6 +304,37 @@ class ForumController {
         exit;
     }
 
+    // Xóa mềm bình luận cha và toàn bộ phản hồi con/cháu
+    private function deleteCommentTree($postId, $commentId) {
+        $stmt = $this->pdo->prepare("SELECT comment_id, parent_id FROM forum_comments WHERE post_id = ?");
+        $stmt->execute([$postId]);
+
+        $childrenMap = [];
+        foreach ($stmt->fetchAll() as $row) {
+            if ($row['parent_id'] !== null) {
+                $childrenMap[(int) $row['parent_id']][] = (int) $row['comment_id'];
+            }
+        }
+
+        $ids = [];
+        $queue = [(int) $commentId];
+        while (!empty($queue)) {
+            $id = array_shift($queue);
+            if (isset($ids[$id])) {
+                continue;
+            }
+            $ids[$id] = $id;
+
+            foreach ($childrenMap[$id] ?? [] as $childId) {
+                $queue[] = $childId;
+            }
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $this->pdo->prepare("UPDATE forum_comments SET status = 'deleted' WHERE comment_id IN ($placeholders)");
+        $stmt->execute(array_values($ids));
+    }
+
     // --- 7. XÓA BÌNH LUẬN ---
     public function commentDelete() {
         $this->requireLogin();
@@ -296,15 +343,16 @@ class ForumController {
         $userId = (int) $_SESSION['user']['id'];
         $userRole = $_SESSION['user']['role'];
 
-        $stmt = $this->pdo->prepare("SELECT user_id FROM forum_comments WHERE comment_id = ?");
+        $stmt = $this->pdo->prepare("SELECT user_id, post_id FROM forum_comments WHERE comment_id = ?");
         $stmt->execute([$commentId]);
         $comment = $stmt->fetch();
 
         if ($comment) {
+            $commentPostId = (int) $comment['post_id'];
             if ($comment['user_id'] === $userId || $userRole === 'admin') {
-                $stmt = $this->pdo->prepare("UPDATE forum_comments SET status = 'deleted' WHERE comment_id = ?");
-                $stmt->execute([$commentId]);
+                $this->deleteCommentTree($commentPostId, $commentId);
             }
+            $postId = $commentPostId;
         }
         header("Location: index.php?action=forum_detail&post_id=$postId");
         exit;

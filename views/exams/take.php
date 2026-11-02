@@ -10,41 +10,46 @@ $deadline = strtotime($exam['start_time']) + ((int) $exam['duration_minutes'] * 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
-        :root { --brand: #0d6efd; --ink: #17233c; --soft: #f4f8ff; }
-        body { background: linear-gradient(135deg, #eaf4ff 0%, #f8fbff 45%, #fff 100%); color: var(--ink); }
-        .topbar { background: rgba(255,255,255,.9); border-bottom: 1px solid #e5edf8; backdrop-filter: blur(12px); }
-        .brand { color: var(--brand); font-size: 1.35rem; }
+        body { background: #f2f7fc; }
         .exam-shell { max-width: 980px; }
-        .exam-header { border: 0; border-radius: 22px; background: linear-gradient(135deg, #0d6efd, #438df4); color: #fff; box-shadow: 0 16px 36px rgba(13,110,253,.18); }
-        .question-card { border: 1px solid #e5edf8; border-radius: 16px; box-shadow: 0 8px 24px rgba(31,74,125,.06); transition: transform .2s ease, box-shadow .2s ease; }
-        .question-card:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(31,74,125,.1); }
-        .answer-option { cursor: pointer; background: #fff; border: 1px solid #e2eaf5 !important; transition: .2s ease; }
-        .answer-option:hover { border-color: var(--brand) !important; background: #f5f9ff; }
-        .answer-option input { accent-color: var(--brand); }
+        .exam-status { color: var(--edu-teal); }
+        .exam-status.timer-warning { color: #b54708; }
+        .exam-header { border: 1px solid var(--edu-line); border-left: 4px solid #1769aa; border-radius: 6px; background: #fff; color: #172f4d; box-shadow: none; position: relative; overflow: hidden; }
+        .exam-header-content { position: relative; z-index: 1; }
+        .question-card { border: 1px solid var(--edu-line) !important; border-radius: 6px; box-shadow: none !important; }
+        .question-card:hover { border-color: #b7cadd !important; }
+        .question-number { background: var(--edu-teal-soft); color: var(--edu-teal); }
+        .answer-option { cursor: pointer; background: #fff; border: 1px solid var(--edu-line) !important; transition: background .15s ease, border-color .15s ease, box-shadow .15s ease; }
+        .answer-option:hover, .answer-option:has(input:checked) { border-color: #1769aa !important; background: #f4f8fc; box-shadow: 0 0 0 3px rgba(23,105,170,.1); }
+        .answer-option input { accent-color: var(--edu-teal); }
         .submit-bar { position: sticky; bottom: 18px; z-index: 5; }
+        .submit-bar .btn { min-width: 160px; }
+        @media (max-width: 767.98px) {
+            .exam-status-group { width: 100%; justify-content: space-between; }
+            .exam-header { border-radius: 6px; }
+        }
     </style>
+    <link rel="stylesheet" href="assets/css/edutest.css">
+    <link rel="stylesheet" href="assets/css/admin.css">
 </head>
-<body>
-<nav class="navbar topbar sticky-top">
-    <div class="container exam-shell d-flex flex-wrap align-items-center justify-content-between gap-2">
-        <a class="navbar-brand brand fw-bold" href="index.php?action=dashboard"><i class="fa-solid fa-graduation-cap me-2"></i>EduTest</a>
-        <span class="fw-semibold text-primary text-nowrap" aria-live="polite">
-            <i class="fa-regular fa-clock me-1"></i>Còn lại <span id="exam-countdown">--:--</span>
-        </span>
-        <span id="autosave-status" class="small text-muted text-nowrap" aria-live="polite">Đang kết nối lưu bài</span>
-        <span id="violation-count" class="badge bg-warning-subtle text-warning-emphasis text-nowrap">
-            <?php echo (int) $exam['anti_cheat_enabled'] ? 'Vi phạm ' . $violationCount . '/' . (int) $exam['violation_limit'] : 'Giám sát tắt'; ?>
-        </span>
-        <a href="index.php?action=dashboard" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-arrow-left me-1"></i>Trang tổng quan</a>
-    </div>
-</nav>
+<body class="admin-app">
+<?php
+$appPageTitle = 'Đang làm bài';
+$appActiveAction = 'exam';
+$appTopbarHtml = '<div class="exam-status-group d-flex align-items-center"><span id="exam-timer" class="exam-status fw-semibold text-nowrap" aria-live="polite"><i class="fa-regular fa-clock me-1"></i>Còn lại <span id="exam-countdown">--:--</span></span><span id="autosave-status" class="small text-muted text-nowrap" aria-live="polite">Đang kết nối lưu bài</span><span id="violation-count" class="badge bg-warning-subtle text-warning-emphasis text-nowrap">' .
+    ((int) $exam['anti_cheat_enabled'] ? 'Vi phạm ' . (int) $violationCount . '/' . (int) $exam['violation_limit'] : 'Giám sát tắt') .
+    '</span></div>';
+require __DIR__ . '/../partials/app-shell-start.php';
+?>
 <div class="container exam-shell py-4 py-md-5">
     <div class="exam-header p-4 p-md-5 mb-4">
-        <div class="small opacity-75 mb-2"><i class="fa-solid fa-pen-to-square me-1"></i> BÀI KIỂM TRA TRỰC TUYẾN</div>
-        <h1 class="h2 fw-bold mb-3"><?php echo htmlspecialchars($exam['title']); ?></h1>
-        <div class="d-flex flex-wrap gap-3 small">
+    <div class="exam-header-content">
+    <div class="eyebrow small opacity-75 mb-2"><i class="fa-solid fa-pen-to-square me-1"></i>Bài kiểm tra trực tuyến</div>
+    <h1 class="h2 fw-bold mb-3"><?php echo htmlspecialchars($exam['title']); ?></h1>
+    <div class="d-flex flex-wrap gap-3 small opacity-75">
             <span><i class="fa-solid fa-list-ol me-1"></i><?php echo (int) $exam['question_count']; ?> câu hỏi</span>
             <span><i class="fa-regular fa-clock me-1"></i><?php echo (int) $exam['duration_minutes']; ?> phút</span>
+        </div>
         </div>
     </div>
 
@@ -57,7 +62,7 @@ $deadline = strtotime($exam['start_time']) + ((int) $exam['duration_minutes'] * 
             <section class="card question-card mb-3">
                 <div class="card-body">
                     <div class="d-flex gap-3 align-items-start">
-                        <span class="badge rounded-pill bg-primary-subtle text-primary px-3 py-2">Câu <?php echo $number++; ?></span>
+                        <span class="badge rounded-pill question-number px-3 py-2">Câu <?php echo $number++; ?></span>
                         <h5 class="fw-bold mb-0 lh-base"><?php echo htmlspecialchars($question['content']); ?></h5>
                     </div>
                     <?php foreach ($question['answers'] as $answer): ?>
@@ -173,7 +178,7 @@ $deadline = strtotime($exam['start_time']) + ((int) $exam['duration_minutes'] * 
         const minutes = String(Math.floor(remaining / 60)).padStart(2, '0');
         const seconds = String(remaining % 60).padStart(2, '0');
         countdown.textContent = minutes + ':' + seconds;
-        countdown.classList.toggle('text-danger', remaining <= 60);
+        document.getElementById('exam-timer').classList.toggle('timer-warning', remaining <= 60);
 
         if (remaining === 0) {
             submitExam();
@@ -223,5 +228,6 @@ $deadline = strtotime($exam['start_time']) + ((int) $exam['duration_minutes'] * 
     updateCountdown();
 }());
 </script>
+<?php require __DIR__ . '/../partials/app-shell-end.php'; ?>
 </body>
 </html>

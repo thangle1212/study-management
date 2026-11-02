@@ -17,15 +17,19 @@ class AuthController {
     // --- 1. ĐĂNG NHẬP ---
     public function login() {
         $error = '';
+        $notice = '';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $email = trim($_POST['email'] ?? '');
             $password = $_POST['password'] ?? '';
 
             $user = $this->userModel->findByEmail($email);
             if ($user && password_verify($password, $user['password'])) {
-                if ($user['status'] !== 'active') {
+                if ($user['role'] === 'admin') {
+                    $notice = 'Tài khoản quản trị không thể đăng nhập tại cổng học tập. Vui lòng sử dụng cổng đăng nhập quản trị.';
+                } elseif ($user['status'] !== 'active') {
                     $error = 'Tài khoản của bạn đã bị khóa!';
                 } else {
+                    session_regenerate_id(true); // Tạo session ID hoàn toàn mới, hủy ID cũ
                     $_SESSION['user'] = [
                         'id' => $user['user_id'],
                         'full_name' => $user['full_name'],
@@ -35,7 +39,8 @@ class AuthController {
                     ];
                     header('Location: index.php?action=dashboard');
                     exit;
-                }
+
+                } 
             } else {
                 $error = 'Email hoặc mật khẩu không chính xác!';
             }

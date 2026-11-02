@@ -1,0 +1,64 @@
+@startuml
+title EduTest - Luồng làm bài thi chính (khớp kiến trúc MVC thực tế)
+autonumber
+actor "Học sinh" as S
+participant "Trình duyệt" as B
+participant "index.php\n(Router)" as R
+participant "ExamController" as EC
+participant "AutomaticGradingController" as GC
+participant "Models\n(Exam, AutomaticGrading)" as M
+database "MySQL\n(study_management)" as DB
+
+== Bắt đầu lượt thi ==
+S -> B : Bấm "Bắt đầu" ở trang chuẩn bị
+B -> R : POST index.php?action=start_exam
+R -> R : session_start(), kiểm tra $_SESSION['user']
+R -> EC : start()
+EC -> M : kiểm tra điều kiện dự thi
+M -> DB : SELECT exams, class_students\n(status, start_time, end_time, lớp)
+alt Không đủ điều kiện
+  EC --> B : thông báo lỗi / chuyển hướng
+else Hợp lệ
+  M -> DB : INSERT exam_attempts\n(start_time, các cột *_snapshot, shuffle_seed)
+  M -> DB : INSERT attempt_correct_answers\n(đóng băng đáp án đúng)
+  EC --> B : chuyển đến take_exam
+end
+B -> R : GET index.php?action=take_exam
+R -> EC : take()
+EC -> M : lấy câu hỏi theo shuffle_seed
+M -> DB : SELECT exam_questions, questions, answers
+EC --> B : trang làm bài (không chứa đáp án đúng)
+
+== Lưu tự động ==
+loop định kỳ hoặc khi đổi đáp án
+  B -> R : POST index.php?action=autosave_answers
+  R -> GC : autosave()
+  GC -> M : lưu câu trả lời
+  M -> DB : ghi attempt_answers theo attempt_id
+  GC --> B : JSON kết quả lưu
+  B -> B : hiện "Đã lưu" sau khi nhận phản hồi
+end
+
+== Ghi nhận vi phạm ==
+B -> R : POST index.php?action=log_violation
+R -> GC : logViolation()
+GC -> M : ghi vi phạm
+M -> DB : INSERT violation_logs
+alt Đạt violation_limit_snapshot
+  GC -> GC : áp dụng violation_action_snapshot\n(ví dụ auto_submit)
+end
+GC --> B : JSON
+
+== Nộp bài và chấm điểm ==
+S -> B : Bấm "Nộp bài" (hoặc hết giờ / vi phạm)
+B -> R : POST index.php?action=submit_exam
+R -> GC : submit()
+GC -> M : chấm điểm
+M -> DB : đọc attempt_correct_answers + attempt_answers
+M -> M : so khớp, tính điểm theo score_weight
+M -> DB : UPDATE exam_attempts\n(status=completed, total_score, end_time, submit_reason)
+GC --> B : chuyển đến exam_result
+B -> R : GET index.php?action=exam_result
+R -> R : ExamHistoryController->resultPage()
+R --> B : trang kết quả
+@enduml
