@@ -599,3 +599,149 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+.admin-app .card,
+.admin-app .content-card,
+.admin-app .monitor-table,
+.admin-app .result-card,
+.admin-app .info-card,
+.admin-app .history-card,
+.admin-app .question-card,
+.admin-app .exam-create-card,
+.admin-app .parsed-question {
+    border-color: var(--admin-border) !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+}
+
+.admin-app .btn {
+    border-radius: 5px !important;
+    font-weight: 600;
+}
+
+.admin-app .btn-primary {
+    color: #fff;
+    border-color: var(--admin-primary);
+    background: var(--admin-primary);
+}
+
+.admin-app .btn-primary:hover,
+.admin-app .btn-primary:focus-visible {
+    border-color: var(--admin-deep);
+    background: var(--admin-deep);
+}
+
+.admin-app .btn-outline-primary {
+    color: var(--admin-primary);
+    border-color: var(--admin-primary);
+}
+
+.admin-app .btn-outline-primary:hover,
+.admin-app .btn-outline-primary:focus-visible {
+    color: #fff;
+    border-color: var(--admin-primary);
+    background: var(--admin-primary);
+}
+
+.admin-app .form-control,
+.admin-app .form-select {
+    border-color: #c9d8e7;
+    border-radius: 5px !important;
+    color: var(--admin-ink);
+}
+
+.admin-app .form-control:focus,
+.admin-app .form-select:focus {
+    border-color: var(--admin-primary);
+    box-shadow: 0 0 0 3px rgba(23, 105, 170, .15);
+}
+
+.admin-app .navbar {
+    min-height: 62px;
+    border-bottom: 1px solid var(--admin-border);
+    background: #fff !important;
+    box-shadow: 0 1px 0 rgba(23, 47, 77, .02);
+}
+
+.admin-app .navbar-brand,
+.admin-app .brand {
+    color: var(--admin-primary) !important;
+    font-family: 'Fira Sans', sans-serif;
+    font-weight: 700;
+}
+
+.admin-app .admin-module-navbar .container { gap: 8px; }
+.admin-app .admin-module-navbar .container > .d-flex { flex-wrap: wrap; justify-content: flex-end; gap: 6px !important; }
+.admin-app .admin-module-navbar .container > .d-flex .btn { padding: 5px 8px; font-size: 12px; }
+
+.admin-app .table thead th {
+    color: #536b84;
+    background: #f4f8fc;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.admin-app .table-hover tbody tr:hover > * { background: #f7fbff; }
+
+.admin-app .forum-header,
+.admin-app .page-heading,
+.admin-app .monitor-heading,
+.admin-app .prepare-header,
+.admin-app .exam-header {
+    border: 1px solid var(--admin-border) !important;
+    border-left: 4px solid var(--admin-primary) !important;
+    border-radius: 6px !important;
+    color: var(--admin-ink) !important;
+    background: #fff !important;
+    box-shadow: none !important;
+}
+
+.admin-app .forum-header .opacity-75,
+.admin-app .monitor-heading .opacity-75,
+.admin-app .prepare-header .opacity-75,
+.admin-app .exam-header .opacity-75 {
+    color: var(--admin-muted) !important;
+}
+
+.admin-app .forum-header::after,
+.admin-app .monitor-heading::after,
+.admin-app .prepare-header::after,
+.admin-app .exam-header::after {
+    content: none !important;
+}
+
+.admin-app .result-head {
+    color: #fff;
+    background: var(--admin-deep);
+}
+
+.admin-app .score {
+    border-color: var(--admin-soft);
+    color: var(--admin-primary);
+}
+
+.admin-app .detail-link {
+    color: var(--admin-primary);
+    border-color: var(--admin-primary);
+}
+
+.admin-app .detail-link:hover,
+.admin-app .detail-link:focus-visible {
+    color: #fff;
+    border-color: var(--admin-primary);
+    background: var(--admin-primary);
+}
+
+.admin-app .exam-status { color: var(--admin-primary); }
+.admin-app .exam-status.timer-warning { color: #b54708; }
+
+.admin-app .search-box,
+.admin-app .search-btn,
+.admin-app .filter-select {
+    border-radius: 5px !important;
+}
+
+.admin-app .avatar-img { box-shadow: none; }
+.admin-app .role-badge { border-radius: 4px; }
+.admin-app .role-student { color: var(--admin-primary); background: var(--admin-soft); }

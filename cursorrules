@@ -1,0 +1,32 @@
+# EduTest - Quy tắc cho AI (PHP thuần, MVC, MySQL, chạy trên XAMPP)
+
+## Kiến trúc và chiều phụ thuộc
+- Điểm vào duy nhất: `index.php`, định tuyến bằng `?action=...` trong khối `switch`. Route mới phải thêm ở đó.
+- Chiều phụ thuộc một hướng: views <- controllers -> models -> PDO ($pdo).
+  - `views/` chỉ hiển thị dữ liệu controller truyền sang; KHÔNG gọi model hoặc viết SQL trong view.
+  - `controllers/` kế thừa `BaseController`; xử lý request, kiểm tra quyền, gọi model, chọn view.
+  - `models/` là nơi DUY NHẤT chứa SQL. Model không được `require` controller hoặc view.
+  - Cấm import vòng tròn: model không gọi controller, controller không gọi controller khác.
+- Không sửa `libs/PHPMailer/`. Không đặt tài liệu hoặc file nhạy cảm trong thư mục web công khai.
+
+## Bảo mật (bắt buộc, theo PRD mục 6.1)
+- Mọi SQL dùng prepared statement của PDO; không nối chuỗi từ input.
+- Mọi thao tác thay đổi dữ liệu dùng POST và kiểm tra token CSRF; GET không được làm thay đổi dữ liệu.
+- Mọi action kiểm tra `$_SESSION['user']` và role ở phía máy chủ; kiểm tra quyền sở hữu
+  (teacher_id, student_id, class_id) trước khi đọc hoặc ghi, không tin ID từ client.
+- Escape đầu ra HTML bằng `htmlspecialchars` trong view.
+- Không nhận `role`, `status`, `is_correct`, điểm từ client.
+- Không log mật khẩu, reset token, CSRF token. Không commit `.env`.
+
+## Luồng thi (PRD mục 6.2 - 6.4)
+- Thời gian hết hạn tính theo giờ máy chủ/DB, không tin đồng hồ trình duyệt.
+- Lượt thi dùng các cột `*_snapshot` và bảng `attempt_correct_answers`; không chấm lại bằng đáp án mới.
+- Nộp bài phải idempotent: chỉ chuyển `in_progress` -> `completed` một lần, dùng transaction
+  và `SELECT ... FOR UPDATE` hoặc `UPDATE ... WHERE status='in_progress'`.
+- Autosave và submit không được ghi đè lượt đã `completed`.
+
+## Quy ước mã
+- Tên bảng/cột lấy đúng từ `db.sql`; đổi schema thì cập nhật `db.sql` VÀ `docs/02-design/erd.mermaid`.
+- Mỗi hàm model làm một việc; trả về mảng hoặc giá trị, không `echo`.
+- Thêm route mới thì cập nhật `docs/03-backend/openapi.yaml`.
+- Viết comment và thông báo người dùng bằng tiếng Việt; tên biến, hàm bằng tiếng Anh.

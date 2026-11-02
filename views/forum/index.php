@@ -7,25 +7,26 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
-        :root { --brand: #0d6efd; --ink: #17233c; --soft: #f4f8ff; }
-        body { background: linear-gradient(135deg, #eaf4ff 0%, #f8fbff 45%, #fff 100%); color: var(--ink); min-height: 100vh; }
-        .topbar { background: rgba(255,255,255,.9); border-bottom: 1px solid #e5edf8; backdrop-filter: blur(12px); }
+        :root { --brand: #1769aa; --ink: #172f4d; --soft: #e6f2fc; }
+        body { background: #f2f7fc; color: var(--ink); min-height: 100vh; }
+        .topbar { background: #fff; border-bottom: 1px solid #d9e5f0; }
         .brand { color: var(--brand); font-size: 1.35rem; }
-        .forum-header { border: 0; border-radius: 22px; background: linear-gradient(135deg, #0d6efd, #438df4); color: #fff; box-shadow: 0 16px 36px rgba(13,110,253,.18); }
-        .post-card { border: 1px solid #e5edf8; border-radius: 16px; box-shadow: 0 8px 24px rgba(31,74,125,.06); transition: transform .2s ease, box-shadow .2s ease; background-color: #fff; }
-        .post-card:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(31,74,125,.1); }
-        .avatar-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
-        .role-badge { font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 8px; font-weight: 600; }
-        .role-student { background-color: #e3f2fd; color: #0d6efd; }
+        .forum-header { border: 1px solid #d9e5f0; border-left: 4px solid #1769aa; border-radius: 6px; background: #fff; color: #172f4d; box-shadow: none; }
+        .post-card { border: 1px solid #d9e5f0; border-radius: 6px; box-shadow: none; transition: border-color .2s ease; background-color: #fff; }
+        .post-card:hover { border-color: #b7cadd; }
+        .avatar-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; }
+        .role-badge { font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; }
+        .role-student { background-color: #e6f2fc; color: #1769aa; }
         .role-teacher { background-color: #e8f5e9; color: #2e7d32; }
         .role-admin { background-color: #ffebee; color: #c62828; }
-        .search-box { border-radius: 30px; padding-left: 20px; border: 1px solid #ced4da; }
-        .search-btn { border-radius: 30px; }
-        .filter-select { border-radius: 12px; }
+        .search-box { border-radius: 5px; padding-left: 12px; border: 1px solid #c9d8e7; }
+        .search-btn { border-radius: 5px; }
+        .filter-select { border-radius: 5px; }
     </style>
     <link rel="stylesheet" href="assets/css/edutest.css">
+    <link rel="stylesheet" href="assets/css/admin.css">
 </head>
-<body>
+<body class="admin-app">
 <nav class="navbar topbar sticky-top">
     <div class="container py-2">
         <a class="navbar-brand brand fw-bold" href="index.php?action=dashboard"><i class="fa-solid fa-graduation-cap me-2"></i>EduTest</a>

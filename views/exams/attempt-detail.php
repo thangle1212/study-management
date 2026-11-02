@@ -7,20 +7,21 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
-        :root { --brand: #0d6efd; --ink: #17233c; }
-        body { background: linear-gradient(135deg, #eaf4ff 0%, #f8fbff 48%, #fff 100%); color: var(--ink); }
-        .topbar { background: rgba(255,255,255,.9); border-bottom: 1px solid #e5edf8; backdrop-filter: blur(12px); }
+        :root { --brand: #1769aa; --ink: #172f4d; }
+        body { background: #f2f7fc; color: var(--ink); }
+        .topbar { background: #fff; border-bottom: 1px solid #d9e5f0; }
         .brand { color: var(--brand); font-size: 1.35rem; }
-        .page-heading { border: 0; border-radius: 22px; background: linear-gradient(135deg, #0d6efd, #438df4); color: #fff; box-shadow: 0 16px 36px rgba(13,110,253,.18); }
-        .question-card { border: 1px solid #e5edf8; border-radius: 18px; box-shadow: 0 10px 28px rgba(31,74,125,.07); }
-        .answer-row { border: 1px solid #e5edf8; border-radius: 10px; }
-        .answer-selected { background: #eef6ff; border-color: #86b7fe; }
+        .page-heading { border: 1px solid #d9e5f0; border-left: 4px solid #1769aa; border-radius: 6px; background: #fff; color: #172f4d; box-shadow: none; }
+        .question-card { border: 1px solid #d9e5f0; border-radius: 6px; box-shadow: none; }
+        .answer-row { border: 1px solid #d9e5f0; border-radius: 5px; }
+        .answer-selected { background: #e6f2fc; border-color: #8db9dc; }
         .answer-correct { background: #eefaf3; border-color: #8bd3a8; }
         .answer-wrong { background: #fff2f2; border-color: #f1aeb5; }
     </style>
     <link rel="stylesheet" href="assets/css/edutest.css">
+    <link rel="stylesheet" href="assets/css/admin.css">
 </head>
-<body>
+<body class="admin-app">
 <nav class="navbar topbar sticky-top">
     <div class="container">
         <a class="navbar-brand brand fw-bold" href="index.php?action=dashboard"><i class="fa-solid fa-graduation-cap me-2"></i>EduTest</a>

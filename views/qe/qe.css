@@ -1,16 +1,16 @@
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&display=swap');
 
 /* ============================================================
    EduTest - Question Bank Module
-   Phong cách: Azota Dashboard + startpage.php palette
+   Phong cách: EduTest admin palette
    Tác giả: EduTest Team
    ============================================================ */
 
 /* ---------- BIẾN TOÀN CỤC ---------- */
 :root {
-    --primary-color: #176b87;
-    --primary-hover: #0f5268;
-    --primary-soft: #e7f4f4;
+    --primary-color: #1769aa;
+    --primary-hover: #0b3d73;
+    --primary-soft: #e6f2fc;
 
     --success-color: #198754;
     --success-soft: #d1e7dd;
@@ -21,25 +21,26 @@
     --danger-color: #dc3545;
     --danger-soft: #f8d7da;
 
-    --purple-color: #6b5ca5;
-    --purple-soft: #eeeafa;
+    --purple-color: #596b86;
+    --purple-soft: #edf2f8;
 
-    --text-primary: #102a43;
-    --text-secondary: #486581;
-    --text-muted: #829ab1;
+    --text-primary: #172f4d;
+    --text-secondary: #536b84;
+    --text-muted: #62758b;
 
-    --border-color: #dce7e5;
-    --bg-body: #f5f8f6;
+    --border-color: #d9e5f0;
+    --bg-body: #f2f7fc;
     --bg-card: #ffffff;
+    --sidebar-color: #0b3d73;
 
-    --sidebar-width: 260px;
+    --sidebar-width: 238px;
 
-    --radius-sm: 8px;
-    --radius-md: 10px;
-    --radius-lg: 14px;
+    --radius-sm: 4px;
+    --radius-md: 5px;
+    --radius-lg: 6px;
 
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-sm: 0 1px 0 rgba(23, 47, 77, .02);
+    --shadow-md: 0 4px 16px rgba(21, 65, 108, .035);
 }
 
 /* ---------- RESET ---------- */
@@ -48,7 +49,7 @@
 }
 
 body {
-    font-family: 'Be Vietnam Pro', 'Segoe UI', sans-serif;
+    font-family: 'Fira Sans', sans-serif;
     background: var(--bg-body);
     color: var(--text-primary);
     min-height: 100vh;
@@ -68,14 +69,14 @@ body {
    ============================================================ */
 .member2-sidebar {
     width: var(--sidebar-width);
-    background: var(--bg-card);
-    color: var(--text-primary);
+    background: var(--sidebar-color);
+    color: #eff6fc;
     padding: 1.5rem 1rem;
     position: fixed;
     top: 0;
     left: 0;
     min-height: 100vh;
-    border-right: 1px solid var(--border-color);
+    border-right: 1px solid var(--sidebar-color);
     z-index: 1000;
     display: flex;
     flex-direction: column;
@@ -87,15 +88,16 @@ body {
     gap: 0.75rem;
     padding-bottom: 1.5rem;
     margin-bottom: 1.5rem;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid rgba(255, 255, 255, .2);
 }
 
 .sidebar-brand-icon {
     width: 40px;
     height: 40px;
     border-radius: var(--radius-md);
-    background: var(--primary-color);
-    color: #fff;
+    background: rgba(255, 255, 255, .12);
+    color: #bde7ff;
+    border: 1px solid rgba(255, 255, 255, .32);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -106,20 +108,20 @@ body {
 .sidebar-brand-title {
     font-weight: 700;
     font-size: 1.2rem;
-    color: var(--primary-color);
+    color: #fff;
     line-height: 1.2;
 }
 
 .sidebar-brand-subtitle {
     font-size: 0.7rem;
-    color: var(--text-muted);
+    color: #bad8f0;
     text-transform: uppercase;
     letter-spacing: 0.04em;
 }
 
 .sidebar-section-label {
     font-size: 0.7rem;
-    color: #adb5bd;
+    color: #bad8f0;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     font-weight: 600;
@@ -140,7 +142,7 @@ body {
     gap: 0.75rem;
     padding: 0.7rem 0.75rem;
     border-radius: var(--radius-md);
-    color: var(--text-secondary);
+    color: #d4e7f8;
     font-weight: 500;
     text-decoration: none;
     transition: all 0.2s ease;
@@ -154,23 +156,24 @@ body {
 }
 
 .sidebar-menu a:hover {
-    background: var(--primary-soft);
-    color: var(--primary-color);
+    background: rgba(255, 255, 255, .1);
+    color: #fff;
 }
 
 .sidebar-menu a.active {
-    background: var(--primary-color);
+    background: rgba(93, 183, 238, .2);
     color: #fff;
+    box-shadow: inset 3px 0 #69c5f2;
 }
 
 .sidebar-user {
     margin-top: auto;
     padding-top: 1.25rem;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid rgba(255, 255, 255, .2);
 }
 
 .sidebar-user-card {
-    background: var(--bg-body);
+    background: rgba(255, 255, 255, .1);
     border-radius: var(--radius-md);
     padding: 0.75rem;
     display: flex;
@@ -181,7 +184,8 @@ body {
 .sidebar-user-avatar {
     width: 38px;
     height: 38px;
-    background: var(--primary-color);
+    background: #d8efff;
+    color: var(--sidebar-color);
     color: #fff;
     border-radius: 50%;
     display: flex;
@@ -196,11 +200,11 @@ body {
     font-weight: 600;
     font-size: 0.85rem;
     line-height: 1.2;
-    color: var(--text-primary);
+    color: #fff;
 }
 
 .sidebar-user-role {
-    color: var(--text-muted);
+    color: #bad8f0;
     font-size: 0.7rem;
 }
 

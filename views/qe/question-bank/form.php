@@ -13,8 +13,18 @@ $escape = static function ($value) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="views/qe/qe.css">
     <link rel="stylesheet" href="assets/css/edutest.css">
+    <link rel="stylesheet" href="assets/css/admin.css">
 </head>
-<body>
+<body class="admin-app">
+<nav class="navbar admin-module-navbar">
+    <div class="container">
+        <a class="navbar-brand" href="index.php?action=dashboard"><i class="fa-solid fa-graduation-cap me-2" aria-hidden="true"></i>EduTest</a>
+        <div class="d-flex gap-2">
+            <a class="btn btn-sm btn-outline-secondary" href="index.php?action=dashboard">Bảng điều khiển</a>
+            <a class="btn btn-sm btn-outline-primary" href="index.php?action=qe_banks">Ngân hàng câu hỏi</a>
+        </div>
+    </div>
+</nav>
 <main class="container py-4" style="max-width: 900px">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>

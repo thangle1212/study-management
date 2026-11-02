@@ -10,30 +10,29 @@ $deadline = strtotime($exam['start_time']) + ((int) $exam['duration_minutes'] * 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
-        body { background: radial-gradient(circle at 72% 0%, #e8f4f2 0, #f5f8f6 38%, #eef3f1 100%); }
+        body { background: #f2f7fc; }
         .exam-shell { max-width: 980px; }
         .exam-status { color: var(--edu-teal); }
         .exam-status.timer-warning { color: #b54708; }
-        .exam-header { border: 0; border-radius: 14px; background: linear-gradient(120deg, #102a43 0%, #176b87 72%, #3c98a0 100%); color: #fff; box-shadow: var(--edu-shadow); position: relative; overflow: hidden; }
-        .exam-header::after { content: ''; position: absolute; width: 250px; height: 250px; border: 1px solid rgba(255,255,255,.16); border-radius: 50%; right: -78px; top: -125px; }
+        .exam-header { border: 1px solid var(--edu-line); border-left: 4px solid #1769aa; border-radius: 6px; background: #fff; color: #172f4d; box-shadow: none; position: relative; overflow: hidden; }
         .exam-header-content { position: relative; z-index: 1; }
-        .exam-header .eyebrow { letter-spacing: .04em; }
-        .question-card { border: 1px solid var(--edu-line) !important; border-radius: 12px; box-shadow: 0 8px 26px rgba(16,42,67,.05) !important; }
-        .question-card:hover { box-shadow: 0 12px 30px rgba(16,42,67,.09) !important; }
+        .question-card { border: 1px solid var(--edu-line) !important; border-radius: 6px; box-shadow: none !important; }
+        .question-card:hover { border-color: #b7cadd !important; }
         .question-number { background: var(--edu-teal-soft); color: var(--edu-teal); }
         .answer-option { cursor: pointer; background: #fff; border: 1px solid var(--edu-line) !important; transition: background .15s ease, border-color .15s ease, box-shadow .15s ease; }
-        .answer-option:hover, .answer-option:has(input:checked) { border-color: #5da6ae !important; background: #f0f8f7; box-shadow: 0 0 0 3px rgba(23,107,135,.08); }
+        .answer-option:hover, .answer-option:has(input:checked) { border-color: #1769aa !important; background: #f4f8fc; box-shadow: 0 0 0 3px rgba(23,105,170,.1); }
         .answer-option input { accent-color: var(--edu-teal); }
         .submit-bar { position: sticky; bottom: 18px; z-index: 5; }
         .submit-bar .btn { min-width: 160px; }
         @media (max-width: 767.98px) {
             .exam-status-group { width: 100%; justify-content: space-between; }
-            .exam-header { border-radius: 10px; }
+            .exam-header { border-radius: 6px; }
         }
     </style>
     <link rel="stylesheet" href="assets/css/edutest.css">
+    <link rel="stylesheet" href="assets/css/admin.css">
 </head>
-<body>
+<body class="admin-app">
 <nav class="navbar topbar sticky-top">
     <div class="container exam-shell d-flex flex-wrap align-items-center justify-content-between gap-2">
         <a class="navbar-brand brand fw-bold" href="index.php?action=dashboard"><i class="fa-solid fa-graduation-cap me-2"></i>EduTest</a>

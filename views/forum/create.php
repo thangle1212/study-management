@@ -7,18 +7,19 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
-        :root { --brand: #0d6efd; --ink: #17233c; --soft: #f4f8ff; }
-        body { background: linear-gradient(135deg, #eaf4ff 0%, #f8fbff 45%, #fff 100%); color: var(--ink); min-height: 100vh; }
-        .topbar { background: rgba(255,255,255,.9); border-bottom: 1px solid #e5edf8; backdrop-filter: blur(12px); }
+        :root { --brand: #1769aa; --ink: #172f4d; --soft: #e6f2fc; }
+        body { background: #f2f7fc; color: var(--ink); min-height: 100vh; }
+        .topbar { background: #fff; border-bottom: 1px solid #d9e5f0; }
         .brand { color: var(--brand); font-size: 1.35rem; }
-        .form-card { border: 1px solid #e5edf8; border-radius: 16px; box-shadow: 0 8px 24px rgba(31,74,125,.06); background-color: #fff; }
+        .form-card { border: 1px solid #d9e5f0; border-radius: 6px; box-shadow: none; background-color: #fff; }
         .form-label { font-weight: 600; color: var(--ink); }
-        .form-control, .form-select { border-radius: 10px; border: 1px solid #ced4da; padding: 0.75rem 1rem; }
-        .form-control:focus, .form-select:focus { border-color: var(--brand); box-shadow: 0 0 0 0.25rem rgba(13,110,253,.15); }
+        .form-control, .form-select { border-radius: 5px; border: 1px solid #c9d8e7; padding: 0.65rem 0.85rem; }
+        .form-control:focus, .form-select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(23,105,170,.15); }
     </style>
     <link rel="stylesheet" href="assets/css/edutest.css">
+    <link rel="stylesheet" href="assets/css/admin.css">
 </head>
-<body>
+<body class="admin-app">
 <nav class="navbar topbar sticky-top">
     <div class="container py-2">
         <a class="navbar-brand brand fw-bold" href="index.php?action=dashboard"><i class="fa-solid fa-graduation-cap me-2"></i>EduTest</a>
