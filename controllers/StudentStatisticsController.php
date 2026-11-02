@@ -18,8 +18,7 @@ final class StudentStatisticsController extends BaseController
         $this->requireLogin();
         $studentId = (int) $_SESSION['user']['id'];
         $selectedExamId = (int) ($_GET['exam_id'] ?? 0);
-        $selectedExamType = is_string($_GET['exam_type'] ?? null) ? $_GET['exam_type'] : '';
-        $data = $this->statistics->getDashboard($studentId, $selectedExamId, $selectedExamType);
+        $data = $this->statistics->getDashboard($studentId, $selectedExamId);
         extract($data, EXTR_SKIP);
         require __DIR__ . '/../views/exams/student-statistics.php';
     }
