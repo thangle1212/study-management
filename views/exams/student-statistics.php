@@ -111,7 +111,7 @@
                                         <span class="badge bg-success-subtle text-success">Đã nộp</span>
                                     <?php endif; ?>
                                 </td>
-                                <td><a href="index.php?action=attempt_detail&attempt_id=<?php echo (int) $attempt['attempt_id']; ?>" class="btn btn-sm btn-outline-primary rounded-3 text-nowrap"><i class="fa-solid fa-eye me-1"></i>Chi tiết</a></td>
+                            <td><a href="index.php?action=attempt_detail&attempt_id=<?php echo (int) $attempt['attempt_id']; ?>" class="btn btn-sm btn-outline-primary rounded-3 text-nowrap"><i class="fa-solid fa-eye me-1"></i>Chi tiết</a></td>
                             </tr>
                         <?php endforeach; ?>
                         </tbody>
