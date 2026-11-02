@@ -7,26 +7,26 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
-        body { background: radial-gradient(circle at 50% 0%, #edf7f5 0, #f5f8f6 42%, #eef3f1 100%); }
-        .result-card { max-width: 720px; border: 1px solid #dce7e5; border-radius: 18px; box-shadow: 0 24px 60px rgba(16,42,67,.12); overflow: hidden; }
-        .result-head { background: linear-gradient(120deg, #102a43 0%, #176b87 72%, #3c98a0 100%); color: #fff; position: relative; overflow: hidden; }
-        .result-head::after { content: ''; position: absolute; width: 220px; height: 220px; border: 1px solid rgba(255,255,255,.16); border-radius: 50%; right: -72px; top: -112px; }
+        body { background: #f2f7fc; }
+        .result-card { max-width: 720px; border: 1px solid #d9e5f0; border-radius: 6px; box-shadow: none; overflow: hidden; }
+        .result-head { background: #0b3d73; color: #fff; position: relative; overflow: hidden; }
         .result-head-content { position: relative; z-index: 1; }
         .result-kicker { letter-spacing: .04em; }
-        .score { width: 158px; height: 158px; border: 9px solid #dcefeb; background: #fff; color: #176b87; box-shadow: 0 8px 20px rgba(16,42,67,.08); }
+        .score { width: 158px; height: 158px; border: 9px solid #e6f2fc; background: #fff; color: #1769aa; box-shadow: none; }
         .result-actions { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
         .result-actions .btn { min-width: 205px; }
-        .detail-link { color: #176b87; border-color: #176b87; }
-        .detail-link:hover, .detail-link:focus-visible { color: #fff; background: #176b87; border-color: #176b87; }
+        .detail-link { color: #1769aa; border-color: #1769aa; }
+        .detail-link:hover, .detail-link:focus-visible { color: #fff; background: #1769aa; border-color: #1769aa; }
         @media (max-width: 575.98px) {
-            .result-card { border-radius: 12px; }
+            .result-card { border-radius: 6px; }
             .result-actions { flex-direction: column; }
             .result-actions .btn { width: 100%; }
         }
     </style>
     <link rel="stylesheet" href="assets/css/edutest.css">
+    <link rel="stylesheet" href="assets/css/admin.css">
 </head>
-<body>
+<body class="admin-app">
 <div class="container py-5 d-flex justify-content-center">
     <div class="card result-card text-center w-100">
         <div class="result-head p-4 p-md-5">

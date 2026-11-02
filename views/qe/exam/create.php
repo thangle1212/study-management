@@ -30,19 +30,20 @@ $escape = function ($value) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="views/qe/qe.css">
+    <link rel="stylesheet" href="assets/css/admin.css">
     <style>
         .exam-create-wrap { max-width: 1100px; }
-        .exam-create-card { border: 1px solid #e5edf8; border-radius: 16px; background: #fff; padding: 24px; margin-bottom: 20px; }
-        .paste-editor { min-height: 320px; max-height: 65vh; overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; border: 1px solid #ced4da; border-radius: 8px; padding: 16px; background: #fff; }
-        .paste-editor:focus { outline: 0; border-color: #86b7fe; box-shadow: 0 0 0 .2rem rgba(13,110,253,.15); }
+        .exam-create-card { border: 1px solid #d9e5f0; border-radius: 6px; background: #fff; padding: 24px; margin-bottom: 20px; }
+        .paste-editor { min-height: 320px; max-height: 65vh; overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; border: 1px solid #c9d8e7; border-radius: 5px; padding: 16px; background: #fff; }
+        .paste-editor:focus { outline: 2px solid #c47721; outline-offset: 2px; border-color: #1769aa; box-shadow: 0 0 0 3px rgba(23,105,170,.15); }
         .paste-editor:empty:before { content: attr(data-placeholder); color: #6c757d; pointer-events: none; }
-        .parsed-question { border: 1px solid #dce7f5; border-radius: 12px; padding: 18px; margin-top: 14px; background: #f9fbff; }
-        .parsed-answer { border: 1px solid #e1e9f3; border-radius: 9px; padding: 10px 12px; background: #fff; }
+        .parsed-question { border: 1px solid #d9e5f0; border-radius: 6px; padding: 18px; margin-top: 14px; background: #f4f8fc; }
+        .parsed-answer { border: 1px solid #d9e5f0; border-radius: 5px; padding: 10px 12px; background: #fff; }
         .parsed-answer.correct { border-color: #75b798; background: #f1faf5; }
-        .parse-guide { background: #f4f8ff; border-radius: 10px; padding: 14px 16px; }
+        .parse-guide { background: #e6f2fc; border-radius: 5px; padding: 14px 16px; }
     </style>
 </head>
-<body class="exam-create-page">
+<body class="exam-create-page admin-app">
     <div class="member2-app">
         <aside class="member2-sidebar" id="sidebar">
             <div class="sidebar-brand">

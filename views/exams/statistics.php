@@ -8,18 +8,18 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --brand: #0d6efd; --ink: #17233c; }
-        body { background: linear-gradient(135deg, #eaf4ff 0%, #f8fbff 48%, #fff 100%); color: var(--ink); }
-        .topbar { background: rgba(255,255,255,.9); border-bottom: 1px solid #e5edf8; backdrop-filter: blur(12px); }
+        :root { --brand: #1769aa; --ink: #172f4d; }
+        body { background: #f2f7fc; color: var(--ink); }
+        .topbar { background: #fff; border-bottom: 1px solid #d9e5f0; }
         .brand { color: var(--brand); font-size: 1.35rem; }
-        .stat-card { border: 1px solid #e5edf8; border-radius: 18px; box-shadow: 0 10px 28px rgba(31,74,125,.07); }
-        .page-heading { border: 0; border-radius: 22px; background: linear-gradient(135deg, #0d6efd, #438df4); color: #fff; box-shadow: 0 16px 36px rgba(13,110,253,.18); }
-        .table thead th { color: #6c7b93; font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; border-bottom-width: 1px; }
+        .stat-card { border: 1px solid #d9e5f0; border-radius: 6px; box-shadow: none; }
+        .page-heading { border: 1px solid #d9e5f0; border-left: 4px solid #1769aa; border-radius: 6px; background: #fff; color: #172f4d; box-shadow: none; }
+        .table thead th { color: #536b84; background: #f4f8fc; font-size: 11px; font-weight: 700; text-transform: uppercase; border-bottom-width: 1px; }
         .table tbody tr:last-child td { border-bottom: 0; }
-        .kpi-card { border: 1px solid #e5edf8; border-radius: 16px; box-shadow: 0 8px 24px rgba(31,74,125,.06); }
-        .kpi-icon { width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; border-radius: 11px; }
+        .kpi-card { border: 1px solid #d9e5f0; border-radius: 6px; box-shadow: none; }
+        .kpi-icon { width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; border-radius: 5px; }
         .kpi-value { font-size: 1.45rem; line-height: 1.2; }
-        .table-filter { background: #f7faff; border: 1px solid #e5edf8; border-radius: 12px; }
+        .table-filter { background: #f4f8fc; border: 1px solid #d9e5f0; border-radius: 5px; }
         .scores-table-wrap { max-height: 440px; overflow: auto; }
         .scores-table-wrap thead th { position: sticky; top: 0; z-index: 1; background: #fff; }
         .chart-wrap { position: relative; width: 100%; height: 280px; overflow: hidden; }
@@ -28,8 +28,9 @@
         .question-analysis-wrap thead th { position: sticky; top: 0; z-index: 1; background: #fff; }
     </style>
     <link rel="stylesheet" href="assets/css/edutest.css">
+    <link rel="stylesheet" href="assets/css/admin.css">
 </head>
-<body>
+<body class="admin-app">
 <nav class="navbar topbar sticky-top">
     <div class="container">
         <a class="navbar-brand brand fw-bold" href="index.php?action=dashboard"><i class="fa-solid fa-graduation-cap me-2"></i>EduTest</a>
@@ -389,7 +390,7 @@ new Chart(document.getElementById('scoreDistributionChart'), {
         datasets: [{
             label: 'Số lượt đạt điểm',
             data: <?php echo json_encode(array_values($scoreDistribution)); ?>,
-            backgroundColor: '#0d6efd',
+            backgroundColor: '#1769aa',
             borderRadius: 8,
             maxBarThickness: 56
         }]

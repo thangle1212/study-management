@@ -8,13 +8,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --brand: #0d6efd; --ink: #17233c; }
-        body { background: linear-gradient(135deg, #eaf4ff 0%, #f8fbff 48%, #fff 100%); color: var(--ink); }
-        .topbar { background: rgba(255,255,255,.9); border-bottom: 1px solid #e5edf8; backdrop-filter: blur(12px); }
+        :root { --brand: #1769aa; --ink: #172f4d; }
+        body { background: #f2f7fc; color: var(--ink); }
+        .topbar { background: #fff; border-bottom: 1px solid #d9e5f0; }
         .brand { color: var(--brand); font-size: 1.35rem; }
-        .page-heading { border: 0; border-radius: 22px; background: linear-gradient(135deg, #0d6efd, #438df4); color: #fff; box-shadow: 0 16px 36px rgba(13,110,253,.18); }
-        .stat-card { border: 1px solid #e5edf8; border-radius: 18px; box-shadow: 0 10px 28px rgba(31,74,125,.07); }
-        .metric { border-radius: 14px; background: #f7faff; border: 1px solid #e5edf8; }
+        .page-heading { border: 1px solid #d9e5f0; border-left: 4px solid #1769aa; border-radius: 6px; background: #fff; color: #172f4d; box-shadow: none; }
+        .stat-card { border: 1px solid #d9e5f0; border-radius: 6px; box-shadow: none; }
+        .metric { border-radius: 5px; background: #f4f8fc; border: 1px solid #d9e5f0; }
         .chart-wrap { min-height: 320px; }
         .empty-state { min-height: 260px; }
         .metric { height: 100%; }
@@ -23,8 +23,9 @@
         .chart-center-label { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; z-index: 2; }
     </style>
     <link rel="stylesheet" href="assets/css/edutest.css">
+    <link rel="stylesheet" href="assets/css/admin.css">
 </head>
-<body>
+<body class="admin-app">
 <nav class="navbar topbar sticky-top">
     <div class="container">
         <a class="navbar-brand brand fw-bold" href="index.php?action=dashboard"><i class="fa-solid fa-graduation-cap me-2"></i>EduTest</a>
@@ -144,7 +145,7 @@ const scoreData = <?php echo json_encode(array_map(function ($attempt) {
 }, $attempts)); ?>;
 new Chart(document.getElementById('scoreChart'), {
     type: 'line',
-    data: { labels: scoreLabels, datasets: [{ label: 'Tỷ lệ điểm (%)', data: scoreData, borderColor: '#176b87', backgroundColor: 'rgba(23,107,135,.13)', fill: true, tension: 0.2, pointRadius: 4, pointHoverRadius: 6, pointBackgroundColor: '#176b87', pointBorderColor: '#fff', pointBorderWidth: 2 }] },
+    data: { labels: scoreLabels, datasets: [{ label: 'Tỷ lệ điểm (%)', data: scoreData, borderColor: '#1769aa', backgroundColor: 'rgba(23,105,170,.13)', fill: true, tension: 0.2, pointRadius: 4, pointHoverRadius: 6, pointBackgroundColor: '#1769aa', pointBorderColor: '#fff', pointBorderWidth: 2 }] },
     options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'nearest' }, plugins: { legend: { display: false }, tooltip: { callbacks: { title: function (items) { return scoreTitles[items[0].dataIndex] || 'Bài kiểm tra'; }, label: function (context) { return 'Lần ' + (context.dataIndex + 1) + ': ' + context.raw + '%'; } } } }, scales: { x: { ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 } }, y: { beginAtZero: true, max: 110, ticks: { stepSize: 20, callback: function (value) { return value <= 100 ? value : ''; } }, title: { display: true, text: 'Tỷ lệ điểm (%)' } } } }
 });
 new Chart(document.getElementById('accuracyChart'), {

@@ -7,13 +7,11 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
-        body { min-height: 100vh; background: radial-gradient(circle at 75% 0%, #e8f4f2 0, #f5f8f6 38%, #eef3f1 100%); }
+        body { min-height: 100vh; background: #f2f7fc; }
         .prepare-shell { max-width: 820px; }
-        .prepare-header { border: 0; border-radius: 14px; background: linear-gradient(120deg, #102a43 0%, #176b87 72%, #3c98a0 100%); color: #fff; box-shadow: var(--edu-shadow); position: relative; overflow: hidden; }
-        .prepare-header::after { content: ''; position: absolute; width: 230px; height: 230px; border: 1px solid rgba(255,255,255,.16); border-radius: 50%; right: -72px; top: -118px; }
+        .prepare-header { border: 1px solid var(--edu-line); border-left: 4px solid #1769aa; border-radius: 6px; background: #fff; color: #172f4d; box-shadow: none; position: relative; overflow: hidden; }
         .prepare-header-content { position: relative; z-index: 1; }
-        .prepare-header .eyebrow { letter-spacing: .04em; }
-        .info-card, .history-card { border: 1px solid var(--edu-line) !important; border-radius: 12px; box-shadow: 0 8px 26px rgba(16,42,67,.05); }
+        .info-card, .history-card { border: 1px solid var(--edu-line) !important; border-radius: 6px; box-shadow: none; }
         .policy-row { border-bottom: 1px solid var(--edu-line); }
         .policy-row:last-child { border-bottom: 0; }
         .history-score { min-width: 86px; }
@@ -26,8 +24,9 @@
         }
     </style>
     <link rel="stylesheet" href="assets/css/edutest.css">
+    <link rel="stylesheet" href="assets/css/admin.css">
 </head>
-<body>
+<body class="admin-app">
 <nav class="navbar topbar sticky-top">
     <div class="container prepare-shell">
         <a class="navbar-brand brand fw-bold" href="index.php?action=dashboard"><i class="fa-solid fa-graduation-cap me-2"></i>EduTest</a>

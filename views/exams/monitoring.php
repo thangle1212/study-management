@@ -7,16 +7,17 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
-        :root { --ink: #17233c; }
-        body { min-height: 100vh; background: linear-gradient(135deg, #eaf4ff, #f8fbff 52%, #fff); color: var(--ink); }
+        :root { --ink: #172f4d; }
+        body { min-height: 100vh; background: #f2f7fc; color: var(--ink); }
         .monitor-shell { max-width: 1180px; }
-        .monitor-heading { border: 0; border-radius: 16px; background: linear-gradient(135deg, #0d6efd, #438df4); color: #fff; }
-        .monitor-table { border: 1px solid #e5edf8; border-radius: 8px; overflow: hidden; }
-        .table thead th { color: #64748b; font-size: .78rem; text-transform: uppercase; }
+        .monitor-heading { border: 1px solid #d9e5f0; border-left: 4px solid #1769aa; border-radius: 6px; background: #fff; color: #172f4d; }
+        .monitor-table { border: 1px solid #d9e5f0; border-radius: 6px; overflow: hidden; }
+        .table thead th { color: #536b84; background: #f4f8fc; font-size: 11px; font-weight: 700; text-transform: uppercase; }
     </style>
     <link rel="stylesheet" href="assets/css/edutest.css">
+    <link rel="stylesheet" href="assets/css/admin.css">
 </head>
-<body>
+<body class="admin-app">
 <nav class="navbar bg-white border-bottom">
     <div class="container monitor-shell">
         <a class="navbar-brand fw-bold text-primary" href="index.php?action=dashboard"><i class="fa-solid fa-graduation-cap me-2"></i>EduTest</a>
