@@ -72,7 +72,7 @@
                 <section class="card stat-card h-100">
                     <div class="card-body p-4">
                         <h2 class="h5 fw-bold mb-1"><i class="fa-solid fa-arrow-trend-up text-primary me-2"></i>Điểm qua các lần làm bài</h2>
-                        <p class="text-muted small mb-4">Điểm quy đổi theo tỷ lệ % số điểm đạt được</p>
+                        <p class="text-muted small mb-4">Điểm quy đổi theo tỷ lệ % của 15 lần làm gần nhất</p>
                         <div class="chart-wrap"><canvas id="scoreChart"></canvas></div>
                     </div>
                 </section>
@@ -133,21 +133,23 @@
 
 <?php if ($attempts): ?>
 <script>
+<?php $chartAttempts = array_slice($attempts, -15); ?>
 const scoreTitles = <?php echo json_encode(array_map(function ($attempt) {
     $title = trim((string) $attempt['title']);
     return $title === '' ? $title : mb_strtoupper(mb_substr($title, 0, 1, 'UTF-8'), 'UTF-8') . mb_substr($title, 1);
-}, $attempts), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
-const scoreLabels = <?php echo json_encode(array_map(function ($attempt, $index) {
-    return 'Lần ' . ($index + 1);
-}, $attempts, array_keys($attempts)), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+}, $chartAttempts), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+<?php $chartAttemptOffset = count($attempts) - count($chartAttempts); ?>
+const scoreLabels = <?php echo json_encode(array_map(function ($attempt, $index) use ($chartAttemptOffset) {
+    return 'Lần ' . ($index + 1 + $chartAttemptOffset);
+}, $chartAttempts, array_keys($chartAttempts)), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
 const scoreData = <?php echo json_encode(array_map(function ($attempt) {
     $maxScore = (float) $attempt['max_score'];
     return $maxScore > 0 ? round(((float) $attempt['total_score'] / $maxScore) * 100, 1) : 0;
-}, $attempts)); ?>;
+}, $chartAttempts)); ?>;
 new Chart(document.getElementById('scoreChart'), {
     type: 'line',
     data: { labels: scoreLabels, datasets: [{ label: 'Tỷ lệ điểm (%)', data: scoreData, borderColor: '#1769aa', backgroundColor: 'rgba(23,105,170,.13)', fill: true, tension: 0.2, pointRadius: 4, pointHoverRadius: 6, pointBackgroundColor: '#1769aa', pointBorderColor: '#fff', pointBorderWidth: 2 }] },
-    options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'nearest' }, plugins: { legend: { display: false }, tooltip: { callbacks: { title: function (items) { return scoreTitles[items[0].dataIndex] || 'Bài kiểm tra'; }, label: function (context) { return 'Lần ' + (context.dataIndex + 1) + ': ' + context.raw + '%'; } } } }, scales: { x: { ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 } }, y: { beginAtZero: true, max: 110, ticks: { stepSize: 20, callback: function (value) { return value <= 100 ? value : ''; } }, title: { display: true, text: 'Tỷ lệ điểm (%)' } } } }
+    options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'nearest' }, plugins: { legend: { display: false }, tooltip: { callbacks: { title: function (items) { return scoreTitles[items[0].dataIndex] || 'Bài kiểm tra'; }, label: function (context) { return scoreLabels[context.dataIndex] + ': ' + context.raw + '%'; } } } }, scales: { x: { ticks: { autoSkip: true, maxTicksLimit: 10, maxRotation: 0, minRotation: 0 } }, y: { beginAtZero: true, max: 110, ticks: { stepSize: 20, callback: function (value) { return value <= 100 ? value : ''; } }, title: { display: true, text: 'Tỷ lệ điểm (%)' } } } }
 });
 new Chart(document.getElementById('accuracyChart'), {
     type: 'doughnut',
