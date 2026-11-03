@@ -60,3 +60,8 @@ Nháp: bài thi hoặc câu hỏi đang được xây dựng, chưa sử dụng.
 Đã công bố/Hoạt động: nội dung đã sẵn sàng để sử dụng.
 Đã lên lịch: bài thi sẽ mở trong khoảng thời gian đã cài đặt.
 Lưu trữ: không còn sử dụng nhưng vẫn giữ lại dữ liệu.
+
+5. Giới hạn đăng nhập sai
+Đăng nhập ở cổng học tập và cổng quản trị dùng chung bộ đếm: tối đa 5 lần sai cho một email trong 15 phút, sau đó khóa thử đăng nhập email đó trong 15 phút. IP có ngưỡng 20 lần sai trong 15 phút để tránh khóa nhầm người dùng chung mạng trường học/văn phòng.
+
+Khi cài đặt hoặc nâng cấp cơ sở dữ liệu hiện có, chạy một lần `sql/login_attempt_limits.sql` trong phpMyAdmin. Bảng này lưu hash của email/IP, số lần thất bại và thời hạn khóa; các bản ghi cũ hơn một ngày được dọn khi có lần đăng nhập thất bại mới.

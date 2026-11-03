@@ -67,6 +67,10 @@ $roleLabels = [
             <i class="fa-solid fa-circle-exclamation me-2" aria-hidden="true"></i>
             <?php if ($_GET['error'] === 'self_action_forbidden'): ?>
                 Bạn không thể thay đổi trạng thái hoặc vai trò của chính tài khoản đang đăng nhập.
+            <?php elseif ($_GET['error'] === 'admin_promotion_forbidden'): ?>
+                Không thể cấp quyền quản trị viên từ trang quản lý tài khoản.
+            <?php elseif ($_GET['error'] === 'admin_creation_forbidden'): ?>
+                Không thể tạo tài khoản quản trị viên từ trang quản lý tài khoản.
             <?php elseif ($_GET['error'] === 'email_exists'): ?>
                 Email này đã được sử dụng bởi tài khoản khác.
             <?php elseif ($_GET['error'] === 'invalid_profile'): ?>
@@ -109,7 +113,7 @@ $roleLabels = [
                 <div class="col-md-6">
                     <label for="new-role" class="form-label">Phân quyền</label>
                     <select id="new-role" name="role" class="form-select" required>
-                        <?php foreach ($roleLabels as $role => $label): ?>
+                        <?php foreach (['student' => $roleLabels['student'], 'teacher' => $roleLabels['teacher']] as $role => $label): ?>
                             <option value="<?= htmlspecialchars($role, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?></option>
                         <?php endforeach; ?>
                     </select>
@@ -196,7 +200,10 @@ $roleLabels = [
                                     <input type="hidden" name="action_type" value="role">
                                     <label class="visually-hidden" for="role-user-<?= $userId ?>">Vai trò của <?= $userName ?></label>
                                     <select id="role-user-<?= $userId ?>" name="value" class="form-select form-select-sm" aria-label="Vai trò của <?= $userName ?>" onchange="this.form.submit()" <?= $isCurrentUser ? 'disabled' : '' ?>>
-                                        <?php foreach ($roleLabels as $role => $label): ?>
+                                        <?php if ($userRole === 'admin'): ?>
+                                            <option value="admin" selected disabled><?= htmlspecialchars($roleLabels['admin'], ENT_QUOTES, 'UTF-8') ?></option>
+                                        <?php endif; ?>
+                                        <?php foreach (['student' => $roleLabels['student'], 'teacher' => $roleLabels['teacher']] as $role => $label): ?>
                                             <option value="<?= htmlspecialchars($role, ENT_QUOTES, 'UTF-8') ?>" <?= $userRole === $role ? 'selected' : '' ?>>
                                                 <?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>
                                             </option>

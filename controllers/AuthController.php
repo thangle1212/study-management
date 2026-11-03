@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../models/User.php';
+require_once __DIR__ . '/../models/LoginAttemptLimiter.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
@@ -9,9 +10,11 @@ require_once __DIR__ . '/../libs/PHPMailer/src/SMTP.php';
 
 class AuthController {
     private $userModel;
+    private $loginAttemptLimiter;
 
     public function __construct($pdo) {
         $this->userModel = new User($pdo);
+        $this->loginAttemptLimiter = new LoginAttemptLimiter($pdo);
     }
 
     // --- 1. ĐĂNG NHẬP ---
@@ -19,30 +22,42 @@ class AuthController {
         $error = '';
         $notice = '';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $email = trim($_POST['email'] ?? '');
-            $password = $_POST['password'] ?? '';
+            $emailInput = $_POST['email'] ?? '';
+            $passwordInput = $_POST['password'] ?? '';
+            $email = is_string($emailInput) ? trim($emailInput) : '';
+            $password = is_string($passwordInput) ? $passwordInput : '';
+            $ipAddress = is_string($_SERVER['REMOTE_ADDR'] ?? null) ? $_SERVER['REMOTE_ADDR'] : '';
+            $lockoutSeconds = $this->loginAttemptLimiter->getLockoutSeconds($email, $ipAddress);
 
-            $user = $this->userModel->findByEmail($email);
-            if ($user && password_verify($password, $user['password'])) {
-                if ($user['role'] === 'admin') {
-                    $notice = 'Tài khoản quản trị không thể đăng nhập tại cổng học tập. Vui lòng sử dụng cổng đăng nhập quản trị.';
-                } elseif ($user['status'] !== 'active') {
-                    $error = 'Tài khoản của bạn đã bị khóa!';
-                } else {
-                    session_regenerate_id(true); // Tạo session ID hoàn toàn mới, hủy ID cũ
-                    $_SESSION['user'] = [
-                        'id' => $user['user_id'],
-                        'full_name' => $user['full_name'],
-                        'email' => $user['email'],
-                        'role' => $user['role'],
-                        'avatar' => $user['avatar'] ?? 'assets/images/default-avatar.png'
-                    ];
-                    header('Location: index.php?action=dashboard');
-                    exit;
-
-                } 
+            if ($lockoutSeconds > 0) {
+                $error = $this->loginAttemptLimiter->getLockoutMessage($lockoutSeconds);
             } else {
-                $error = 'Email hoặc mật khẩu không chính xác!';
+                $user = $this->userModel->findByEmail($email);
+                if ($user && password_verify($password, $user['password'])) {
+                    $this->loginAttemptLimiter->clearEmailFailures($email);
+
+                    if ($user['role'] === 'admin') {
+                        $notice = 'Tài khoản quản trị không thể đăng nhập tại cổng học tập. Vui lòng sử dụng cổng đăng nhập quản trị.';
+                    } elseif ($user['status'] !== 'active') {
+                        $error = 'Tài khoản của bạn đã bị khóa!';
+                    } else {
+                        session_regenerate_id(true);
+                        $_SESSION['user'] = [
+                            'id' => $user['user_id'],
+                            'full_name' => $user['full_name'],
+                            'email' => $user['email'],
+                            'role' => $user['role'],
+                            'avatar' => $user['avatar'] ?? 'assets/images/default-avatar.png'
+                        ];
+                        header('Location: index.php?action=dashboard');
+                        exit;
+                    }
+                } else {
+                    $lockoutSeconds = $this->loginAttemptLimiter->recordFailure($email, $ipAddress);
+                    $error = $lockoutSeconds > 0
+                        ? $this->loginAttemptLimiter->getLockoutMessage($lockoutSeconds)
+                        : 'Email hoặc mật khẩu không chính xác!';
+                }
             }
         }
         require __DIR__ . '/../views/auth/login.php';
