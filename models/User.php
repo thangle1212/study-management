@@ -112,7 +112,17 @@ class User {
             "UPDATE users SET status = ? WHERE user_id = ? AND role <> 'admin'"
         );
         $stmt->execute([$status, $userId]);
-        return $stmt->rowCount() > 0;
+        if ($stmt->rowCount() > 0) {
+            return true;
+        }
+
+        $check = $this->pdo->prepare(
+            "SELECT 1
+             FROM users
+             WHERE user_id = ? AND role <> 'admin' AND status = ?"
+        );
+        $check->execute([$userId, $status]);
+        return (bool) $check->fetchColumn();
     }
 
     public function updateRole($userId, $role) {

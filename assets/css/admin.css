@@ -872,10 +872,45 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
 .admin-app .forum-header .col-md-4 { text-align: left !important; }
 .admin-app .result-head::after { content: none; }
 
+.student-dashboard-classes { margin-bottom: 30px; }
+.student-dashboard-classes .user-section-heading { margin-bottom: 14px; }
+.student-dashboard-class-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.student-dashboard-class { display: flex; min-width: 0; align-items: flex-start; gap: 12px; padding: 15px; }
+.student-dashboard-class .user-exam-icon { width: 36px; height: 36px; flex-basis: 36px; font-size: 14px; }
+.student-dashboard-class h3 { overflow: hidden; margin: 0 0 4px; color: var(--admin-ink); font-size: 13px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.student-dashboard-class p { margin: 0 0 3px; color: var(--admin-muted); font-size: 11px; }
+.student-dashboard-class > div > span { color: var(--admin-muted); font-size: 11px; }
+.student-dashboard-empty { padding: 15px 18px; color: var(--admin-muted); font-size: 13px; }
+.student-dashboard-empty p { margin: 0; }
+.student-class-list { display: grid; gap: 16px; }
+.student-class-card { overflow: hidden; }
+.student-class-heading { display: flex; align-items: center; gap: 13px; padding: 17px 20px; border-bottom: 1px solid #e6edf4; }
+.student-class-heading .user-exam-icon { width: 42px; height: 42px; flex-basis: 42px; }
+.student-class-title { min-width: 0; flex: 1; }
+.student-class-title h2 { overflow: hidden; margin: 0 0 4px; color: var(--admin-ink); font-size: 16px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.student-class-title p { margin: 0; color: var(--admin-muted); font-size: 12px; }
+.student-class-title strong { color: var(--admin-primary); font-family: 'Fira Code', monospace; font-size: 11px; }
+.student-class-exams { display: grid; padding: 0 20px; }
+.student-assigned-exam { display: flex; min-width: 0; align-items: center; gap: 12px; padding: 14px 0; }
+.student-assigned-exam + .student-assigned-exam { border-top: 1px solid #edf1f5; }
+.student-assigned-icon { display: grid; width: 38px; height: 38px; flex: 0 0 38px; margin: 0; place-items: center; border-radius: 5px; color: var(--admin-primary); background: var(--admin-soft); font-size: 15px; }
+.student-assigned-exam-copy { min-width: 0; flex: 1; }
+.student-assigned-exam-copy h3 { overflow: hidden; margin: 0 0 4px; color: var(--admin-ink); font-size: 13px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.student-assigned-exam-copy p { margin: 0; color: var(--admin-muted); font-size: 11px; }
+.student-exam-action { min-height: 34px; flex: 0 0 auto; gap: 7px; padding: 6px 10px; font-size: 11px; }
+.student-class-empty { margin: 0; padding: 16px 20px; color: var(--admin-muted); font-size: 12px; }
+
 @media (max-width: 620px) {
     .admin-app .admin-exam-topbar { align-items: flex-start; }
     .admin-app .admin-exam-topbar .admin-topbar-actions { width: 100%; justify-content: flex-start; }
     .admin-app .exam-status-group { flex-wrap: wrap; }
+    .student-dashboard-class-grid { grid-template-columns: 1fr; }
+    .student-class-heading { align-items: flex-start; flex-wrap: wrap; padding: 15px; }
+    .student-class-heading > .user-count-badge { margin-left: 55px; }
+    .student-class-exams { padding: 0 15px; }
+    .student-assigned-exam { flex-wrap: wrap; }
+    .student-assigned-exam-copy { flex-basis: calc(100% - 55px); }
+    .student-exam-action { margin-left: 50px; }
     .admin-app .forum-header h1,
     .admin-app .page-heading h1,
     .admin-app .monitor-heading h1,

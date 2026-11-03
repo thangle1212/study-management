@@ -16,6 +16,7 @@ require_once __DIR__ . '/controllers/ForumController.php';
 require_once __DIR__ . '/controllers/AdminController.php';
 require_once __DIR__ . '/controllers/AdminClassController.php';
 require_once __DIR__ . '/controllers/ClassController.php';
+require_once __DIR__ . '/controllers/StudentClassController.php';
 require_once __DIR__ . '/controllers/ProfileController.php';
 
 $action = $_GET['action'] ?? 'home';
@@ -30,6 +31,7 @@ $forumController = new ForumController($pdo);
 $adminController = new AdminController($pdo);
 $adminClassController = new AdminClassController($pdo);
 $classController = new ClassController($pdo);
+$studentClassController = new StudentClassController($pdo);
 $profileController = new ProfileController($pdo);
 
 switch ($action) {
@@ -113,6 +115,10 @@ switch ($action) {
 
     case 'teacher_class_assign_exam':
         $classController->assignExam();
+        break;
+
+    case 'student_classes':
+        $studentClassController->index();
         break;
 
     case 'admin_update_user':
