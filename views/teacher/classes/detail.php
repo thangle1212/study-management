@@ -13,37 +13,8 @@
     <link rel="stylesheet" href="assets/css/admin.css">
 </head>
 <body class="admin-app">
-<div class="admin-layout">
-    <aside class="admin-sidebar">
-        <a class="admin-brand" href="index.php?action=dashboard">
-            <span class="admin-brand-mark" aria-hidden="true"><i class="fa-solid fa-graduation-cap"></i></span>
-            <span>EduTest</span>
-        </a>
-        <nav class="admin-nav" aria-label="Điều hướng chính">
-            <a class="admin-nav-link" href="index.php?action=dashboard"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Tổng quan</span></a>
-            <a class="admin-nav-link active" href="index.php?action=teacher_classes" aria-current="page"><i class="fa-solid fa-school" aria-hidden="true"></i><span>Lớp học của tôi</span></a>
-            <a class="admin-nav-link" href="index.php?action=profile"><i class="fa-regular fa-id-card" aria-hidden="true"></i><span>Hồ sơ của tôi</span></a>
-            <a class="admin-nav-link" href="index.php?action=qe_banks"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Ngân hàng câu hỏi</span></a>
-            <a class="admin-nav-link" href="index.php?action=qe_exam_create"><i class="fa-solid fa-file-circle-plus" aria-hidden="true"></i><span>Tạo đề thi</span></a>
-            <a class="admin-nav-link" href="index.php?action=forum"><i class="fa-regular fa-comments" aria-hidden="true"></i><span>Diễn đàn</span></a>
-        </nav>
-        <div class="admin-sidebar-bottom">
-            <span class="admin-account-avatar" aria-hidden="true"><i class="fa-solid fa-chalkboard-user"></i></span>
-            <div class="admin-account-copy">
-                <div class="admin-account-name"><?= htmlspecialchars($_SESSION['user']['full_name'] ?? 'Giáo viên', ENT_QUOTES, 'UTF-8') ?></div>
-                <div class="admin-account-role">Giáo viên</div>
-            </div>
-            <a class="admin-logout" href="index.php?action=logout" aria-label="Đăng xuất" title="Đăng xuất"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i></a>
-        </div>
-    </aside>
-
-    <div class="admin-main">
-        <header class="admin-topbar">
-            <p class="admin-breadcrumb">EduTest <span aria-hidden="true">/</span> <a href="index.php?action=teacher_classes">Lớp học của tôi</a> <span aria-hidden="true">/</span> <strong><?= htmlspecialchars($class['class_name'], ENT_QUOTES, 'UTF-8') ?></strong></p>
-            <a href="index.php?action=forum" class="admin-topbar-link"><i class="fa-regular fa-comments me-1" aria-hidden="true"></i> Diễn đàn</a>
-        </header>
-
-        <main class="admin-content">
+<?php $appPageTitle = $class['class_name']; $appActiveAction = 'teacher_classes'; require __DIR__ . '/../../partials/app-shell-start.php'; ?>
+<main>
             <div class="admin-page-heading">
                 <div>
                     <p class="admin-eyebrow">Chi tiết lớp học</p>
@@ -72,7 +43,7 @@
                         </div>
                         <span class="user-count-badge"><i class="fa-solid fa-user-graduate" aria-hidden="true"></i><?= count($students) ?> học sinh</span>
                     </div>
-                    <div class="class-card-body">
+                    <div class="class-card-body class-member-management">
                         <div class="class-roster">
                             <?php if (!$students): ?>
                                 <p class="class-roster-empty">Lớp chưa có học sinh. Hãy thêm học sinh để bắt đầu quản lý.</p>
@@ -98,8 +69,8 @@
                                                             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                                                             <input type="hidden" name="class_id" value="<?= (int) $class['class_id'] ?>">
                                                             <input type="hidden" name="student_id" value="<?= (int) $student['user_id'] ?>">
-                                                            <button type="submit" class="btn btn-outline-danger btn-sm">
-                                                                <i class="fa-solid fa-user-minus me-1" aria-hidden="true"></i>Bỏ khỏi lớp
+                                                            <button type="submit" class="btn-admin-danger btn-admin-compact">
+                                                                <i class="fa-solid fa-user-minus" aria-hidden="true"></i>Bỏ khỏi lớp
                                                             </button>
                                                         </form>
                                                     </td>
@@ -133,7 +104,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="class-card-body">
+                    <div class="class-card-body class-exam-assignment">
                         <form action="index.php?action=teacher_class_assign_exam" method="POST" class="class-edit-form">
                             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                             <input type="hidden" name="class_id" value="<?= (int) $class['class_id'] ?>">
@@ -164,9 +135,7 @@
                     </div>
                 </section>
             </div>
-        </main>
-    </div>
-</div>
+<?php require __DIR__ . '/../../partials/app-shell-end.php'; ?>
 
 <div class="modal fade" id="addStudentModal" tabindex="-1" aria-labelledby="addStudentModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -195,7 +164,7 @@
                     <p class="form-text mb-0">Học sinh đã thuộc lớp này không hiển thị trong danh sách.</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn-admin-outline" data-bs-dismiss="modal">Hủy</button>
                     <button type="submit" class="btn-admin-primary">
                         <i class="fa-solid fa-user-plus" aria-hidden="true"></i> Thêm vào lớp
                     </button>

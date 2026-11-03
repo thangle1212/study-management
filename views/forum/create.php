@@ -20,7 +20,8 @@
     <link rel="stylesheet" href="assets/css/admin.css">
 </head>
 <body class="admin-app">
-<nav class="navbar topbar sticky-top">
+<?php $appPageTitle = 'Diễn đàn'; $appActiveAction = 'forum'; require __DIR__ . '/../partials/app-shell-start.php'; ?>
+<nav class="navbar topbar sticky-top legacy-page-navbar">
     <div class="container py-2">
         <a class="navbar-brand brand fw-bold" href="index.php?action=dashboard"><i class="fa-solid fa-graduation-cap me-2"></i>EduTest</a>
         <div class="d-flex align-items-center gap-3">
@@ -107,5 +108,6 @@
         </form>
     </div>
 </div>
+<?php require __DIR__ . '/../partials/app-shell-end.php'; ?>
 </body>
 </html>

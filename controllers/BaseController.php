@@ -7,6 +7,7 @@ class BaseController {
     }
 
     // 1. Kiểm tra xem người dùng đã đăng nhập chưa và tài khoản có còn active không
+    /** Kiểm tra session, trạng thái tài khoản và khởi tạo CSRF token. */
     protected function requireLogin() {
         if (!isset($_SESSION['user'])) {
             header('Location: index.php?action=login');
@@ -31,6 +32,7 @@ class BaseController {
         }
     }
 
+    /** Chỉ cho phép POST có CSRF token hợp lệ thực hiện thao tác ghi dữ liệu. */
     protected function requirePostWithCsrf() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
@@ -45,6 +47,7 @@ class BaseController {
     }
 
     // 2. Chỉ cho phép Admin truy cập
+    /** Kiểm tra quyền quản trị viên trước khi truy cập chức năng admin. */
     protected function requireAdmin() {
         if (!isset($_SESSION['user'])) {
             header('Location: index.php?action=admin_login');
@@ -73,6 +76,7 @@ class BaseController {
     }
 
     // 3. Cho phép Giáo viên hoặc Admin truy cập
+    /** Kiểm tra người dùng là giáo viên hoặc quản trị viên. */
     protected function requireTeacher() {
         $this->requireLogin();
         if (!in_array($_SESSION['user']['role'], ['admin', 'teacher'])) {

@@ -31,7 +31,13 @@
     <link rel="stylesheet" href="assets/css/admin.css">
 </head>
 <body class="admin-app">
-<nav class="navbar topbar sticky-top">
+<?php
+$appPageTitle = 'Thống kê bài thi';
+$appActiveAction = 'exam';
+$appTopbarHtml = '<a href="index.php?action=exam_monitoring&exam_id=' . (int) $exam['exam_id'] . '" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-tower-broadcast me-1"></i>Giám sát</a>';
+require __DIR__ . '/../partials/app-shell-start.php';
+?>
+<nav class="navbar topbar sticky-top legacy-page-navbar">
     <div class="container">
         <a class="navbar-brand brand fw-bold" href="index.php?action=dashboard"><i class="fa-solid fa-graduation-cap me-2"></i>EduTest</a>
         <div class="d-flex gap-2">
@@ -305,7 +311,7 @@
             <?php endif; ?>
         </div>
     </div>
-</div>
+    </div>
 <?php if ($scores): ?>
 <script>
 const scoreSearch = document.getElementById('score-search');
@@ -407,5 +413,6 @@ new Chart(document.getElementById('scoreDistributionChart'), {
 });
 </script>
 <?php endif; ?>
+<?php require __DIR__ . '/../partials/app-shell-end.php'; ?>
 </body>
 </html>

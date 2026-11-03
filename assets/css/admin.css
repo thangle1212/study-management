@@ -71,7 +71,7 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
     color: #bde7ff;
 }
 
-.admin-nav { display: grid; gap: 5px; }
+.admin-nav { display: grid; grid-auto-flow: row; gap: 5px; }
 
 .admin-nav-link {
     display: flex;
@@ -81,13 +81,15 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
     padding: 0 12px;
     border-radius: 5px;
     color: #d4e7f8;
+    font-family: 'Fira Sans', sans-serif;
     font-size: 14px;
     font-weight: 500;
     text-decoration: none;
     transition: color 160ms ease, background-color 160ms ease;
 }
 
-.admin-nav-link i { width: 18px; text-align: center; }
+.admin-nav-link > i { display: inline-grid; width: 18px; flex: 0 0 18px; place-items: center; font-size: 15px; line-height: 1; text-align: center; }
+.admin-nav-link > span { min-width: 0; white-space: nowrap; }
 .admin-nav-link:hover { color: #fff; background: rgba(255, 255, 255, .1); }
 .admin-nav-link.active { color: #fff; background: rgba(93, 183, 238, .2); box-shadow: inset 3px 0 #69c5f2; font-weight: 700; }
 
@@ -184,6 +186,7 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
 
 .btn-admin-primary { color: #fff; background: var(--admin-primary); }
 .btn-admin-primary:hover { color: #fff; border-color: var(--admin-deep); background: var(--admin-deep); }
+.btn-admin-primary:disabled { cursor: not-allowed; opacity: .55; }
 .btn-admin-outline { color: var(--admin-primary); background: #fff; }
 .btn-admin-outline:hover { color: var(--admin-deep); background: var(--admin-soft); }
 
@@ -266,7 +269,7 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
 .admin-app .form-control, .admin-app .form-select { min-height: 42px; border-color: #c9d8e7; border-radius: 5px; color: var(--admin-ink); font-size: 14px; }
 .admin-app .form-control:focus, .admin-app .form-select:focus { border-color: var(--admin-primary); box-shadow: 0 0 0 3px rgba(23, 105, 170, .15); }
 .admin-app .form-text { color: var(--admin-muted); font-size: 12px; }
-.admin-app .form-label { color: var(--admin-ink); font-size: 13px; font-weight: 600; }
+.admin-app .form-label { color: var(--admin-ink); font-size: 13px; font-weight: 600; text-transform: none; }
 
 .admin-table-wrap { overflow-x: auto; overflow-y: hidden; }
 .admin-table { min-width: 1030px; margin: 0; }
@@ -299,12 +302,19 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
 .class-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 17px 20px; border-bottom: 1px solid #e6edf4; background: #fbfdff; }
 .class-title { display: flex; min-width: 0; align-items: center; gap: 12px; }
 .class-card-icon { display: grid; width: 40px; height: 40px; flex: 0 0 40px; place-items: center; border-radius: 5px; color: var(--admin-primary); background: var(--admin-soft); }
+.class-card-heading .class-title h2,
 .class-title h3 { overflow-wrap: anywhere; margin: 0 0 4px; color: var(--admin-ink); font-size: 16px; font-weight: 700; }
 .class-code { color: var(--admin-muted); font-size: 12px; }
 .class-code i { margin-right: 4px; color: var(--admin-primary); }
 .class-code strong { color: var(--admin-ink); font-family: 'Fira Code', monospace; letter-spacing: .04em; }
 .class-card-heading .user-count-badge { flex: 0 0 auto; }
 .class-card-body { display: grid; grid-template-columns: minmax(220px, .8fr) minmax(0, 1.2fr); gap: 20px; padding: 18px 20px; }
+.class-member-management,
+.class-exam-assignment { display: block; }
+.class-member-management .class-roster { padding-left: 0; border-left: 0; }
+.class-member-management .class-roster table { min-width: 720px; }
+.class-member-management > .class-edit-form { margin-top: 16px; padding-top: 14px; border-top: 1px solid #e6edf4; }
+.class-exam-assignment > .class-edit-form { max-width: 640px; }
 .class-edit-form { display: grid; align-content: start; gap: 13px; }
 .class-edit-form .form-control,
 .class-edit-form .form-select,
@@ -532,12 +542,13 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
     .profile-privacy-note { margin-top: 8px; padding-top: 10px; }
     .class-card-body { grid-template-columns: 1fr; }
     .class-roster { padding: 16px 0 0; border-top: 1px solid #e6edf4; border-left: 0; }
+    .class-member-management .class-roster { padding-top: 0; border-top: 0; }
 }
 
 @media (max-width: 620px) {
     .admin-sidebar { gap: 8px 14px; }
     .admin-nav { order: 3; flex-basis: 100%; }
-    .admin-nav-link { flex: 1 1 auto; }
+    .admin-nav-link { flex: 1 1 100%; }
     .admin-topbar { min-height: 54px; padding: 10px 16px; }
     .admin-content { padding: 22px 16px 32px; }
     .admin-page-heading { align-items: flex-start; flex-direction: column; gap: 14px; margin-bottom: 20px; }
@@ -673,6 +684,18 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
 .admin-app .admin-module-navbar .container { gap: 8px; }
 .admin-app .admin-module-navbar .container > .d-flex { flex-wrap: wrap; justify-content: flex-end; gap: 6px !important; }
 .admin-app .admin-module-navbar .container > .d-flex .btn { padding: 5px 8px; font-size: 12px; }
+.admin-app .legacy-page-navbar { display: none !important; }
+.admin-app .admin-module-navbar { display: none !important; }
+.admin-app .admin-content > .container { max-width: none; margin: 0; padding: 0; }
+.admin-app .admin-topbar-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.admin-app .admin-topbar-actions .btn { min-height: 36px; }
+.admin-app .admin-exam-topbar { flex-wrap: wrap; }
+.admin-app .exam-status-group { gap: 12px !important; }
+.admin-app .member2-app { display: block; min-height: 0; }
+.admin-app .member2-sidebar,
+.admin-app .member2-topbar { display: none !important; }
+.admin-app .member2-main { margin-left: 0; }
+.admin-app .member2-page { padding: 0; }
 
 .admin-app .table thead th {
     color: #536b84;
@@ -689,11 +712,12 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
 .admin-app .monitor-heading,
 .admin-app .prepare-header,
 .admin-app .exam-header {
-    border: 1px solid var(--admin-border) !important;
-    border-left: 4px solid var(--admin-primary) !important;
-    border-radius: 6px !important;
+    margin-bottom: 26px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
     color: var(--admin-ink) !important;
-    background: #fff !important;
+    background: transparent !important;
     box-shadow: none !important;
 }
 
@@ -702,6 +726,7 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
 .admin-app .prepare-header .opacity-75,
 .admin-app .exam-header .opacity-75 {
     color: var(--admin-muted) !important;
+    opacity: 1 !important;
 }
 
 .admin-app .forum-header::after,
@@ -745,3 +770,115 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
 .admin-app .avatar-img { box-shadow: none; }
 .admin-app .role-badge { border-radius: 4px; }
 .admin-app .role-student { color: var(--admin-primary); background: var(--admin-soft); }
+.admin-app,
+.admin-app button,
+.admin-app input,
+.admin-app select,
+.admin-app textarea {
+    font-family: 'Fira Sans', sans-serif;
+}
+
+.admin-app .admin-page-heading h1,
+.admin-app .admin-page-heading p,
+.admin-app .admin-page-heading .admin-eyebrow { font-family: 'Fira Sans', sans-serif; }
+.admin-app .admin-page-heading h1 { font-size: 28px; font-weight: 700; line-height: 1.25; }
+.admin-app .admin-page-heading > div > p:last-child { color: var(--admin-muted); font-size: 14px; line-height: 1.55; }
+.admin-app .admin-eyebrow a { color: inherit; text-decoration: none; }
+.admin-app .admin-eyebrow a:hover { text-decoration: underline; }
+
+.btn-admin-compact {
+    display: inline-flex;
+    min-height: 34px;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 5px 9px;
+    border: 1px solid var(--admin-primary);
+    border-radius: 5px;
+    background: #fff;
+    color: var(--admin-primary);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.btn-admin-compact:hover { background: var(--admin-soft); color: var(--admin-deep); }
+.btn-admin-danger { border-color: #b94a48; background: #fff; color: #a63c3a; }
+.btn-admin-danger:hover { background: #fbefee; color: #8e2f2d; }
+
+.admin-app .admin-form-card { max-width: 900px; gap: 0; padding: 24px; }
+.admin-app .admin-empty-icon {
+    display: grid;
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 14px;
+    place-items: center;
+    border-radius: 6px;
+    background: var(--admin-soft);
+    color: var(--admin-primary);
+    font-size: 20px;
+}
+
+.question-count-badge,
+.question-number-badge {
+    display: inline-flex;
+    min-height: 28px;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 9px;
+    border-radius: 4px;
+    background: var(--admin-soft);
+    color: var(--admin-primary);
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.question-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--admin-muted); font-size: 12px; }
+.question-content { margin: 0; color: var(--admin-ink); font-size: 15px; font-weight: 600; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.question-content-card .card-body { padding: 18px 20px; }
+.question-answer-list { display: grid; gap: 7px; padding-left: 1.75rem; }
+.question-answer-list li { padding: 7px 10px; border: 1px solid #e6edf4; border-radius: 4px; background: #fff; line-height: 1.5; }
+.question-answer-list li::marker { color: var(--admin-muted); font-weight: 600; }
+.question-answer-list li.text-success { border-color: #cae8d8; background: #f3faf6; }
+.question-image-link { display: inline-block; margin-top: 12px; color: var(--admin-primary); font-size: 13px; font-weight: 600; text-decoration: none; }
+.question-image-link:hover { text-decoration: underline; }
+.admin-app .answer-label { min-width: 42px; justify-content: center; border-color: #c9d8e7; border-radius: 5px 0 0 5px; background: var(--admin-soft); color: var(--admin-primary); }
+.admin-app .answer-row { align-items: stretch; gap: 8px; padding: 8px; border: 1px solid var(--admin-border); border-radius: 5px; background: #fbfdff; }
+.admin-app .answer-row .form-control { min-width: 0; }
+.admin-app .answer-row .correct-choice { width: 18px; height: 18px; flex: 0 0 18px; margin: auto 5px; accent-color: var(--admin-primary); }
+.admin-app .admin-form-card .form-label { color: var(--admin-ink); font-size: 13px; font-weight: 600; }
+.admin-app .admin-form-card .form-control,
+.admin-app .admin-form-card .form-select { min-height: 42px; font-size: 14px; }
+
+@media (max-width: 620px) {
+    .admin-app .admin-page-heading h1 { font-size: 24px; }
+    .admin-app .admin-form-card { padding: 16px; }
+    .question-content-card .card-body { padding: 15px; }
+    .admin-app .answer-row { display: grid; grid-template-columns: 32px 24px minmax(0, 1fr); gap: 8px; }
+    .admin-app .answer-row .answer-label { min-width: 32px; border-radius: 4px; }
+    .admin-app .answer-row .correct-choice { grid-column: 2; grid-row: 1; }
+    .admin-app .answer-row textarea { grid-column: 1 / -1; grid-row: 2; }
+    .admin-app .answer-row .remove-answer { grid-column: 3; grid-row: 1; justify-self: end; }
+}
+.admin-app .forum-header h1,
+.admin-app .page-heading h1,
+.admin-app .monitor-heading h1,
+.admin-app .prepare-header h1,
+.admin-app .exam-header h1 { margin: 0 0 6px; font-size: 28px; font-weight: 700; line-height: 1.25; }
+.admin-app .forum-header .row { align-items: flex-end !important; }
+.admin-app .forum-header .col-md-4 { text-align: left !important; }
+.admin-app .result-head::after { content: none; }
+
+@media (max-width: 620px) {
+    .admin-app .admin-exam-topbar { align-items: flex-start; }
+    .admin-app .admin-exam-topbar .admin-topbar-actions { width: 100%; justify-content: flex-start; }
+    .admin-app .exam-status-group { flex-wrap: wrap; }
+    .admin-app .forum-header h1,
+    .admin-app .page-heading h1,
+    .admin-app .monitor-heading h1,
+    .admin-app .prepare-header h1,
+    .admin-app .exam-header h1 { font-size: 24px; }
+}

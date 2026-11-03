@@ -6,6 +6,7 @@ class ExamController {
     private $pdo;
     private $grading;
 
+    /** Khởi tạo controller đề thi và model chấm điểm dùng trong luồng làm bài. */
     public function __construct($pdo) {
         $this->pdo = $pdo;
         $this->grading = new AutomaticGrading($pdo);
@@ -41,6 +42,7 @@ class ExamController {
         }
     }
 
+    /** Kiểm tra request hiện tại thuộc về một học sinh đang đăng nhập. */
     private function requireStudent() {
         $this->requireLogin();
         if (($_SESSION['user']['role'] ?? '') !== 'student') {
@@ -422,6 +424,7 @@ class ExamController {
         exit;
     }
 
+    /** Kiểm tra đề có thể được xử lý bằng cơ chế chấm tự động. */
     private function ensureAutomaticallyGradableExam($examId) {
         $stmt = $this->pdo->prepare(
             "SELECT q.question_id, q.question_type,
@@ -454,6 +457,7 @@ class ExamController {
         return null;
     }
 
+    /** Lưu đáp án của lượt thi theo danh sách câu hỏi thuộc đề. */
     private function saveAttemptAnswers($attemptId, $examId, $answers) {
         $answers = is_array($answers) ? $answers : [];
         $stmt = $this->pdo->prepare(
@@ -493,6 +497,7 @@ class ExamController {
         }
     }
 
+    /** Trộn câu hỏi và đáp án của lượt thi theo seed đã lưu. */
     private function orderAttemptQuestions(array $questions, $seed, $shuffleQuestions, $shuffleAnswers) {
         foreach ($questions as &$question) {
             if (!$shuffleAnswers) {
@@ -523,6 +528,7 @@ class ExamController {
         return $questions;
     }
 
+    /** Bổ sung bản ghi cho các câu hỏi chưa có đáp án trong lượt thi. */
     private function ensureUnansweredQuestions($attemptId, $examId) {
         $stmt = $this->pdo->prepare(
             "INSERT INTO attempt_answers (attempt_id, question_id, answer_id, is_correct)
@@ -541,6 +547,7 @@ class ExamController {
         $stmt->execute([$attemptId, $examId, $attemptId]);
     }
 
+    /** Lưu bản sao đáp án đúng để bảo toàn kết quả của lượt thi. */
     private function snapshotCorrectAnswers($attemptId, $examId) {
         $stmt = $this->pdo->prepare(
             "INSERT IGNORE INTO attempt_correct_answers (attempt_id, question_id, answer_id)
@@ -552,6 +559,7 @@ class ExamController {
         $stmt->execute([$attemptId, $examId]);
     }
 
+    /** Hoàn tất và chấm điểm một lượt thi trong transaction. */
     private function finalizeAttempt($attemptId, $studentId, $answers, $reason) {
         $stmt = $this->pdo->prepare(
                 "SELECT ea.attempt_id, ea.exam_id, ea.start_time,
@@ -633,6 +641,7 @@ class ExamController {
         return true;
     }
 
+    /** Hiển thị trang chuẩn bị, kiểm tra đề và nạp lịch sử làm bài của học sinh. */
     public function prepare() {
         $this->requireStudent();
         $examId = (int) ($_GET['exam_id'] ?? 0);
@@ -685,6 +694,7 @@ class ExamController {
         require __DIR__ . '/../views/exams/prepare.php';
     }
 
+    /** Tạo hoặc khôi phục lượt thi, snapshot cấu hình và chuyển sang trang làm bài. */
     public function start() {
         $this->requireStudent();
         $this->requirePostWithCsrf();
@@ -760,6 +770,7 @@ class ExamController {
         exit;
     }
 
+    /** Tải câu hỏi, đáp án, trạng thái autosave và kiểm tra thời gian lượt thi. */
     public function take() {
         $this->requireStudent();
         $attemptId = (int) ($_GET['attempt_id'] ?? 0);
@@ -927,6 +938,7 @@ class ExamController {
         return $stmt->fetchAll();
     }
 
+    /** Hiển thị trang giám sát lượt thi của giáo viên cho một đề. */
     public function monitoring() {
         $this->requireLogin();
         $examId = (int) ($_GET['exam_id'] ?? 0);
@@ -945,6 +957,7 @@ class ExamController {
         require __DIR__ . '/../views/exams/monitoring.php';
     }
 
+    /** Trả dữ liệu giám sát lượt thi dạng JSON. */
     public function monitoringData() {
         $this->requireLogin();
         $examId = (int) ($_GET['exam_id'] ?? 0);
@@ -963,6 +976,7 @@ class ExamController {
         $this->sendJson(['attempts' => $attempts]);
     }
 
+    /** Xử lý yêu cầu giáo viên hủy kết quả hoặc cho phép làm lại. */
     public function reviewAttempt() {
         $this->requireLogin();
         $this->requirePostWithCsrf();
@@ -996,6 +1010,7 @@ class ExamController {
         exit;
     }
 
+    /** Hiển thị kết quả tổng quan của một lượt thi đã hoàn tất. */
     public function result() {
         $this->requireLogin();
         $attemptId = (int) ($_GET['attempt_id'] ?? 0);
@@ -1015,6 +1030,7 @@ class ExamController {
         require __DIR__ . '/../views/exams/result.php';
     }
 
+    /** Tổng hợp điểm và phân tích câu hỏi cho báo cáo đề thi. */
     public function statistics() {
         $this->requireLogin();
         $examId = (int) ($_GET['exam_id'] ?? 0);
@@ -1176,6 +1192,7 @@ class ExamController {
         require __DIR__ . '/../views/exams/statistics.php';
     }
 
+    /** Hiển thị chi tiết đáp án, điểm và vi phạm của một lượt thi. */
     public function attemptDetail() {
         $this->requireLogin();
         $attemptId = (int) ($_GET['attempt_id'] ?? 0);
@@ -1272,6 +1289,7 @@ class ExamController {
         require __DIR__ . '/../views/exams/attempt-detail.php';
     }
 
+    /** Tổng hợp thống kê cá nhân và lịch sử làm bài của học sinh. */
     public function studentStatistics() {
         $this->requireLogin();
         $studentId = (int) $_SESSION['user']['id'];

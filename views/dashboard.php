@@ -31,57 +31,13 @@ $visibleExams = $userRole === 'student' ? $publishedExams : $teacherExams;
     <link rel="stylesheet" href="assets/css/admin.css">
 </head>
 <body class="admin-app">
-<div class="admin-layout">
-    <aside class="admin-sidebar">
-        <a class="admin-brand" href="index.php?action=dashboard">
-            <span class="admin-brand-mark" aria-hidden="true"><i class="fa-solid fa-graduation-cap"></i></span>
-            <span>EduTest</span>
-        </a>
-        <nav class="admin-nav" aria-label="Điều hướng chính">
-            <a class="admin-nav-link active" href="index.php?action=dashboard" aria-current="page">
-                <i class="fa-solid fa-house" aria-hidden="true"></i><span>Tổng quan</span>
-            </a>
-            <a class="admin-nav-link" href="index.php?action=profile">
-                <i class="fa-regular fa-id-card" aria-hidden="true"></i><span>Hồ sơ của tôi</span>
-            </a>
-            <?php if ($userRole === 'student'): ?>
-                <a class="admin-nav-link" href="index.php?action=student_statistics">
-                    <i class="fa-solid fa-chart-line" aria-hidden="true"></i><span>Thống kê của tôi</span>
-                </a>
-            <?php elseif ($userRole === 'teacher'): ?>
-                <a class="admin-nav-link" href="index.php?action=teacher_classes">
-                    <i class="fa-solid fa-school" aria-hidden="true"></i><span>Lớp học của tôi</span>
-                </a>
-                <a class="admin-nav-link" href="index.php?action=qe_banks">
-                    <i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Ngân hàng câu hỏi</span>
-                </a>
-                <a class="admin-nav-link" href="index.php?action=qe_exam_create">
-                    <i class="fa-solid fa-file-circle-plus" aria-hidden="true"></i><span>Tạo đề thi</span>
-                </a>
-            <?php endif; ?>
-            <a class="admin-nav-link" href="index.php?action=forum">
-                <i class="fa-regular fa-comments" aria-hidden="true"></i><span>Diễn đàn</span>
-            </a>
-        </nav>
-        <div class="admin-sidebar-bottom">
-            <span class="admin-account-avatar" aria-hidden="true"><i class="fa-solid <?= htmlspecialchars($userIcon, ENT_QUOTES, 'UTF-8') ?>"></i></span>
-            <div class="admin-account-copy">
-                <div class="admin-account-name"><?= htmlspecialchars($userName, ENT_QUOTES, 'UTF-8') ?></div>
-                <div class="admin-account-role"><?= htmlspecialchars($roleLabel, ENT_QUOTES, 'UTF-8') ?></div>
-            </div>
-            <a class="admin-logout" href="index.php?action=logout" aria-label="Đăng xuất" title="Đăng xuất">
-                <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
-            </a>
-        </div>
-    </aside>
-
-    <div class="admin-main">
-        <header class="admin-topbar">
-            <p class="admin-breadcrumb">EduTest <span aria-hidden="true">/</span> <strong>Không gian học tập</strong></p>
-            <a href="index.php?action=forum" class="admin-topbar-link"><i class="fa-regular fa-comments me-1" aria-hidden="true"></i> Diễn đàn</a>
-        </header>
-
-        <main class="admin-content">
+<?php
+$appPageTitle = 'Không gian học tập';
+$appActiveAction = 'dashboard';
+$appTopbarHtml = '<a href="index.php?action=forum" class="admin-topbar-link"><i class="fa-regular fa-comments me-1" aria-hidden="true"></i> Diễn đàn</a>';
+require __DIR__ . '/partials/app-shell-start.php';
+?>
+<main>
             <div class="admin-page-heading">
                 <div>
                     <p class="admin-eyebrow">Bảng điều khiển cá nhân</p>
@@ -164,8 +120,6 @@ $visibleExams = $userRole === 'student' ? $publishedExams : $teacherExams;
                     </div>
                 <?php endif; ?>
             </section>
-        </main>
-    </div>
-</div>
+<?php require __DIR__ . '/partials/app-shell-end.php'; ?>
 </body>
 </html>

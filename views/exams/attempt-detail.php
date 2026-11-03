@@ -22,22 +22,23 @@
     <link rel="stylesheet" href="assets/css/admin.css">
 </head>
 <body class="admin-app">
-<nav class="navbar topbar sticky-top">
-    <div class="container">
-        <a class="navbar-brand brand fw-bold" href="index.php?action=dashboard"><i class="fa-solid fa-graduation-cap me-2"></i>EduTest</a>
-        <?php
-        $fromResult = ($_GET['from'] ?? '') === 'result';
-        $backAction = $_SESSION['user']['role'] === 'student'
-            ? ($fromResult
-                ? 'exam_result&attempt_id=' . (int) $attempt['attempt_id']
-                : (($_GET['from'] ?? '') === 'exam'
-                    ? 'prepare_exam&exam_id=' . (int) $attempt['exam_id']
-                    : 'student_statistics'))
-            : 'exam_statistics&exam_id=' . (int) $attempt['exam_id'];
-        ?>
-        <a href="index.php?action=<?php echo $backAction; ?>" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-arrow-left me-1"></i><?php echo $fromResult ? 'Quay lại kết quả' : ($_SESSION['user']['role'] === 'student' ? 'Quay lại thống kê cá nhân' : 'Quay lại bảng điểm'); ?></a>
-    </div>
-</nav>
+<?php
+$fromResult = ($_GET['from'] ?? '') === 'result';
+$backAction = $_SESSION['user']['role'] === 'student'
+    ? ($fromResult
+        ? 'exam_result&attempt_id=' . (int) $attempt['attempt_id']
+        : (($_GET['from'] ?? '') === 'exam'
+            ? 'prepare_exam&exam_id=' . (int) $attempt['exam_id']
+            : 'student_statistics'))
+    : 'exam_statistics&exam_id=' . (int) $attempt['exam_id'];
+$backLabel = $fromResult
+    ? 'Quay lại kết quả'
+    : ($_SESSION['user']['role'] === 'student' ? 'Quay lại thống kê cá nhân' : 'Quay lại bảng điểm');
+$appPageTitle = 'Chi tiết lượt thi';
+$appActiveAction = 'exam';
+$appTopbarHtml = '<a href="index.php?action=' . htmlspecialchars($backAction, ENT_QUOTES, 'UTF-8') . '" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-arrow-left me-1"></i>' . htmlspecialchars($backLabel, ENT_QUOTES, 'UTF-8') . '</a>';
+require __DIR__ . '/../partials/app-shell-start.php';
+?>
 
 <main class="container py-4 py-md-5">
     <?php
@@ -127,5 +128,6 @@
         </section>
     <?php endforeach; ?>
 </main>
+<?php require __DIR__ . '/../partials/app-shell-end.php'; ?>
 </body>
 </html>

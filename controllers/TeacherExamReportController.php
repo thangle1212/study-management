@@ -7,12 +7,14 @@ final class TeacherExamReportController extends BaseController
 {
     private $report;
 
+    /** Khởi tạo controller báo cáo và giám sát đề thi của giáo viên. */
     public function __construct($pdo)
     {
         parent::__construct($pdo);
         $this->report = new TeacherReport($pdo);
     }
 
+    /** Kiểm tra quyền và hiển thị báo cáo điểm của một đề thi. */
     public function index()
     {
         $this->requireTeacher();
@@ -46,6 +48,7 @@ final class TeacherExamReportController extends BaseController
         require __DIR__ . '/../views/exams/statistics.php';
     }
 
+    /** Hiển thị danh sách trạng thái làm bài để giáo viên giám sát trực tiếp. */
     public function monitor()
     {
         $this->requireTeacher();
@@ -62,6 +65,7 @@ final class TeacherExamReportController extends BaseController
         require __DIR__ . '/../views/exams/monitoring.php';
     }
 
+    /** Trả dữ liệu giám sát dạng JSON cho thao tác cập nhật không tải lại trang. */
     public function monitorData()
     {
         $this->requireTeacher();
@@ -73,6 +77,7 @@ final class TeacherExamReportController extends BaseController
         $this->sendJson(['attempts' => $data['attempts']]);
     }
 
+    /** Nhận và lưu cấu hình thời gian, trộn đề và chống gian lận của đề thi. */
     public function updateSettings()
     {
         $this->requireTeacher();
@@ -100,6 +105,7 @@ final class TeacherExamReportController extends BaseController
         exit;
     }
 
+    /** Xử lý quyết định của giáo viên với lượt thi đang chờ xem xét. */
     public function reviewAttempt()
     {
         $this->requireTeacher();
@@ -126,6 +132,7 @@ final class TeacherExamReportController extends BaseController
         exit;
     }
 
+    /** Gửi phản hồi JSON cho các endpoint giám sát. */
     private function sendJson($payload, $statusCode = 200)
     {
         http_response_code($statusCode);
