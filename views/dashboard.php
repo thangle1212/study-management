@@ -23,11 +23,17 @@ if ($userRole === 'student') {
     $studentClasses = $classStatement->fetchAll(PDO::FETCH_ASSOC);
 
     $examStatement = $pdo->prepare(
-        "SELECT e.exam_id, e.title, c.class_name
+        "SELECT e.exam_id, e.title, e.status, e.start_time, e.end_time, c.class_name,
+                CASE
+                    WHEN (e.start_time IS NULL OR e.start_time <= NOW())
+                     AND (e.end_time IS NULL OR e.end_time >= NOW())
+                    THEN 1 ELSE 0
+                END AS can_start
          FROM exams e
          LEFT JOIN classes c ON c.class_id = e.class_id
-         WHERE e.status = 'published'
-           AND (e.class_id IS NULL OR EXISTS (
+         WHERE (e.status = 'published' OR (e.status = 'scheduled' AND e.class_id IS NOT NULL))
+           AND (e.end_time IS NULL OR e.end_time >= NOW())
+           AND ((e.status = 'published' AND e.class_id IS NULL) OR EXISTS (
                SELECT 1 FROM class_students cs
                WHERE cs.class_id = e.class_id AND cs.student_id = ?
            ))
@@ -150,7 +156,7 @@ require __DIR__ . '/partials/app-shell-start.php';
                         <span class="user-empty-icon" aria-hidden="true"><i class="fa-regular fa-folder-open"></i></span>
                         <h3><?= $userRole === 'student' ? 'Chưa có đề thi được mở' : 'Chưa có đề thi nào' ?></h3>
                         <p><?= $userRole === 'student'
-                            ? 'Các đề thi mới sẽ xuất hiện tại đây khi được công khai.'
+                            ? 'Đề đã công bố và đề được giao cho lớp của bạn sẽ xuất hiện tại đây.'
                             : 'Bắt đầu tạo đề thi đầu tiên để chia sẻ nội dung học tập với học sinh.' ?></p>
                         <?php if ($userRole === 'teacher'): ?>
                             <a href="index.php?action=qe_exam_create" class="btn-admin-primary"><i class="fa-solid fa-plus" aria-hidden="true"></i> Tạo đề thi</a>
@@ -169,9 +175,15 @@ require __DIR__ . '/partials/app-shell-start.php';
                                         ? (!empty($exam['class_name']) ? 'Giao cho lớp ' . htmlspecialchars($exam['class_name'], ENT_QUOTES, 'UTF-8') : 'Đề công khai')
                                         : 'Bảng điểm và phân tích câu hỏi' ?></p>
                                     <?php if ($userRole === 'student'): ?>
-                                        <a href="index.php?action=prepare_exam&amp;exam_id=<?= (int) $exam['exam_id'] ?>" class="btn-admin-primary user-exam-link">
-                                            Làm bài <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-                                        </a>
+                                        <?php if (!empty($exam['can_start'])): ?>
+                                            <a href="index.php?action=prepare_exam&amp;exam_id=<?= (int) $exam['exam_id'] ?>" class="btn-admin-primary user-exam-link">
+                                                Làm bài <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                                            </a>
+                                        <?php else: ?>
+                                            <span class="btn-admin-outline user-exam-link" aria-disabled="true">
+                                                Mở vào <?= htmlspecialchars(date('d/m/Y H:i', strtotime($exam['start_time'])), ENT_QUOTES, 'UTF-8') ?>
+                                            </span>
+                                        <?php endif; ?>
                                     <?php else: ?>
                                         <a href="index.php?action=exam_statistics&amp;exam_id=<?= (int) $exam['exam_id'] ?>" class="btn-admin-outline user-exam-link">
                                             Xem thống kê <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>

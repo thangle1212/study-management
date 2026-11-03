@@ -67,9 +67,15 @@ require __DIR__ . '/../../partials/app-shell-start.php';
                                             <?php endif; ?>
                                         </p>
                                     </div>
-                                    <a href="index.php?action=prepare_exam&amp;exam_id=<?= (int) $exam['exam_id'] ?>" class="btn-admin-primary student-exam-action">
-                                        Xem đề thi <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-                                    </a>
+                                    <?php if (!empty($exam['can_start'])): ?>
+                                        <a href="index.php?action=prepare_exam&amp;exam_id=<?= (int) $exam['exam_id'] ?>" class="btn-admin-primary student-exam-action">
+                                            Xem đề thi <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                                        </a>
+                                    <?php else: ?>
+                                        <span class="btn-admin-outline student-exam-action" aria-disabled="true">
+                                            Mở vào <?= htmlspecialchars(date('d/m/Y H:i', strtotime($exam['start_time'])), ENT_QUOTES, 'UTF-8') ?>
+                                        </span>
+                                    <?php endif; ?>
                                 </article>
                             <?php endforeach; ?>
                         </div>

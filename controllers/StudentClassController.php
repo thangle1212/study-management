@@ -19,7 +19,7 @@ class StudentClassController extends BaseController {
 
         $studentId = (int) $_SESSION['user']['id'];
         $classes = $this->classModel->getClassesByStudent($studentId);
-        $assignedExams = $this->classModel->getPublishedExamsByStudent($studentId);
+        $assignedExams = $this->classModel->getAssignedExamsByStudent($studentId);
 
         require __DIR__ . '/../views/student/classes/index.php';
     }

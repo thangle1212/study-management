@@ -45,15 +45,22 @@ class ClassModel {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getPublishedExamsByStudent($studentId) {
+    public function getAssignedExamsByStudent($studentId) {
         $stmt = $this->pdo->prepare(
             "SELECT e.exam_id, e.title, e.start_time, e.end_time, e.duration_minutes,
+                    e.status,
+                    CASE
+                        WHEN (e.start_time IS NULL OR e.start_time <= NOW())
+                         AND (e.end_time IS NULL OR e.end_time >= NOW())
+                        THEN 1 ELSE 0
+                    END AS can_start,
                     c.class_id, c.class_name
              FROM exams e
              INNER JOIN class_students cs ON cs.class_id = e.class_id
              INNER JOIN classes c ON c.class_id = e.class_id
              WHERE cs.student_id = ?
-               AND e.status = 'published'
+               AND e.status IN ('published', 'scheduled')
+               AND (e.end_time IS NULL OR e.end_time >= NOW())
              ORDER BY e.created_at DESC, e.exam_id DESC"
         );
         $stmt->execute([$studentId]);

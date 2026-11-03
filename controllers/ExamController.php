@@ -650,7 +650,10 @@ class ExamController {
             "SELECT e.*, COUNT(eq.id) AS question_count
              FROM exams e
              LEFT JOIN exam_questions eq ON eq.exam_id = e.exam_id
-             WHERE e.exam_id = ? AND e.status = 'published'
+             WHERE e.exam_id = ?
+               AND (e.status = 'published' OR (e.status = 'scheduled' AND e.class_id IS NOT NULL))
+               AND (e.start_time IS NULL OR e.start_time <= NOW())
+               AND (e.end_time IS NULL OR e.end_time >= NOW())
                AND (e.class_id IS NULL OR EXISTS (
                    SELECT 1
                    FROM class_students cs
@@ -709,7 +712,10 @@ class ExamController {
             "SELECT e.exam_id, e.duration_minutes, e.anti_cheat_enabled,
                 e.violation_limit, e.violation_action, e.shuffle_questions, e.shuffle_answers
              FROM exams e
-             WHERE e.exam_id = ? AND e.status = 'published'
+             WHERE e.exam_id = ?
+               AND (e.status = 'published' OR (e.status = 'scheduled' AND e.class_id IS NOT NULL))
+               AND (e.start_time IS NULL OR e.start_time <= NOW())
+               AND (e.end_time IS NULL OR e.end_time >= NOW())
                AND (e.class_id IS NULL OR EXISTS (
                    SELECT 1
                    FROM class_students cs

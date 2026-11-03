@@ -65,3 +65,5 @@ Lưu trữ: không còn sử dụng nhưng vẫn giữ lại dữ liệu.
 Đăng nhập ở cổng học tập và cổng quản trị dùng chung bộ đếm: tối đa 5 lần sai cho một email trong 15 phút, sau đó khóa thử đăng nhập email đó trong 15 phút. IP có ngưỡng 20 lần sai trong 15 phút để tránh khóa nhầm người dùng chung mạng trường học/văn phòng.
 
 Khi cài đặt hoặc nâng cấp cơ sở dữ liệu hiện có, chạy một lần `sql/login_attempt_limits.sql` trong phpMyAdmin. Bảng này lưu hash của email/IP, số lần thất bại và thời hạn khóa; các bản ghi cũ hơn một ngày được dọn khi có lần đăng nhập thất bại mới.
+
+Khi nâng cấp cơ sở dữ liệu đã tạo trước tính năng giữ thứ tự câu hỏi trong lượt thi, chạy một lần `sql/exam_attempt_shuffle.sql` trong phpMyAdmin để bổ sung các cột snapshot và seed còn thiếu cho bảng `exam_attempts`.
