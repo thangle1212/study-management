@@ -132,7 +132,7 @@
 
     <!-- Phần bình luận -->
     <section class="mb-5">
-        <h3 class="h4 fw-bold text-dark mb-4"><i class="fa-regular fa-comment-dots me-2 text-primary"></i>Bình luận (<?php echo count($allComments ?? $comments); ?>)</h3>
+        <h3 class="h4 fw-bold text-dark mb-4"><i class="fa-regular fa-comment-dots me-2 text-primary"></i>Bình luận (<?php echo (int) ($commentCount ?? count($comments)); ?>)</h3>
 
         <!-- Danh sách các bình luận -->
         <div class="d-flex flex-column gap-3 mb-4">

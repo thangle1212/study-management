@@ -4,11 +4,13 @@ final class AutomaticGrading
 {
     private $pdo;
 
+    /** Khởi tạo model chấm điểm với kết nối cơ sở dữ liệu dùng chung. */
     public function __construct($pdo)
     {
         $this->pdo = $pdo;
     }
 
+    /** Kiểm tra đề có đủ câu hỏi, đáp án và đủ điều kiện chấm tự động. */
     public function validateExam($examId)
     {
         $stmt = $this->pdo->prepare(
@@ -42,6 +44,7 @@ final class AutomaticGrading
         return null;
     }
 
+    /** Lọc đáp án hợp lệ, lưu lựa chọn của học sinh và ghi nhận câu bỏ trống. */
     public function saveAnswers($attemptId, $examId, $answers)
     {
         $answers = is_array($answers) ? $answers : [];
@@ -82,6 +85,7 @@ final class AutomaticGrading
         }
     }
 
+    /** Trộn câu hỏi và đáp án ổn định theo seed riêng của lượt thi. */
     public function orderQuestions(array $questions, $seed, $shuffleQuestions, $shuffleAnswers)
     {
         foreach ($questions as &$question) {
@@ -113,6 +117,7 @@ final class AutomaticGrading
         return $questions;
     }
 
+    /** Chụp đáp án đúng tại thời điểm bắt đầu để kết quả không bị thay đổi hồi tố. */
     public function snapshotCorrectAnswers($attemptId, $examId)
     {
         $stmt = $this->pdo->prepare(
@@ -125,6 +130,7 @@ final class AutomaticGrading
         $stmt->execute([$attemptId, $examId]);
     }
 
+    /** Hoàn tất lượt thi trong transaction và rollback nếu chấm điểm xảy ra lỗi. */
     public function finalize($attemptId, $studentId, $answers, $reason)
     {
         $this->pdo->beginTransaction();
@@ -144,6 +150,7 @@ final class AutomaticGrading
         }
     }
 
+    /** Thực hiện lưu đáp án, so sánh đúng/sai, tính điểm và đóng lượt thi. */
     private function finalizeInTransaction($attemptId, $studentId, $answers, $reason)
     {
         $stmt = $this->pdo->prepare(
@@ -224,6 +231,7 @@ final class AutomaticGrading
         return true;
     }
 
+    /** Tìm và khóa lượt thi đang làm để xử lý một lần autosave an toàn. */
     public function findAutosaveAttempt($attemptId, $studentId)
     {
         $stmt = $this->pdo->prepare(
@@ -238,6 +246,7 @@ final class AutomaticGrading
         return $stmt->fetch();
     }
 
+    /** Lưu tạm đáp án hoặc tự động hoàn tất lượt thi khi server phát hiện hết giờ. */
     public function autosave($attemptId, $studentId, $answers)
     {
         $this->pdo->beginTransaction();
@@ -263,6 +272,7 @@ final class AutomaticGrading
         }
     }
 
+    /** Ghi log vi phạm và tự động nộp bài nếu vượt giới hạn cấu hình. */
     public function recordViolation($attemptId, $studentId, $violationType, $details)
     {
         $this->pdo->beginTransaction();
@@ -317,6 +327,7 @@ final class AutomaticGrading
         }
     }
 
+    /** Tạo bản ghi answer_id rỗng cho các câu chưa có lựa chọn. */
     private function ensureUnanswered($attemptId, $examId)
     {
         $stmt = $this->pdo->prepare(

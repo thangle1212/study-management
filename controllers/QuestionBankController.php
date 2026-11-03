@@ -5,6 +5,7 @@ require_once __DIR__ . '/../models/QuestionBank.php';
 class QuestionBankController extends BaseController {
     private $questionBank;
 
+    /** Khởi tạo controller quản lý nguồn câu hỏi và đáp án. */
     public function __construct($pdo) {
         parent::__construct($pdo);
         $this->questionBank = new QuestionBank($pdo);
@@ -63,12 +64,14 @@ class QuestionBankController extends BaseController {
         }
     }
 
+    /** Nhận form tạo câu hỏi và đáp án để làm nguồn cho chấm tự động. */
     public function createQuestion() {
         $this->requireTeacher();
         $question = $this->emptyQuestion();
         $this->handleQuestionForm($question);
     }
 
+    /** Nhận form cập nhật câu hỏi và đáp án đúng/sai. */
     public function editQuestion() {
         $this->requireTeacher();
         $questionId = $this->requestId('id');

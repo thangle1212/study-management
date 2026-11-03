@@ -4,11 +4,13 @@ final class ExamHistory
 {
     private $pdo;
 
+    /** Khởi tạo model truy vấn lịch sử làm bài. */
     public function __construct($pdo)
     {
         $this->pdo = $pdo;
     }
 
+    /** Lấy kết quả tổng quan của lượt thi khi người dùng có quyền xem. */
     public function findResult($attemptId, $userId)
     {
         $stmt = $this->pdo->prepare(
@@ -22,6 +24,7 @@ final class ExamHistory
         return $stmt->fetch();
     }
 
+    /** Lấy toàn bộ dữ liệu chi tiết để đối chiếu bài làm với đáp án đúng. */
     public function findDetail($attemptId, $userId)
     {
         $stmt = $this->pdo->prepare(

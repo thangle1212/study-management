@@ -7,12 +7,14 @@ final class ExamHistoryController extends BaseController
 {
     private $history;
 
+    /** Khởi tạo controller đọc kết quả và lịch sử lượt thi. */
     public function __construct($pdo)
     {
         parent::__construct($pdo);
         $this->history = new ExamHistory($pdo);
     }
 
+    /** Hiển thị điểm tổng kết và trạng thái sau khi lượt thi hoàn tất. */
     public function resultPage()
     {
         $this->requireLogin();
@@ -27,6 +29,7 @@ final class ExamHistoryController extends BaseController
         require __DIR__ . '/../views/exams/result.php';
     }
 
+    /** Hiển thị chi tiết câu hỏi, lựa chọn, đáp án đúng và vi phạm của lượt thi. */
     public function detail()
     {
         $this->requireLogin();
