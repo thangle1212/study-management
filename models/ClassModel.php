@@ -24,6 +24,42 @@ class ClassModel {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function getClassesByStudent($studentId) {
+        $stmt = $this->pdo->prepare(
+            "SELECT c.class_id, c.class_name, c.class_code, c.created_at,
+                    teacher.full_name AS teacher_name
+             FROM class_students cs
+             INNER JOIN classes c ON c.class_id = cs.class_id
+             INNER JOIN users student
+                ON student.user_id = cs.student_id
+               AND student.role = 'student'
+               AND student.status = 'active'
+             INNER JOIN users teacher
+                ON teacher.user_id = c.teacher_id
+               AND teacher.role = 'teacher'
+               AND teacher.status = 'active'
+             WHERE cs.student_id = ?
+             ORDER BY c.class_name, c.class_id"
+        );
+        $stmt->execute([$studentId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getPublishedExamsByStudent($studentId) {
+        $stmt = $this->pdo->prepare(
+            "SELECT e.exam_id, e.title, e.start_time, e.end_time, e.duration_minutes,
+                    c.class_id, c.class_name
+             FROM exams e
+             INNER JOIN class_students cs ON cs.class_id = e.class_id
+             INNER JOIN classes c ON c.class_id = e.class_id
+             WHERE cs.student_id = ?
+               AND e.status = 'published'
+             ORDER BY e.created_at DESC, e.exam_id DESC"
+        );
+        $stmt->execute([$studentId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function getClassDetail($classId, $teacherId) {
         $stmt = $this->pdo->prepare(
             "SELECT c.class_id, c.class_name, c.class_code, c.teacher_id, c.created_at,

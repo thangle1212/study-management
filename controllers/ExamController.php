@@ -645,14 +645,20 @@ class ExamController {
     public function prepare() {
         $this->requireStudent();
         $examId = (int) ($_GET['exam_id'] ?? 0);
+        $studentId = (int) $_SESSION['user']['id'];
         $stmt = $this->pdo->prepare(
             "SELECT e.*, COUNT(eq.id) AS question_count
              FROM exams e
              LEFT JOIN exam_questions eq ON eq.exam_id = e.exam_id
              WHERE e.exam_id = ? AND e.status = 'published'
+               AND (e.class_id IS NULL OR EXISTS (
+                   SELECT 1
+                   FROM class_students cs
+                   WHERE cs.class_id = e.class_id AND cs.student_id = ?
+               ))
              GROUP BY e.exam_id"
         );
-        $stmt->execute([$examId]);
+        $stmt->execute([$examId, $studentId]);
         $exam = $stmt->fetch();
 
         if (!$exam) {
@@ -663,7 +669,6 @@ class ExamController {
             die($gradingError);
         }
 
-        $studentId = (int) $_SESSION['user']['id'];
         $historyStmt = $this->pdo->prepare(
             "SELECT ea.attempt_id, ea.total_score, ea.start_time, ea.end_time,
                     ea.submit_reason, ea.review_status,
@@ -701,11 +706,17 @@ class ExamController {
         $examId = (int) ($_POST['exam_id'] ?? 0);
         $studentId = (int) $_SESSION['user']['id'];
         $stmt = $this->pdo->prepare(
-            "SELECT exam_id, duration_minutes, anti_cheat_enabled,
-                violation_limit, violation_action, shuffle_questions, shuffle_answers
-             FROM exams WHERE exam_id = ? AND status = 'published'"
+            "SELECT e.exam_id, e.duration_minutes, e.anti_cheat_enabled,
+                e.violation_limit, e.violation_action, e.shuffle_questions, e.shuffle_answers
+             FROM exams e
+             WHERE e.exam_id = ? AND e.status = 'published'
+               AND (e.class_id IS NULL OR EXISTS (
+                   SELECT 1
+                   FROM class_students cs
+                   WHERE cs.class_id = e.class_id AND cs.student_id = ?
+               ))"
         );
-        $stmt->execute([$examId]);
+        $stmt->execute([$examId, $studentId]);
         $exam = $stmt->fetch();
         if (!$exam) {
             http_response_code(404);

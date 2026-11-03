@@ -6,6 +6,7 @@ $appShellRoleIcons = ['student' => 'fa-user-graduate', 'teacher' => 'fa-chalkboa
 $appShellNavigation = [
     'student' => [
         ['key' => 'dashboard', 'label' => 'Tổng quan', 'icon' => 'fa-house', 'href' => 'index.php?action=dashboard'],
+        ['key' => 'student_classes', 'label' => 'Lớp học của tôi', 'icon' => 'fa-school', 'href' => 'index.php?action=student_classes'],
         ['key' => 'profile', 'label' => 'Hồ sơ của tôi', 'icon' => 'fa-id-card', 'href' => 'index.php?action=profile'],
         ['key' => 'student_statistics', 'label' => 'Thống kê của tôi', 'icon' => 'fa-chart-line', 'href' => 'index.php?action=student_statistics'],
         ['key' => 'forum', 'label' => 'Diễn đàn', 'icon' => 'fa-comments', 'icon_style' => 'fa-regular', 'href' => 'index.php?action=forum'],
