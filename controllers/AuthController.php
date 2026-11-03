@@ -91,9 +91,12 @@ class AuthController {
     public function forgotPassword() {
         $error = '';
         $message = '';
+        $portal = ($_GET['portal'] ?? $_POST['portal'] ?? '') === 'admin' ? 'admin' : 'user';
+        $loginAction = $portal === 'admin' ? 'admin_login' : 'login';
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $email = trim($_POST['email'] ?? '');
+            $emailInput = $_POST['email'] ?? '';
+            $email = is_string($emailInput) ? trim($emailInput) : '';
             $user = $this->userModel->findByEmail($email);
 
             if (!$user) {
@@ -104,7 +107,8 @@ class AuthController {
                 if (!$this->userModel->setResetToken($user['email'], $token)) {
                     $error = 'Không thể tạo liên kết khôi phục, vui lòng thử lại sau.';
                 } else {
-                    $resetUrl = $this->getBaseUrl() . '/index.php?action=reset_password&token=' . urlencode($token);
+                    $resetUrl = $this->getBaseUrl() . '/index.php?action=reset_password&token='
+                        . urlencode($token) . '&portal=' . ($user['role'] === 'admin' ? 'admin' : 'user');
                     $mailer = new PHPMailer(true);
 
                     try {
@@ -129,6 +133,14 @@ class AuthController {
                         $mailer->send();
                         $message = 'Liên kết khôi phục đã được gửi đến email của bạn.';
                     } catch (Exception $exception) {
+                        $diagnostic = $mailer->ErrorInfo !== '' ? $mailer->ErrorInfo : $exception->getMessage();
+                        foreach ([getenv('SMTP_PASSWORD'), getenv('SMTP_USERNAME'), getenv('SMTP_FROM_EMAIL')] as $sensitiveValue) {
+                            if (is_string($sensitiveValue) && $sensitiveValue !== '') {
+                                $diagnostic = str_replace($sensitiveValue, '[redacted]', $diagnostic);
+                            }
+                        }
+                        $diagnostic = preg_replace('/[\r\n]+/', ' ', $diagnostic);
+                        error_log('[EduTest password reset] SMTP send failed: ' . substr($diagnostic, 0, 500));
                         $error = 'Không thể gửi email khôi phục. Vui lòng kiểm tra cấu hình SMTP.';
                     }
                 }
@@ -146,6 +158,8 @@ class AuthController {
     // --- 4. ĐẶT LẠI MẬT KHẨU ---
     public function resetPassword() {
         $token = $_GET['token'] ?? '';
+        $portal = ($_GET['portal'] ?? $_POST['portal'] ?? '') === 'admin' ? 'admin' : 'user';
+        $loginAction = $portal === 'admin' ? 'admin_login' : 'login';
         $error = '';
         $success = '';
 
@@ -163,6 +177,11 @@ class AuthController {
             return;
         }
 
+        if (($user['role'] ?? '') === 'admin') {
+            $portal = 'admin';
+            $loginAction = 'admin_login';
+        }
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newPassword = $_POST['password'] ?? '';
             $confirmPassword = $_POST['confirm_password'] ?? '';
@@ -175,7 +194,7 @@ class AuthController {
                 $userId = $user['user_id'] ?? $user['id']; // Hỗ trợ cả 2 tên cột ID
 
                 $this->userModel->updatePasswordAndClearToken($userId, $newPassword);
-                $success = 'Mật khẩu đã được đổi thành công! <a href="index.php?action=login">Đăng nhập ngay</a>';
+                $success = 'Mật khẩu đã được đổi thành công!';
             }
         }
         require __DIR__ . '/../views/auth/reset-password.php';

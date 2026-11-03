@@ -41,12 +41,13 @@
                 <div class="alert alert-success py-2" role="status">
                     <?= htmlspecialchars(strip_tags($success), ENT_QUOTES, 'UTF-8') ?>
                 </div>
-                <a href="index.php?action=login" class="btn btn-admin-primary auth-submit">
+                <a href="index.php?action=<?= htmlspecialchars($loginAction ?? 'login', ENT_QUOTES, 'UTF-8') ?>" class="btn btn-admin-primary auth-submit">
                     <i class="fa-solid fa-arrow-right-to-bracket" aria-hidden="true"></i>
                     Đăng nhập
                 </a>
             <?php else: ?>
-                <form action="index.php?action=reset_password&amp;token=<?= htmlspecialchars($token ?? '', ENT_QUOTES, 'UTF-8') ?>" method="POST">
+                <form action="index.php?action=reset_password&amp;token=<?= htmlspecialchars($token ?? '', ENT_QUOTES, 'UTF-8') ?>&amp;portal=<?= htmlspecialchars($portal ?? 'user', ENT_QUOTES, 'UTF-8') ?>" method="POST">
+                    <input type="hidden" name="portal" value="<?= htmlspecialchars($portal ?? 'user', ENT_QUOTES, 'UTF-8') ?>">
                     <div class="mb-3">
                         <label for="resetPassword" class="form-label">Mật khẩu mới</label>
                         <div class="input-group">
@@ -73,7 +74,7 @@
                     </button>
                 </form>
             <?php endif; ?>
-            <a href="index.php?action=login" class="admin-login-back"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Quay lại đăng nhập</a>
+            <a href="index.php?action=<?= htmlspecialchars($loginAction ?? 'login', ENT_QUOTES, 'UTF-8') ?>" class="admin-login-back"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Quay lại đăng nhập</a>
         </div>
     </section>
 </main>

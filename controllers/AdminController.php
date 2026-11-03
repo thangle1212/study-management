@@ -71,9 +71,15 @@ class AdminController extends BaseController {
         }
 
         if ($actionType === 'status' && in_array($value, ['active', 'locked'], true)) {
-            $this->userModel->updateStatus($userId, $value);
+            if (!$this->userModel->updateStatus($userId, $value)) {
+                header('Location: index.php?action=admin_users&error=admin_status_immutable');
+                exit;
+            }
         } elseif ($actionType === 'role' && in_array($value, ['student', 'teacher'], true)) {
-            $this->userModel->updateRole($userId, $value);
+            if (!$this->userModel->updateRole($userId, $value)) {
+                header('Location: index.php?action=admin_users&error=admin_role_immutable');
+                exit;
+            }
         } elseif ($actionType === 'profile') {
             $email = $_POST['email'] ?? null;
             $newPassword = $_POST['new_password'] ?? '';

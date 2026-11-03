@@ -108,8 +108,11 @@ class User {
             throw new InvalidArgumentException('Trạng thái tài khoản không hợp lệ.');
         }
 
-        $stmt = $this->pdo->prepare("UPDATE users SET status = ? WHERE user_id = ?");
-        return $stmt->execute([$status, $userId]);
+        $stmt = $this->pdo->prepare(
+            "UPDATE users SET status = ? WHERE user_id = ? AND role <> 'admin'"
+        );
+        $stmt->execute([$status, $userId]);
+        return $stmt->rowCount() > 0;
     }
 
     public function updateRole($userId, $role) {
@@ -117,8 +120,11 @@ class User {
             throw new InvalidArgumentException('Vai trò người dùng không hợp lệ.');
         }
 
-        $stmt = $this->pdo->prepare("UPDATE users SET role = ? WHERE user_id = ?");
-        return $stmt->execute([$role, $userId]);
+        $stmt = $this->pdo->prepare(
+            "UPDATE users SET role = ? WHERE user_id = ? AND role <> 'admin'"
+        );
+        $stmt->execute([$role, $userId]);
+        return $stmt->rowCount() > 0;
     }
 
     public function emailExists($email, $excludeUserId = null) {
