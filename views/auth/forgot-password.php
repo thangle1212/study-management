@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f2f7fc">
-    <title>Quên mật khẩu - EduTest</title>
+    <title><?= ($portal ?? 'user') === 'admin' ? 'Quên mật khẩu quản trị' : 'Quên mật khẩu' ?> - EduTest</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -20,8 +20,8 @@
             <span>EduTest</span>
         </a>
         <div class="admin-login-copy">
-            <p class="admin-eyebrow">Hỗ trợ tài khoản</p>
-            <h1 id="auth-brand-heading">Lấy lại quyền truy cập an toàn.</h1>
+            <p class="admin-eyebrow"><?= ($portal ?? 'user') === 'admin' ? 'Hỗ trợ quản trị' : 'Hỗ trợ tài khoản' ?></p>
+            <h1 id="auth-brand-heading"><?= ($portal ?? 'user') === 'admin' ? 'Khôi phục quyền truy cập quản trị.' : 'Lấy lại quyền truy cập an toàn.' ?></h1>
             <p>Chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu đến email đăng ký của bạn.</p>
         </div>
         <div class="admin-login-stamp">EduTest · Học tập trực tuyến</div>
@@ -30,7 +30,7 @@
     <section class="admin-login-content" aria-labelledby="forgot-heading">
         <div class="admin-login-form auth-form">
             <h2 id="forgot-heading">Quên mật khẩu?</h2>
-            <p class="admin-login-intro">Nhập email đã dùng để đăng ký tài khoản.</p>
+            <p class="admin-login-intro">Nhập email <?= ($portal ?? 'user') === 'admin' ? 'quản trị' : 'đã dùng để đăng ký tài khoản' ?>.</p>
 
             <?php if (!empty($error)): ?>
                 <div class="alert alert-danger py-2" role="alert" tabindex="-1">
@@ -43,7 +43,8 @@
                 </div>
             <?php endif; ?>
 
-            <form action="index.php?action=forgot_password" method="POST">
+            <form action="index.php?action=forgot_password&amp;portal=<?= htmlspecialchars($portal ?? 'user', ENT_QUOTES, 'UTF-8') ?>" method="POST">
+                <input type="hidden" name="portal" value="<?= htmlspecialchars($portal ?? 'user', ENT_QUOTES, 'UTF-8') ?>">
                 <div class="mb-4">
                     <label for="forgotEmail" class="form-label">Email đăng ký</label>
                     <div class="input-group">
@@ -56,7 +57,7 @@
                     Gửi liên kết khôi phục
                 </button>
             </form>
-            <a href="index.php?action=login" class="admin-login-back"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Quay lại đăng nhập</a>
+            <a href="index.php?action=<?= htmlspecialchars($loginAction ?? 'login', ENT_QUOTES, 'UTF-8') ?>" class="admin-login-back"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Quay lại đăng nhập</a>
         </div>
     </section>
 </main>

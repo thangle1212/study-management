@@ -51,7 +51,10 @@
                     </div>
                 </div>
                 <div class="mb-4">
-                    <label for="adminPassword" class="form-label">Mật khẩu</label>
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <label for="adminPassword" class="form-label mb-0">Mật khẩu</label>
+                        <a href="index.php?action=forgot_password&amp;portal=admin" class="auth-inline-link">Quên mật khẩu?</a>
+                    </div>
                     <div class="input-group">
                         <span class="input-group-text" aria-hidden="true"><i class="fa-solid fa-lock"></i></span>
                         <input type="password" id="adminPassword" name="password" class="form-control" autocomplete="current-password" required>

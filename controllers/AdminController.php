@@ -1,13 +1,16 @@
 <?php
 require_once __DIR__ . '/BaseController.php';
 require_once __DIR__ . '/../models/User.php';
+require_once __DIR__ . '/../models/LoginAttemptLimiter.php';
 
 class AdminController extends BaseController {
     private $userModel;
+    private $loginAttemptLimiter;
 
     public function __construct($pdo) {
         parent::__construct($pdo);
         $this->userModel = new User($pdo);
+        $this->loginAttemptLimiter = new LoginAttemptLimiter($pdo);
     }
 
     // Hiển thị trang quản lý người dùng
@@ -62,10 +65,21 @@ class AdminController extends BaseController {
             exit;
         }
 
+        if ($actionType === 'role' && $value === 'admin') {
+            header('Location: index.php?action=admin_users&error=admin_promotion_forbidden');
+            exit;
+        }
+
         if ($actionType === 'status' && in_array($value, ['active', 'locked'], true)) {
-            $this->userModel->updateStatus($userId, $value);
-        } elseif ($actionType === 'role' && in_array($value, ['student', 'teacher', 'admin'], true)) {
-            $this->userModel->updateRole($userId, $value);
+            if (!$this->userModel->updateStatus($userId, $value)) {
+                header('Location: index.php?action=admin_users&error=admin_status_immutable');
+                exit;
+            }
+        } elseif ($actionType === 'role' && in_array($value, ['student', 'teacher'], true)) {
+            if (!$this->userModel->updateRole($userId, $value)) {
+                header('Location: index.php?action=admin_users&error=admin_role_immutable');
+                exit;
+            }
         } elseif ($actionType === 'profile') {
             $email = $_POST['email'] ?? null;
             $newPassword = $_POST['new_password'] ?? '';
@@ -123,6 +137,10 @@ class AdminController extends BaseController {
             || !is_string($password) || !preg_match('/^.{6,}$/us', $password)
             || !is_string($role) || !in_array($role, ['student', 'teacher', 'admin'], true)) {
             header('Location: index.php?action=admin_users&error=invalid_create');
+            exit;
+        }
+        if ($role === 'admin') {
+            header('Location: index.php?action=admin_users&error=admin_creation_forbidden');
             exit;
         }
         $fullName = trim($fullName);
@@ -185,32 +203,45 @@ class AdminController extends BaseController {
         $error = '';
         $notice = '';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $email = trim($_POST['email'] ?? '');
-            $password = $_POST['password'] ?? '';
+            $emailInput = $_POST['email'] ?? '';
+            $passwordInput = $_POST['password'] ?? '';
+            $email = is_string($emailInput) ? trim($emailInput) : '';
+            $password = is_string($passwordInput) ? $passwordInput : '';
+            $ipAddress = is_string($_SERVER['REMOTE_ADDR'] ?? null) ? $_SERVER['REMOTE_ADDR'] : '';
+            $lockoutSeconds = $this->loginAttemptLimiter->getLockoutSeconds($email, $ipAddress);
 
-            $user = $this->userModel->findByEmail($email);
-            if ($user && password_verify($password, $user['password'])) {
-                if ($user['status'] !== 'active') {
-                    $error = 'Tài khoản quản trị của bạn đã bị khóa!';
-                } elseif ($user['role'] !== 'admin') {
-                    // CHẶN NGAY: Học sinh hoặc giáo viên không được đăng nhập qua cổng này
-                    $error = 'Tài khoản này không có quyền truy cập hệ thống quản trị!';
-                } else {
-                    session_regenerate_id(true); // Tạo session ID hoàn toàn mới, hủy ID cũ
-                    $_SESSION['user'] = [
-                        'id' => $user['user_id'],
-                        'full_name' => $user['full_name'],
-                        'email' => $user['email'],
-                        'role' => $user['role'],
-                        'avatar' => $user['avatar'] ?? 'assets/images/default-avatar.png'
-                    ];
-                    header('Location: index.php?action=dashboard');
-                    exit;
-                }
+            if ($lockoutSeconds > 0) {
+                $error = $this->loginAttemptLimiter->getLockoutMessage($lockoutSeconds);
             } else {
-                $error = 'Email hoặc mật khẩu quản trị không chính xác!';
+                $user = $this->userModel->findByEmail($email);
+                if ($user && password_verify($password, $user['password'])) {
+                    $this->loginAttemptLimiter->clearEmailFailures($email);
+
+                    if ($user['status'] !== 'active') {
+                        $error = 'Tài khoản quản trị của bạn đã bị khóa!';
+                    } elseif ($user['role'] !== 'admin') {
+                        $error = 'Tài khoản này không có quyền truy cập hệ thống quản trị!';
+                    } else {
+                        session_regenerate_id(true);
+                        $_SESSION['user'] = [
+                            'id' => $user['user_id'],
+                            'full_name' => $user['full_name'],
+                            'email' => $user['email'],
+                            'role' => $user['role'],
+                            'avatar' => $user['avatar'] ?? 'assets/images/default-avatar.png'
+                        ];
+                        header('Location: index.php?action=dashboard');
+                        exit;
+                    }
+                } else {
+                    $lockoutSeconds = $this->loginAttemptLimiter->recordFailure($email, $ipAddress);
+                    $error = $lockoutSeconds > 0
+                        ? $this->loginAttemptLimiter->getLockoutMessage($lockoutSeconds)
+                        : 'Email hoặc mật khẩu quản trị không chính xác!';
+                }
             }
         }
         require __DIR__ . '/../views/admin/login.php';
     }
+
 }

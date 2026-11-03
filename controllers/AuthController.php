@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../models/User.php';
+require_once __DIR__ . '/../models/LoginAttemptLimiter.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
@@ -9,9 +10,11 @@ require_once __DIR__ . '/../libs/PHPMailer/src/SMTP.php';
 
 class AuthController {
     private $userModel;
+    private $loginAttemptLimiter;
 
     public function __construct($pdo) {
         $this->userModel = new User($pdo);
+        $this->loginAttemptLimiter = new LoginAttemptLimiter($pdo);
     }
 
     // --- 1. ĐĂNG NHẬP ---
@@ -19,30 +22,42 @@ class AuthController {
         $error = '';
         $notice = '';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $email = trim($_POST['email'] ?? '');
-            $password = $_POST['password'] ?? '';
+            $emailInput = $_POST['email'] ?? '';
+            $passwordInput = $_POST['password'] ?? '';
+            $email = is_string($emailInput) ? trim($emailInput) : '';
+            $password = is_string($passwordInput) ? $passwordInput : '';
+            $ipAddress = is_string($_SERVER['REMOTE_ADDR'] ?? null) ? $_SERVER['REMOTE_ADDR'] : '';
+            $lockoutSeconds = $this->loginAttemptLimiter->getLockoutSeconds($email, $ipAddress);
 
-            $user = $this->userModel->findByEmail($email);
-            if ($user && password_verify($password, $user['password'])) {
-                if ($user['role'] === 'admin') {
-                    $notice = 'Tài khoản quản trị không thể đăng nhập tại cổng học tập. Vui lòng sử dụng cổng đăng nhập quản trị.';
-                } elseif ($user['status'] !== 'active') {
-                    $error = 'Tài khoản của bạn đã bị khóa!';
-                } else {
-                    session_regenerate_id(true); // Tạo session ID hoàn toàn mới, hủy ID cũ
-                    $_SESSION['user'] = [
-                        'id' => $user['user_id'],
-                        'full_name' => $user['full_name'],
-                        'email' => $user['email'],
-                        'role' => $user['role'],
-                        'avatar' => $user['avatar'] ?? 'assets/images/default-avatar.png'
-                    ];
-                    header('Location: index.php?action=dashboard');
-                    exit;
-
-                } 
+            if ($lockoutSeconds > 0) {
+                $error = $this->loginAttemptLimiter->getLockoutMessage($lockoutSeconds);
             } else {
-                $error = 'Email hoặc mật khẩu không chính xác!';
+                $user = $this->userModel->findByEmail($email);
+                if ($user && password_verify($password, $user['password'])) {
+                    $this->loginAttemptLimiter->clearEmailFailures($email);
+
+                    if ($user['role'] === 'admin') {
+                        $notice = 'Tài khoản quản trị không thể đăng nhập tại cổng học tập. Vui lòng sử dụng cổng đăng nhập quản trị.';
+                    } elseif ($user['status'] !== 'active') {
+                        $error = 'Tài khoản của bạn đã bị khóa!';
+                    } else {
+                        session_regenerate_id(true);
+                        $_SESSION['user'] = [
+                            'id' => $user['user_id'],
+                            'full_name' => $user['full_name'],
+                            'email' => $user['email'],
+                            'role' => $user['role'],
+                            'avatar' => $user['avatar'] ?? 'assets/images/default-avatar.png'
+                        ];
+                        header('Location: index.php?action=dashboard');
+                        exit;
+                    }
+                } else {
+                    $lockoutSeconds = $this->loginAttemptLimiter->recordFailure($email, $ipAddress);
+                    $error = $lockoutSeconds > 0
+                        ? $this->loginAttemptLimiter->getLockoutMessage($lockoutSeconds)
+                        : 'Email hoặc mật khẩu không chính xác!';
+                }
             }
         }
         require __DIR__ . '/../views/auth/login.php';
@@ -76,9 +91,12 @@ class AuthController {
     public function forgotPassword() {
         $error = '';
         $message = '';
+        $portal = ($_GET['portal'] ?? $_POST['portal'] ?? '') === 'admin' ? 'admin' : 'user';
+        $loginAction = $portal === 'admin' ? 'admin_login' : 'login';
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $email = trim($_POST['email'] ?? '');
+            $emailInput = $_POST['email'] ?? '';
+            $email = is_string($emailInput) ? trim($emailInput) : '';
             $user = $this->userModel->findByEmail($email);
 
             if (!$user) {
@@ -89,7 +107,8 @@ class AuthController {
                 if (!$this->userModel->setResetToken($user['email'], $token)) {
                     $error = 'Không thể tạo liên kết khôi phục, vui lòng thử lại sau.';
                 } else {
-                    $resetUrl = $this->getBaseUrl() . '/index.php?action=reset_password&token=' . urlencode($token);
+                    $resetUrl = $this->getBaseUrl() . '/index.php?action=reset_password&token='
+                        . urlencode($token) . '&portal=' . ($user['role'] === 'admin' ? 'admin' : 'user');
                     $mailer = new PHPMailer(true);
 
                     try {
@@ -114,6 +133,14 @@ class AuthController {
                         $mailer->send();
                         $message = 'Liên kết khôi phục đã được gửi đến email của bạn.';
                     } catch (Exception $exception) {
+                        $diagnostic = $mailer->ErrorInfo !== '' ? $mailer->ErrorInfo : $exception->getMessage();
+                        foreach ([getenv('SMTP_PASSWORD'), getenv('SMTP_USERNAME'), getenv('SMTP_FROM_EMAIL')] as $sensitiveValue) {
+                            if (is_string($sensitiveValue) && $sensitiveValue !== '') {
+                                $diagnostic = str_replace($sensitiveValue, '[redacted]', $diagnostic);
+                            }
+                        }
+                        $diagnostic = preg_replace('/[\r\n]+/', ' ', $diagnostic);
+                        error_log('[EduTest password reset] SMTP send failed: ' . substr($diagnostic, 0, 500));
                         $error = 'Không thể gửi email khôi phục. Vui lòng kiểm tra cấu hình SMTP.';
                     }
                 }
@@ -131,6 +158,8 @@ class AuthController {
     // --- 4. ĐẶT LẠI MẬT KHẨU ---
     public function resetPassword() {
         $token = $_GET['token'] ?? '';
+        $portal = ($_GET['portal'] ?? $_POST['portal'] ?? '') === 'admin' ? 'admin' : 'user';
+        $loginAction = $portal === 'admin' ? 'admin_login' : 'login';
         $error = '';
         $success = '';
 
@@ -148,6 +177,11 @@ class AuthController {
             return;
         }
 
+        if (($user['role'] ?? '') === 'admin') {
+            $portal = 'admin';
+            $loginAction = 'admin_login';
+        }
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newPassword = $_POST['password'] ?? '';
             $confirmPassword = $_POST['confirm_password'] ?? '';
@@ -160,7 +194,7 @@ class AuthController {
                 $userId = $user['user_id'] ?? $user['id']; // Hỗ trợ cả 2 tên cột ID
 
                 $this->userModel->updatePasswordAndClearToken($userId, $newPassword);
-                $success = 'Mật khẩu đã được đổi thành công! <a href="index.php?action=login">Đăng nhập ngay</a>';
+                $success = 'Mật khẩu đã được đổi thành công!';
             }
         }
         require __DIR__ . '/../views/auth/reset-password.php';
